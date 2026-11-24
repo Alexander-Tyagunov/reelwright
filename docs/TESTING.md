@@ -60,7 +60,8 @@ stills took 1.5 s and the page gates alone (`qa --page-only`) took 7.1 s.
 ## The agent chain, end to end
 
 One release film was made the way the plugin intends, each step by the agent and model the plugin assigns, from
-an invented changelog (Tessera 3.2.0).
+an invented changelog (Tessera 3.2.0). The first four steps ran against the earlier JavaScript build of the
+engine. The films were then rendered and measured again with the TypeScript engine, and the review ran on that.
 
 | Step | Agent | Model | What happened |
 |---|---|---|---|
@@ -104,7 +105,7 @@ rules and ran the CLI with bad input. It reported 21 findings: 6 major, 11 minor
 | Chrome left a temp folder per launch | Its temp folder is inside the profile folder that is removed |
 | An experimental Node API is used to serve TypeScript to the browser | Documented with its risk in known issues; `doctor` checks it |
 | A test that could not fail; missing scenarios | Test rewritten; 28 unit tests and 10 end-to-end scenarios added |
-| Eight functions over 40 lines | Split; stills before and after are byte-identical (56 of 56) |
+| Eight functions over 40 lines | Split; stills before and after are byte-identical (56 of 56). A few of 42 to 53 lines remain, the longest in the line chart |
 | README inaccuracies | Corrected |
 | `scenes.md` "generated" by nothing | `reel scenes --md` generates it; a test compares them |
 | Reports written to surprising places | Named after the video; none for a missing file |
