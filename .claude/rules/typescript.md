@@ -9,7 +9,10 @@ paths:
 - Node 24 runs these files directly. Use erasable syntax only: no `enum`, `namespace`, parameter properties or
   decorators. Import with the `.ts` extension; import types with `import type`.
 - ts.dev conventions, enforced by Biome: named exports, `const` by default, no `any`, no non-null assertion,
-  80 columns, single quotes, semicolons.
+  80 columns, single quotes, semicolons. Two things may run past 80: a test name, and the header block of a
+  scene file that `reel scenes` reads.
+- A process that starts a browser, an encoder or a server registers it with `core/cleanup.ts`, so a stop signal
+  ends it. Options that take a number go through `core/validate.ts`.
 - One responsibility per file. Aim for under 200 lines; split before 300. Functions under about 40 lines.
 - Every file starts with a `@fileoverview` TSDoc block. Every export has TSDoc that states what it guarantees
   and the unit of every number (seconds, pixels, frames, levels).

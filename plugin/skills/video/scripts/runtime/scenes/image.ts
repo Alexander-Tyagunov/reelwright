@@ -36,7 +36,7 @@ export interface ImageSceneSpec extends SceneSpec {
 
 function parseImage(s: ImageSceneSpec) {
   const fail = (m: string) => {
-    throw new Error(`scene "image": ${m}`);
+    throw new Error(m);
   };
   if (typeof s.src !== 'string' || !s.src) {
     fail('field "src" is required (a path relative to the film.json folder)');
@@ -48,7 +48,8 @@ function parseImage(s: ImageSceneSpec) {
   const zoom = s.zoom == null ? 1.04 : s.zoom;
   if (typeof zoom !== 'number' || !(zoom >= 1 && zoom <= 2)) {
     fail(
-      `field "zoom" must be a number from 1 to 2, got ${JSON.stringify(s.zoom)}`,
+      'field "zoom" must be a number from 1 to 2, ' +
+        `got ${JSON.stringify(s.zoom)}`,
     );
   }
   const callouts = s.callouts ?? [];
@@ -73,6 +74,39 @@ interface Frame {
   frameBox: HTMLElement;
   zoomer: HTMLElement;
   img: HTMLImageElement;
+}
+
+/** The clipping card that holds the picture. */
+function buildClip(ctx: SceneContext, framed: boolean): HTMLElement {
+  return ctx.h('div', {
+    style: {
+      position: 'absolute',
+      inset: '0',
+      overflow: 'hidden',
+      borderRadius: framed
+        ? 'calc(var(--u) * var(--radius))'
+        : 'calc(var(--u) * 0.8)',
+      border: framed
+        ? 'calc(var(--u) * 0.14) solid var(--line-strong)'
+        : 'none',
+      background: framed ? 'var(--surface)' : 'transparent',
+    },
+  });
+}
+
+/** The picture as a CSS background. */
+function buildPicture(ctx: SceneContext, src: string, fit: string) {
+  const url = String(src).replace(/"/g, '%22');
+  return ctx.h('div', {
+    style: {
+      position: 'absolute',
+      inset: '0',
+      backgroundImage: `url("${url}")`,
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: fit,
+    },
+  });
 }
 
 /**
@@ -101,37 +135,13 @@ function buildFrame(
   const frameBox = h('div', {
     style: {position: 'relative', flex: 'none', width: '10px', height: '10px'},
   });
-  const clip = h('div', {
-    style: {
-      position: 'absolute',
-      inset: '0',
-      overflow: 'hidden',
-      borderRadius: framed
-        ? 'calc(var(--u) * var(--radius))'
-        : 'calc(var(--u) * 0.8)',
-      border: framed
-        ? 'calc(var(--u) * 0.14) solid var(--line-strong)'
-        : 'none',
-      background: framed ? 'var(--surface)' : 'transparent',
-    },
-  });
+  const clip = buildClip(ctx, framed);
   const zoomer = h('div', {
     style: {position: 'absolute', inset: '0', transformOrigin: 'center center'},
   });
   // The picture is a CSS background; the hidden <img> only gives its size.
   const img = h('img', {src, style: {display: 'none'}});
-  const url = String(src).replace(/"/g, '%22');
-  const pic = h('div', {
-    style: {
-      position: 'absolute',
-      inset: '0',
-      backgroundImage: `url("${url}")`,
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      backgroundSize: fit,
-    },
-  });
-  zoomer.append(img, pic);
+  zoomer.append(img, buildPicture(ctx, src, fit));
   clip.append(zoomer);
   frameBox.append(clip);
   area.append(frameBox);

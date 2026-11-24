@@ -75,7 +75,9 @@ export function drawArrow(a: Arrow, p: number, horizontal: boolean): void {
     set(a.line, 'x2', tip.toFixed(2));
     set(a.line, 'y2', y);
     const back = (tip - hs).toFixed(2);
-    const d = `M ${back} ${y - hs * 0.8} L ${tip.toFixed(2)} ${y} L ${back} ${y + hs * 0.8}`;
+    const wing = hs * 0.8;
+    const tipAt = `${tip.toFixed(2)} ${y}`;
+    const d = `M ${back} ${y - wing} L ${tipAt} L ${back} ${y + wing}`;
     set(a.head, 'd', d);
   } else {
     const y0 = a.pad;
@@ -87,7 +89,9 @@ export function drawArrow(a: Arrow, p: number, horizontal: boolean): void {
     set(a.line, 'x2', x);
     set(a.line, 'y2', tip.toFixed(2));
     const back = (tip - hs).toFixed(2);
-    const d = `M ${x - hs * 0.8} ${back} L ${x} ${tip.toFixed(2)} L ${x + hs * 0.8} ${back}`;
+    const wing = hs * 0.8;
+    const tipAt = `${x} ${tip.toFixed(2)}`;
+    const d = `M ${x - wing} ${back} L ${tipAt} L ${x + wing} ${back}`;
     set(a.head, 'd', d);
   }
   const visible = p > 0.03 ? '1' : '0';

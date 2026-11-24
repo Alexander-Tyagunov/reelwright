@@ -3,6 +3,7 @@
  * command gets an argument array.
  */
 import {spawn, spawnSync} from 'node:child_process';
+import {onStop} from './cleanup.ts';
 import {UserError} from './errors.ts';
 
 /** Result of a finished process. */
@@ -34,6 +35,7 @@ function execute(
 ): Promise<RawResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {stdio: ['pipe', 'pipe', 'pipe']});
+    const forget = onStop(() => void child.kill('SIGKILL'));
     const out: Buffer[] = [];
     let stderr = '';
     child.stdout.on('data', (d: Buffer) => out.push(d));
@@ -41,10 +43,12 @@ function execute(
       stderr += d.toString();
     });
     child.stdin.on('error', () => {});
-    child.on('error', e =>
-      reject(new UserError(`could not run ${cmd}: ${e.message}`)),
-    );
+    child.on('error', e => {
+      forget();
+      reject(new UserError(`could not run ${cmd}: ${e.message}`));
+    });
     child.on('close', code => {
+      forget();
       const stdout = Buffer.concat(out);
       if (code === 0 || options.allowFail) {
         resolve({code, stdout, stderr});
@@ -98,4 +102,31 @@ export function which(name: string): string | null {
     return null;
   }
   return r.stdout.split(/\r?\n/)[0]?.trim() || null;
+}
+
+/**
+ * Sends a signal to a process and every process in its group, so helper
+ * processes do not outlive it. The process must have been started detached
+ * on Linux and macOS. On Windows it ends the whole tree.
+ *
+ * @param pid Process id of the group leader.
+ * @param signal Signal name, for example `SIGKILL`.
+ */
+export function killTree(pid: number | undefined, signal: NodeJS.Signals) {
+  if (pid === undefined) {
+    return;
+  }
+  if (process.platform === 'win32') {
+    spawnSync('taskkill', ['/pid', String(pid), '/T', '/F']);
+    return;
+  }
+  try {
+    process.kill(-pid, signal);
+  } catch {
+    try {
+      process.kill(pid, signal);
+    } catch {
+      // The process has already ended.
+    }
+  }
 }

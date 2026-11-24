@@ -58,7 +58,7 @@ function parseSeries(s: LineChartSceneSpec): {
   series: ParsedSeries[];
   nPts: number;
 } {
-  const fail = makeFail('line-chart: ');
+  const fail = makeFail('');
   if (!Array.isArray(s.series) || !s.series.length) {
     fail('"series" is required: an array of 1 to 3 {name, values}');
   }
@@ -90,7 +90,8 @@ function parseSeries(s: LineChartSceneSpec): {
     }
     if (s.labels.length !== nPts) {
       fail(
-        `"labels" has ${s.labels.length} items but the longest series has ${nPts} points`,
+        `"labels" has ${s.labels.length} items but the longest series ` +
+          `has ${nPts} points`,
       );
     }
   }

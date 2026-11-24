@@ -76,6 +76,30 @@ export async function pageErrors(page: CdpSession): Promise<string[]> {
   return [...stored, ...page.errors];
 }
 
+const FRAME_FAILURE = /scene \d+ \([^)]*\) threw at t=[\d.]+s: [^\n]*/;
+
+/**
+ * Makes the page's `eval` report a scene that threw while a frame was drawn
+ * as a `UserError` that holds the scene's message and no stack.
+ */
+function explainFrameFailures(page: CdpSession): void {
+  const rawEval = page.eval.bind(page);
+  page.eval = async expression => {
+    try {
+      return await rawEval(expression);
+    } catch (e) {
+      const found = e instanceof Error && FRAME_FAILURE.exec(e.message);
+      if (!found) {
+        throw e;
+      }
+      throw new UserError(
+        `${found[0]}. Fix that scene's code, or remove the scene, ` +
+          'then run the command again.',
+      );
+    }
+  };
+}
+
 /** Opens one ready page in a new browser process. */
 async function openReadyPage(
   url: string,
@@ -94,6 +118,7 @@ async function openReadyPage(
     await browser.close();
   };
   const page = Object.assign(session, {dispose});
+  explainFrameFailures(page);
   await page.send('Page.navigate', {url});
   const ready = await waitUntilReady(page);
   if (ready !== true) {

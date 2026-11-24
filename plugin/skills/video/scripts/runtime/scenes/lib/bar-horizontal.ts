@@ -34,23 +34,9 @@ interface HorizontalSizes {
   axisGap: number;
 }
 
-function horizontalRow(
-  env: BarEnv,
-  d: BarDatum,
-  i: number,
-  sz: HorizontalSizes,
-) {
-  const {ctx, chart} = env;
-  const label = ctx.text('div', 'rw-body', d.label, {
-    style: {
-      width: `${sz.labelW}px`,
-      flex: 'none',
-      textAlign: 'right',
-      lineHeight: '1.2',
-      fontSize: `calc(var(--u) * ${LABEL_SIZE})`,
-      fontWeight: d.highlight ? '700' : '500',
-    },
-  });
+/** The bar and its value, side by side after the label. */
+function barTrack(env: BarEnv, d: BarDatum, i: number, sz: HorizontalSizes) {
+  const {ctx} = env;
   const valEl = valueEl(env, i, {});
   const barEl = ctx.h('div', {
     style: {
@@ -76,6 +62,27 @@ function horizontalRow(
     barEl,
     valEl,
   );
+  return {valEl, barEl, track};
+}
+
+function horizontalRow(
+  env: BarEnv,
+  d: BarDatum,
+  i: number,
+  sz: HorizontalSizes,
+) {
+  const {ctx, chart} = env;
+  const label = ctx.text('div', 'rw-body', d.label, {
+    style: {
+      width: `${sz.labelW}px`,
+      flex: 'none',
+      textAlign: 'right',
+      lineHeight: '1.2',
+      fontSize: `calc(var(--u) * ${LABEL_SIZE})`,
+      fontWeight: d.highlight ? '700' : '500',
+    },
+  });
+  const {valEl, barEl, track} = barTrack(env, d, i, sz);
   const rowStyle = {
     height: `${sz.rowH}px`,
     display: 'flex',

@@ -107,6 +107,20 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
 - **Fix:** the still-time limit for a scene is the larger of `meta.maxHold` and the scene's longest required
   reading hold plus 1.5 s. The frozen-ratio warning starts at 85%.
 
+### QA passed a film that showed "NaN"
+
+- **Symptom:** a `metric` scene written with `metrics` instead of `items` drew "NaN" and every gate passed.
+- **Cause:** scenes did not check their fields, and no gate read the text.
+- **Fix:** each scene checks its required and numeric fields when it mounts; the error names the scene, the
+  field and any unknown field as the likely typo, and the load gate fails. The layout gate also fails visible
+  text that reads `NaN`, `undefined`, `null` or `[object Object]`.
+
+### A scene that throws mid-film was reported by the wrong gate
+
+- **Symptom:** a custom scene that threw at 4 s passed the load gate and crashed a later gate with a stack.
+- **Fix:** the runtime guards each scene's frame code and records "scene N (type) threw at t=...". The load gate
+  draws every scene at three times and fails with that message. `render` stops with the same line and no stack.
+
 ### QA said PASS with no render
 
 - **Fix:** without a video the verdict is `INCOMPLETE` and the exit code is 1. `--page-only` asks for the page
@@ -116,6 +130,28 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
 
 - **Cause:** every entrance starts from nothing, so frame 0 was the bare background.
 - **Fix:** `meta.lead` (0.5 s) skips the start of the first entrance. Export with `--poster auto` for thumbnails.
+
+### A stopped render left Chrome and ffmpeg running
+
+- **Symptom:** after a timeout or Ctrl+C, browser and encoder processes stayed alive and temporary files stayed
+  on disk.
+- **Fix:** every browser, encoder and server registers with `core/cleanup.ts`. A stop signal runs them all and
+  exits with 128 plus the signal number. Chrome is started in its own process group and killed as a group, and
+  its temporary folder is inside the profile folder that is removed on close.
+- **Check:** the lifecycle scenarios in `tests/e2e`.
+
+## Runtime platform
+
+### The engine uses a Node API that is still marked experimental
+
+- **What:** the local server turns the browser runtime's `.ts` files into JavaScript with
+  `module.stripTypeScriptTypes`. Node 24 prints an experimental warning for it; the engine filters that one
+  warning out.
+- **Why it is used:** it is the only way to serve TypeScript to the browser with no build step and no package
+  dependency. Running `.ts` files in Node itself is stable and does not depend on it.
+- **Risk:** a later Node release can rename or change the function. `reel doctor` checks it ("type stripping")
+  and says so before any render is tried.
+- **If it breaks:** `server/transpile.ts` is the only file that calls it.
 
 ## Packaging
 
@@ -127,4 +163,5 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
 ### A skill cannot find the engine in chat
 
 - **Cause:** chat copies only the skill's own folder into its sandbox.
-- **Fix:** the engine lives in `skills/video/`; other skills refer to it as a sibling folder.
+- **Fix:** the engine lives in `skills/video/`. The other skills refer to it as a sibling folder and, when it is
+  not there, say to load the `video` skill and use the path it gives.

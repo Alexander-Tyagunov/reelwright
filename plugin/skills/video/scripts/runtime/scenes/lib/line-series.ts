@@ -105,7 +105,8 @@ function buildLine(
   len: number,
 ) {
   const {u, h} = ctx;
-  const d = `M${pts.map(p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' L')}`;
+  const coords = pts.map(p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`);
+  const d = `M${coords.join(' L')}`;
   const path = h('path', {
     d,
     fill: 'none',

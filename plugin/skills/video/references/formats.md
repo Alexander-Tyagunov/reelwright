@@ -22,7 +22,7 @@ Rules of thumb:
 ```bash
 reel render film.json                       # out/film.mp4 at the spec's size
 reel render film.json --size 1080x1350      # out/film-1080x1350.mp4
-reel render film.json --draft               # quarter-size, 15 fps preview for a quick look
+reel render film.json --draft               # half the width and height, 15 fps, for a quick look
 reel export film.json --preset x --poster auto
 reel export film.json --preset slack
 reel export film.json --preset gif --gif-width 960

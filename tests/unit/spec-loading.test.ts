@@ -64,4 +64,32 @@ describe('loading a film spec', () => {
     assert.equal(spec.dir, dir);
     assert.equal(spec.film.scenes.length, 1);
   });
+
+  it('a width that is not a number names meta.width and the value', () => {
+    const path = put(dir, 'film.json', '{"meta":{"width":"wide"},"scenes":[]}');
+    assert.match(
+      message(() => loadSpec(path)),
+      /meta\.width must be an even integer from 16 to 8192, got "wide"/,
+    );
+  });
+
+  it('a frame rate of 0 names meta.fps and the allowed range', () => {
+    const path = put(dir, 'film.json', '{"meta":{"fps":0},"scenes":[]}');
+    assert.match(
+      message(() => loadSpec(path)),
+      /meta\.fps must be a number from 1 to 120, got 0/,
+    );
+  });
+
+  it('a height of 100000 is rejected before any browser starts', () => {
+    const path = put(
+      dir,
+      'film.json',
+      '{"meta":{"height":100000},"scenes":[]}',
+    );
+    assert.match(
+      message(() => loadSpec(path)),
+      /meta\.height must be an even integer from 16 to 8192, got 100000/,
+    );
+  });
 });

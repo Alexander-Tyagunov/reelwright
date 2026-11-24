@@ -19,7 +19,7 @@ export interface RenderSettings {
   crf: number;
   /** Frames are PNG instead of JPEG. */
   png: boolean;
-  /** Quarter-size, lower-quality preview. */
+  /** Half-size on each side, lower-quality preview. */
   draft: boolean;
 }
 
@@ -36,12 +36,12 @@ export interface Segment {
   file: string;
 }
 
-/** Draft output is smaller by this factor on each side. */
-const DRAFT_DIVISOR = 4;
+/** Fraction of each side that draft frames keep. */
+const DRAFT_SIDE_FRACTION = 0.5;
 
 /**
- * Size of the encoded frames in pixels. Draft frames are a quarter of the
- * width and height, rounded to an even number.
+ * Size of the encoded frames in pixels. Draft frames have half the width and
+ * half the height, rounded to an even number: 1920x1080 gives 960x540.
  */
 export function outputSize(settings: RenderSettings): {
   width: number;
@@ -50,7 +50,8 @@ export function outputSize(settings: RenderSettings): {
   if (!settings.draft) {
     return {width: settings.width, height: settings.height};
   }
-  const shrink = (n: number): number => Math.round(n / DRAFT_DIVISOR) * 2;
+  const shrink = (n: number): number =>
+    Math.round((n * DRAFT_SIDE_FRACTION) / 2) * 2;
   return {width: shrink(settings.width), height: shrink(settings.height)};
 }
 

@@ -52,9 +52,11 @@ export async function loadMaster(
     ? resolve(video)
     : join(dir, 'out', `film${size ? `-${size}` : ''}.mp4`);
   if (!existsSync(master)) {
-    const again = `reel render ${args.positional[0]}${size ? ` --size ${size}` : ''}`;
+    const flag = size ? ` --size ${size}` : '';
+    const again = `reel render ${args.positional[0]}${flag}`;
     throw new UserError(
-      `master video not found: ${master}\nRun "${again}" first, or pass --video path.`,
+      `master video not found: ${master}\n` +
+        `Run "${again}" first, or pass --video path.`,
     );
   }
   const facts = await probe(master);

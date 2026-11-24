@@ -74,7 +74,7 @@ function chipClass(tag: string): string {
 }
 
 function parseItems(s: ChangelogSceneSpec) {
-  const fail = makeFail('changelog: ');
+  const fail = makeFail('');
   if (!Array.isArray(s.items) || !s.items.length) {
     fail('"items" is required: an array of 1 to 6 {tag, title, detail?}');
   }
@@ -87,7 +87,8 @@ function parseItems(s: ChangelogSceneSpec) {
     }
     if (it.tag == null || String(it.tag).trim() === '') {
       fail(
-        `items[${i}].tag is required ("new", "improved", "fixed" or any string)`,
+        `items[${i}].tag is required ("new", "improved", "fixed" or any ` +
+          'string)',
       );
     }
     if (it.title == null || String(it.title).trim() === '') {

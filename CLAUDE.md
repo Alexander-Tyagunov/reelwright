@@ -61,7 +61,7 @@ add a test to raise coverage. When a gate changes, the seeded-defect scenario fo
 
 - **A scene type:** follow the `add-scene` skill. One file in `runtime/scenes/`, a spec interface, a header
   block that `reel scenes` reads, one import line in `runtime/scenes/index.ts`, then regenerate
-  `references/scenes.md`.
+  `references/scenes.md` with `reel scenes --md`. A unit test fails when the two differ.
 - **A command:** one file in `commands/`, a line in the command table in `reel.ts`, a row in the README table.
 - **A QA gate:** one file in `qa/gates/`, its thresholds in `qa/thresholds.ts`, a row in
   `references/qa-gates.md`, and an e2e scenario that the gate must catch.

@@ -37,9 +37,44 @@ export function sceneLengthWarnings(info: FilmInfo): string[] {
   return out;
 }
 
+/** Spread of the first and last frame, in grey levels. */
+export interface EndSpreads {
+  first: number;
+  last: number;
+  /** Film time of the last frame, in seconds. */
+  lastAt: number;
+}
+
+/**
+ * Warns when the first or the last frame is blank. A looping film is blank
+ * at both ends by design, so it never warns.
+ *
+ * @param loop True when the film loops.
+ * @param ends Spread of the first and the last frame.
+ */
+export function blankFrameWarnings(loop: boolean, ends: EndSpreads): string[] {
+  if (loop) {
+    return [];
+  }
+  const out: string[] = [];
+  if (ends.first < BLANK_STDDEV) {
+    out.push(
+      `frame 0 is blank: the thumbnail will be empty, export with --poster ` +
+        `(thumbnail stddev ${r2(ends.first)}, need >= ${BLANK_STDDEV})`,
+    );
+  }
+  if (ends.last < BLANK_STDDEV) {
+    out.push(
+      `last frame (t=${r3(ends.lastAt)}s) is blank (thumbnail stddev ` +
+        `${r2(ends.last)}, need >= ${BLANK_STDDEV})`,
+    );
+  }
+  return out;
+}
+
 /**
  * Checks scene lengths, then draws the first and the last frame and warns
- * when either is blank.
+ * when either is blank. A looping film skips the frame checks.
  */
 export async function gatePacing(film: OpenFilm): Promise<GateResult> {
   const {info, page} = film;
@@ -47,31 +82,28 @@ export async function gatePacing(film: OpenFilm): Promise<GateResult> {
   for (const text of sceneLengthWarnings(info)) {
     result.add('WARN', text);
   }
-  const last = (info.frames - 1) / info.fps;
-  const first = await thumbnailSpread(await frameAt(page, 0));
-  const end = await thumbnailSpread(await frameAt(page, last));
-  if (first < BLANK_STDDEV) {
-    result.add(
-      'WARN',
-      `frame 0 is blank: the thumbnail will be empty, export with --poster ` +
-        `(thumbnail stddev ${r2(first)}, need >= ${BLANK_STDDEV})`,
-    );
-  }
-  if (end < BLANK_STDDEV) {
-    result.add(
-      'WARN',
-      `last frame (t=${r3(last)}s) is blank (thumbnail stddev ${r2(end)}, ` +
-        `need >= ${BLANK_STDDEV})`,
-    );
-  }
   const lengths = info.scenes.map(s => s.duration);
   const range = `${Math.min(...lengths)}-${Math.max(...lengths)}`;
+  if (info.loop) {
+    return {
+      id: 'pacing',
+      status: result.status,
+      summary: `scenes ${range} s; loop, blank ends are by design`,
+      details: result.details,
+    };
+  }
+  const lastAt = (info.frames - 1) / info.fps;
+  const first = await thumbnailSpread(await frameAt(page, 0));
+  const last = await thumbnailSpread(await frameAt(page, lastAt));
+  for (const text of blankFrameWarnings(false, {first, last, lastAt})) {
+    result.add('WARN', text);
+  }
   return {
     id: 'pacing',
     status: result.status,
     summary:
       `scenes ${range} s; frame 0 stddev ${r2(first)}, ` +
-      `last frame stddev ${r2(end)}`,
+      `last frame stddev ${r2(last)}`,
     details: result.details,
   };
 }

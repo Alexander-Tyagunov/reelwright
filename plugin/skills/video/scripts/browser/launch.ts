@@ -6,7 +6,9 @@ import {spawn} from 'node:child_process';
 import {mkdtempSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {onStop} from '../core/cleanup.ts';
 import {UserError} from '../core/errors.ts';
+import {killTree} from '../core/process.ts';
 import {CdpSession} from './cdp.ts';
 import {findChrome} from './chrome.ts';
 
@@ -155,16 +157,36 @@ function startProcess(options: LaunchOptions) {
     ...extraFlags(),
     'about:blank',
   ];
-  const proc = spawn(bin, args, {stdio: ['ignore', 'ignore', 'pipe']});
+  // The profile folder is also the temp folder, so nothing is left behind.
+  const env: NodeJS.ProcessEnv = {...process.env};
+  for (const key of ['TMPDIR', 'TMP', 'TEMP']) {
+    env[key] = profile;
+  }
+  const proc = spawn(bin, args, {
+    stdio: ['ignore', 'ignore', 'pipe'],
+    env,
+    detached: process.platform !== 'win32',
+  });
   return {bin, profile, proc};
+}
+
+function removeProfile(profile: string): void {
+  rmSync(profile, {
+    recursive: true,
+    force: true,
+    maxRetries: 3,
+    retryDelay: 50,
+  });
 }
 
 /**
  * Launches headless Chrome, Chromium or Edge.
  *
  * Uses a temporary profile folder named `reelwright-chrome-*`, removed by
- * `close()`. Runs as root with `--no-sandbox`. The variable
- * `REEL_CHROME_ARGS` adds space-separated flags.
+ * `close()` and by a stop signal. Chrome runs in its own process group,
+ * and every helper process is stopped with it. Runs as root with
+ * `--no-sandbox`. The variable `REEL_CHROME_ARGS` adds space-separated
+ * flags.
  *
  * @throws UserError when no browser is found or it does not start within
  *   30 seconds.
@@ -178,11 +200,15 @@ export async function launch(options: LaunchOptions = {}): Promise<Browser> {
   try {
     port = await waitForPort(proc);
   } catch (e) {
-    proc.kill();
-    rmSync(profile, {recursive: true, force: true});
+    killTree(proc.pid, 'SIGKILL');
+    removeProfile(profile);
     throw e;
   }
   const sessions: CdpSession[] = [];
+  const forget = onStop(() => {
+    killTree(proc.pid, 'SIGKILL');
+    removeProfile(profile);
+  });
   return {
     bin,
     async newPage(size) {
@@ -191,14 +217,19 @@ export async function launch(options: LaunchOptions = {}): Promise<Browser> {
       return session;
     },
     async close() {
+      forget();
       for (const s of sessions) {
         s.close();
       }
-      proc.kill();
-      const timer = setTimeout(() => proc.kill('SIGKILL'), STOP_TIMEOUT_MS);
+      killTree(proc.pid, 'SIGTERM');
+      const timer = setTimeout(
+        () => killTree(proc.pid, 'SIGKILL'),
+        STOP_TIMEOUT_MS,
+      );
       await stopped;
       clearTimeout(timer);
-      rmSync(profile, {recursive: true, force: true});
+      killTree(proc.pid, 'SIGKILL');
+      removeProfile(profile);
     },
   };
 }

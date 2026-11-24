@@ -6,7 +6,8 @@ Reelwright is a Claude plugin that makes short videos from code: release videos,
 metrics. A film is one JSON file. A headless browser draws every frame as a function of time, ffmpeg encodes
 it, and a quality gate measures the result before you see it.
 
-It works in Claude Code, in Cowork and in chat on claude.ai.
+It loads in Claude Code, in Cowork and in chat on claude.ai. Rendering needs Node 24, ffmpeg and a Chromium-family
+browser wherever the session runs; `reel doctor` reports what is missing.
 
 ## What it makes
 
@@ -80,28 +81,33 @@ claude plugin install reelwright@reelwright
 
 To try it from a checkout without installing: `claude --plugin-dir ./plugin`.
 
-## Quick start
+## Run the engine by hand
+
+You normally ask Claude and it runs these for you. To run them yourself from a checkout of the repository, point
+`REEL` at the CLI and work in a folder of your own:
 
 ```bash
-node skills/video/scripts/reel.ts doctor
-node skills/video/scripts/reel.ts init my-film --template release
+REEL="$PWD/plugin/skills/video/scripts/reel.ts"
+node "$REEL" doctor
+mkdir -p ~/films && cd ~/films
+node "$REEL" init my-film --template release
 cd my-film
-node ../skills/video/scripts/reel.ts preview film.json
-node ../skills/video/scripts/reel.ts stills film.json
-node ../skills/video/scripts/reel.ts render film.json
-node ../skills/video/scripts/reel.ts qa film.json
-node ../skills/video/scripts/reel.ts export film.json --preset x --poster auto
+node "$REEL" preview film.json
+node "$REEL" stills film.json
+node "$REEL" render film.json
+node "$REEL" qa film.json
+node "$REEL" export film.json --preset x --poster auto
 ```
 
 | Command | What it does |
 |---|---|
 | `doctor` | Checks Node, ffmpeg, the browser and the bundled fonts |
 | `init` | Creates a project from a template: `release`, `metrics`, `explainer`, `blank` |
-| `scenes` | Lists the twelve scene types and their fields |
+| `scenes` | Lists the twelve scene types and their fields; `--json` and `--md` for other formats |
 | `preview` | Serves the film with a scrubbing player |
-| `stills` | Draws full-size stills and a contact sheet |
-| `render` | Renders the MP4, scene by scene |
-| `qa` | Runs the quality gate; `--page-only` skips the video gates |
+| `stills` | Draws full-size stills and a contact sheet; `--every` draws a motion strip |
+| `render` | Renders the MP4, scene by scene; `--draft` is a fast preview at half size |
+| `qa` | Runs the quality gate; `--page-only` skips the video gates, `--size WxH` checks another format |
 | `export` | Writes delivery files: `master`, `x`, `linkedin`, `youtube`, `slack`, `web`, `gif`, `webm` |
 | `build` | Bundles the film into one HTML file that plays in a browser |
 
@@ -116,9 +122,12 @@ Reelwright sends no data anywhere. It has no telemetry, makes no network request
 
 While a command runs it starts three local processes: a headless browser to draw frames, ffmpeg and ffprobe to
 encode and measure, and a file server bound to 127.0.0.1 that serves the film page and your project folder to
-that browser. All of them stop when the command ends. Output is written to the `out/` folder of your project.
+that browser. The server answers only requests addressed to 127.0.0.1 or localhost, and does not serve hidden
+files or links that lead out of the project. All three stop when the command ends or is interrupted. Output is
+written to the `out/` folder of your project.
 
-Inter and JetBrains Mono are bundled under the SIL Open Font License, so a film looks the same on every machine.
+Inter and JetBrains Mono are bundled under the SIL Open Font License, so Latin and Cyrillic text looks the same
+on every machine. Other scripts are drawn with a font from the machine.
 
 ## Limits
 

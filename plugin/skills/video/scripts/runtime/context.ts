@@ -102,8 +102,8 @@ type Methods = Pick<
   | 'fit'
 >;
 
-/** Builds the methods. `self` gives the context they return for chaining. */
-function createMethods(state: SceneState, self: () => SceneContext): Methods {
+/** The methods that make or measure text. */
+function textMethods(state: SceneState, self: () => SceneContext) {
   return {
     text(tag, cls, str, attrs) {
       const el = h(tag, {class: cls, ...attrs});
@@ -113,6 +113,16 @@ function createMethods(state: SceneState, self: () => SceneContext): Methods {
       return el;
     },
     words: splitWords,
+    fit(el, {maxLines = 2, min = 0.55} = {}) {
+      fitText(el, maxLines, min);
+      return self();
+    },
+  } satisfies Partial<Methods>;
+}
+
+/** The methods that add motion to an element. */
+function motionMethods(state: SceneState, self: () => SceneContext) {
+  return {
     track(el, spec) {
       addTrack(state.tracks, el, createTrack(spec));
       return self();
@@ -144,16 +154,20 @@ function createMethods(state: SceneState, self: () => SceneContext): Methods {
       const last = Math.max(0, els.length - 1) * each;
       return at + last + (o.dur ?? 0.6);
     },
+  } satisfies Partial<Methods>;
+}
+
+/** Builds the methods. `self` gives the context they return for chaining. */
+function createMethods(state: SceneState, self: () => SceneContext): Methods {
+  return {
+    ...textMethods(state, self),
+    ...motionMethods(state, self),
     onFrame(fn) {
       state.frameFns.push(fn);
       return self();
     },
     settle(el, seconds) {
       state.settles.push({el, at: seconds});
-      return self();
-    },
-    fit(el, {maxLines = 2, min = 0.55} = {}) {
-      fitText(el, maxLines, min);
       return self();
     },
   };

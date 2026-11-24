@@ -29,7 +29,8 @@ async function verify(out: string, size: {width: number; height: number}) {
     if (ready !== true || errors.length) {
       const detail = errors.join('\n  ') || 'no error was reported';
       throw new UserError(
-        `the built file did not load cleanly from file:// (ready=${ready}).\n  ${detail}`,
+        'the built file did not load cleanly from file:// ' +
+          `(ready=${ready}).\n  ${detail}`,
       );
     }
     const info = (await page.eval('window.__film')) as FilmInfo;
@@ -75,9 +76,10 @@ export async function run(args: Args): Promise<number> {
   const mb = (statSync(out).size / 1048576).toFixed(2);
   const plural = (n: number, w: string): string =>
     `${n} ${w}${n === 1 ? '' : 's'}`;
+  const runtime = modules.length - project.entries.length;
   console.log(`built ${out}`);
   console.log(
-    `  ${mb} MB; ${plural(modules.length - project.entries.length, 'runtime module')}, ` +
+    `  ${mb} MB; ${plural(runtime, 'runtime module')}, ` +
       `${plural(project.sceneKeys.length, 'custom scene script')}, ` +
       `${plural(inlined.images, 'image reference')} inlined, ` +
       `${plural(inlined.fonts, 'font file')} inlined`,

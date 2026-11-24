@@ -1,6 +1,6 @@
 # Scene types
 
-Generated from the scene files by `reel scenes`. Every scene also takes `type` and `duration` (seconds).
+Generated from the scene files by `reel scenes --md`. Every scene also takes `type` and `duration` (seconds).
 
 ## `bar-chart`
 

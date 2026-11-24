@@ -81,7 +81,8 @@ export async function qaVideoFile(options: QaOptions): Promise<QaOutcome> {
       incomplete: false,
       pageOnly: false,
     }),
-    dir: dirname(path),
+    // No report file for a video that does not exist.
+    dir: existsSync(path) ? dirname(path) : null,
     suffix,
   });
   if (!existsSync(path)) {

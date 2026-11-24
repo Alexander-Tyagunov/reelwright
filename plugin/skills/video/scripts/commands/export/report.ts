@@ -62,7 +62,8 @@ export function printResult(r: ExportResult): void {
   console.log(`${r.name}: ${r.out}`);
   console.log(
     `  ${megabytes(r.facts.size)} MB  ${v.width}x${v.height}  ${v.fps} fps  ` +
-      `${r.facts.duration}s  ${describeVideo(v)}${describeAudio(r.facts)}${stream}`,
+      `${r.facts.duration}s  ${describeVideo(v)}` +
+      `${describeAudio(r.facts)}${stream}`,
   );
   if (r.note) {
     console.log(`  ${r.note}`);
@@ -71,7 +72,8 @@ export function printResult(r: ExportResult): void {
     const target = LOUDNESS_TARGET;
     console.log(
       `  measured (ebur128): ${r.loudness.lufs} LUFS integrated, ` +
-        `${r.loudness.truePeak} dBTP true peak (target ${target.integrated} LUFS, <= ${target.truePeak} dBTP)`,
+        `${r.loudness.truePeak} dBTP true peak ` +
+        `(target ${target.integrated} LUFS, <= ${target.truePeak} dBTP)`,
     );
   }
   if (r.poster) {

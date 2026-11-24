@@ -8,6 +8,7 @@ description: Add a new scene type to Reelwright - a custom layout, chart, diagra
 Read `${CLAUDE_SKILL_DIR}/../video/references/scene-api.md` first; it is the contract. Then read one built-in scene close
 to what you need in `${CLAUDE_SKILL_DIR}/../video/scripts/runtime/scenes/` and follow its shape. CLI:
 `node ${CLAUDE_SKILL_DIR}/../video/scripts/reel.ts <command>` (written `reel` below).
+If that folder is not next to this one, load this plugin's `video` skill and use the CLI path it gives.
 
 1. Check that no built-in scene already does it: `reel scenes`. A new option on an existing scene is better than a
    near-duplicate scene.
@@ -24,7 +25,7 @@ to what you need in `${CLAUDE_SKILL_DIR}/../video/scripts/runtime/scenes/` and f
      `runtime/scenes/index.ts` so the scene registers.
    The header block is the first comment in the file. Its first line reads `<type> — <summary>` and the lines
    after it list the spec fields, one per line. `reel scenes` reads it, so write it as the field list an author
-   needs. After adding a built-in scene, regenerate `${CLAUDE_SKILL_DIR}/../video/references/scenes.md` from `reel scenes --json`.
+   needs. After adding a built-in scene, regenerate `${CLAUDE_SKILL_DIR}/../video/references/scenes.md` with `reel scenes --md`.
 4. Every frame must be a pure function of `t`: no clocks, no `Math.random()`, no CSS transitions, no state kept
    between frames. Register all copy with `ctx.text` so the gates can measure it. Size in `u`, colour from the
    CSS variables.

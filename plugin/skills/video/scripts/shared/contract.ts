@@ -190,7 +190,11 @@ export interface LayoutReport {
 
 /** Values the film page puts on `window`. */
 export interface FilmPageGlobals {
-  /** Draws the frame for time `t`, in seconds. */
+  /**
+   * Draws the frame for time `t`, in seconds. When a scene throws, the other
+   * scenes are still drawn, then it throws an error whose message reads
+   * `scene N (type) threw at t=X.XXs: message`.
+   */
   renderAt(t: number): void;
   /** `true` when frames can be drawn, `'error'` when loading failed. */
   __ready?: true | 'error';

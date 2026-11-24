@@ -5,6 +5,7 @@ import {existsSync, readFileSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import type {FilmSpec} from '../shared/contract.ts';
 import {UserError} from './errors.ts';
+import {checkFps, checkSide} from './validate.ts';
 
 /** A film spec read from disk. */
 export interface LoadedSpec {
@@ -47,21 +48,45 @@ export function loadSpec(path: string | undefined): LoadedSpec {
   if (typeof film !== 'object' || film === null || Array.isArray(film)) {
     throw new UserError(`film spec must be a JSON object (${abs})`);
   }
+  checkMeta(film as FilmSpec);
   return {abs, dir: dirname(abs), film: film as FilmSpec};
 }
 
-/**
- * Checks that both sides of a frame size are even, as H.264 requires.
- *
- * @throws UserError when either side is odd.
- */
-export function assertEvenSize(size: FrameSize): FrameSize {
-  if (size.width % 2 || size.height % 2) {
-    const text = `${size.width}x${size.height}`;
-    throw new UserError(
-      `width and height must be even numbers for H.264, got ${text}`,
-    );
+/** Checks `meta.width`, `meta.height` and `meta.fps` when they are set. */
+function checkMeta(film: FilmSpec): void {
+  const meta: Record<string, unknown> = {...film.meta};
+  if (meta.width !== undefined) {
+    checkSide('meta.width', meta.width);
   }
+  if (meta.height !== undefined) {
+    checkSide('meta.height', meta.height);
+  }
+  if (meta.fps !== undefined) {
+    checkFps('meta.fps', meta.fps);
+  }
+}
+
+/**
+ * Checks that both sides of a frame size are integers from 16 to 8192
+ * pixels, and even, as H.264 requires.
+ *
+ * @throws UserError when a side is odd, fractional or out of range.
+ */
+export function assertEvenSize(
+  size: FrameSize,
+  names: readonly [string, string] = ['frame width', 'frame height'],
+): FrameSize {
+  const text = `${size.width}x${size.height}`;
+  for (const side of [size.width, size.height]) {
+    if (Number.isInteger(side) && side % 2) {
+      throw new UserError(
+        `width and height must be even numbers for H.264, got ${text}. ` +
+          'Change the odd side by one pixel.',
+      );
+    }
+  }
+  checkSide(names[0], size.width);
+  checkSide(names[1], size.height);
   return size;
 }
 
@@ -83,11 +108,17 @@ export function parseSize(text: string): FrameSize {
  * spec's `meta.width` and `meta.height`, otherwise 1920x1080.
  *
  * @param override Text from `--size`, such as `1080x1920`.
- * @throws UserError when the text is malformed or a side is odd.
+ * @throws UserError when the text is malformed or a side is odd or outside
+ *   16 to 8192 pixels.
  */
 export function frameSize(film: FilmSpec, override?: string): FrameSize {
-  const size = override
-    ? parseSize(override)
-    : {width: film.meta?.width || 1920, height: film.meta?.height || 1080};
-  return assertEvenSize(size);
+  if (override) {
+    const names = ['--size width', '--size height'] as const;
+    return assertEvenSize(parseSize(override), names);
+  }
+  const size = {
+    width: film.meta?.width ?? 1920,
+    height: film.meta?.height ?? 1080,
+  };
+  return assertEvenSize(size, ['meta.width', 'meta.height']);
 }

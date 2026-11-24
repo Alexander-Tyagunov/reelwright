@@ -17,7 +17,7 @@ export interface PlayerSource {
   stage: HTMLElement;
   viewport: HTMLElement;
   film: FilmInfo;
-  /** Draws film time `t`, in seconds. */
+  /** Draws film time `t`, in seconds. It throws when a scene fails. */
   renderAt: (t: number) => void;
   /** Gives the time of the last drawn frame, in seconds. */
   getTime: () => number;
@@ -45,25 +45,40 @@ interface Transport {
   toggle(): void;
 }
 
-function createTransport(
+/** Builds the function that draws one time and updates the controls. */
+function createShow(
   source: PlayerSource,
-  button: HTMLElement,
   range: HTMLInputElement,
   label: HTMLElement,
-): Transport & {tick: (now: number) => void} {
-  const {film, renderAt, getTime} = source;
+): (t: number) => void {
+  const {film, renderAt} = source;
   const {fps, duration} = film;
-  let playing = true;
-  let t0 = performance.now();
-  let base = 0;
-  const show = (t: number) => {
-    renderAt(t);
+  return t => {
+    try {
+      renderAt(t);
+    } catch {
+      // The failing scene is already recorded; keep the player running.
+    }
     range.value = String(Math.round(t * fps));
     const scene = film.scenes.findLast(s => t >= s.start) ?? film.scenes[0];
     label.textContent =
       `${t.toFixed(2)}s / ${duration.toFixed(2)}s  f${Math.round(t * fps)}` +
       `  scene ${(scene?.index ?? 0) + 1} ${scene?.type ?? ''}`;
   };
+}
+
+function createTransport(
+  source: PlayerSource,
+  button: HTMLElement,
+  range: HTMLInputElement,
+  label: HTMLElement,
+): Transport & {tick: (now: number) => void} {
+  const {getTime} = source;
+  const {fps, duration} = source.film;
+  const show = createShow(source, range, label);
+  let playing = true;
+  let t0 = performance.now();
+  let base = 0;
   const setPlaying = (on: boolean) => {
     playing = on;
     button.textContent = on ? 'pause' : 'play';

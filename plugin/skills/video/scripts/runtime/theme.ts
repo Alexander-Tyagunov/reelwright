@@ -83,6 +83,8 @@ export function resolveBrand(brand: Brand = {}): ResolvedBrand {
   };
 }
 
+const MONO_FALLBACK = '"JetBrains Mono", ui-monospace, monospace';
+
 /**
  * Writes the stage CSS variables: `--u`, `--safe`, the colours, `--radius`
  * and the three font stacks.
@@ -115,7 +117,7 @@ export function applyCssVariables(
     '--radius': brand.radius,
     '--font': `"${brand.font}", "Inter", system-ui, sans-serif`,
     '--font-display': `"${brand.fontDisplay}", "Inter", system-ui, sans-serif`,
-    '--font-mono': `"${brand.fontMono}", "JetBrains Mono", ui-monospace, monospace`,
+    '--font-mono': `"${brand.fontMono}", ${MONO_FALLBACK}`,
   };
   for (const [name, value] of Object.entries(vars)) {
     stage.style.setProperty(name, String(value));

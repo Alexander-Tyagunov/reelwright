@@ -7,8 +7,9 @@ description: Make a short educational or explainer video with Reelwright - how s
 
 An explainer changes what one specific viewer understands. Decide who that viewer is and what they will be able
 to say afterwards before choosing a single scene. Follow the pipeline in
-`${CLAUDE_SKILL_DIR}/../video/SKILL.md`; this file changes steps 1 to 4. Start from the template:
-`reel init <dir> --template explainer`.
+`${CLAUDE_SKILL_DIR}/../video/SKILL.md`; this file changes steps 1 to 4. CLI:
+`node ${CLAUDE_SKILL_DIR}/../video/scripts/reel.ts <command>` (written `reel` below). If that folder is not next to this one, load this plugin's `video` skill and use the CLI path it gives.
+Start from the template: `reel init <dir> --template explainer`.
 
 ## Brief (step 1), two extra decisions
 

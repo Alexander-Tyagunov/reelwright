@@ -153,3 +153,20 @@ Reel.scene('typed-rows', (ctx: SceneContext, scene: SceneSpec): void => {
   });
 });
 `;
+
+/** Defect: the frame function throws once the scene is 4 s in. */
+export const THROWS_LATE = `Reel.scene('throws-late', (ctx, s) => {
+  const t = ctx.text('h2', 'rw-h2', s.heading);
+  ctx.el.append(t);
+  ctx.enter(t, 0.1);
+  return time => {
+    if (time >= 4) throw new Error('boom at four seconds');
+  };
+});
+`;
+
+/** Defect: a missing closing bracket, so the file does not parse. */
+export const SYNTAX_ERROR = `Reel.scene('broken-scene', (ctx, s) => {
+  ctx.el.append(ctx.text('h2', 'rw-h2', s.heading);
+});
+`;

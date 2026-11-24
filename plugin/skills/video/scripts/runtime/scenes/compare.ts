@@ -12,6 +12,7 @@
 
 import type {SceneSpec} from '../../shared/contract.ts';
 import {registerScene} from '../registry.ts';
+import type {SceneContext} from '../types.ts';
 import type {LeftTone, RightTone, Side, Tone} from './lib/compare-cards.ts';
 import {buildCard, fitCards} from './lib/compare-cards.ts';
 import {compact, innerBox, makeFail} from './lib/layout.ts';
@@ -40,7 +41,7 @@ function parseSide(
   allowed: readonly Tone[],
   fallback: Tone,
 ): Side {
-  const fail = makeFail('compare: ');
+  const fail = makeFail('');
   const o = s[key];
   if (!o || typeof o !== 'object') {
     fail(`"${key}" is required: { title, items:[...] }`);
@@ -69,26 +70,26 @@ function parseSide(
   return {title: String(o.title), items, tone};
 }
 
-registerScene('compare', (ctx, scene) => {
-  const s = scene as CompareSceneSpec;
-  const {el, h, u} = ctx;
-  const sides: [Side, Side] = [
-    parseSide(s, 'left', ['bad', 'neutral'], 'neutral'),
-    parseSide(s, 'right', ['good', 'accent'], 'accent'),
-  ];
+/** The heading, the card row and the footnote, added to the scene. */
+interface Frame {
+  heading: HTMLElement | null;
+  foot: HTMLElement | null;
+  wrap: HTMLElement;
+}
+
+function buildFrame(ctx: SceneContext, s: CompareSceneSpec): Frame {
   const heading = s.heading ? ctx.text('h2', 'rw-h2', s.heading) : null;
-  const landscape = ctx.aspect === 'landscape';
-  const wrap = h('div', {
+  const wrap = ctx.h('div', {
     style: {
       display: 'flex',
-      flexDirection: landscape ? 'row' : 'column',
+      flexDirection: ctx.aspect === 'landscape' ? 'row' : 'column',
       gap: 'calc(var(--u) * 3)',
       alignItems: 'stretch',
       alignSelf: 'stretch',
     },
   });
   const foot = s.note ? ctx.text('div', 'rw-small', s.note) : null;
-  el.append(...compact([heading, wrap, foot]));
+  ctx.el.append(...compact([heading, wrap, foot]));
   if (heading) {
     ctx.fit(heading, {maxLines: 2});
     ctx.enter(heading, 0.1, {y: 2.5});
@@ -96,18 +97,17 @@ registerScene('compare', (ctx, scene) => {
   if (foot) {
     ctx.fit(foot, {maxLines: 2});
   }
-  const cards = sides.map(side => {
-    const c = buildCard(ctx, side);
-    wrap.append(c.card);
-    return c;
-  });
-  const availH = () =>
-    innerBox(el).h -
-    (heading ? heading.offsetHeight + 3 * u : 0) -
-    (foot ? foot.offsetHeight + 3 * u : 0);
-  fitCards(cards, wrap, availH, u);
-  const n = sides[0].items.length + sides[1].items.length;
-  const pace = ctx.clamp((s.duration - 3.2) / (n + 1), 0.2, 0.55);
+  return {heading, foot, wrap};
+}
+
+/** Staggers the cards and their items in, then the footnote. */
+function animateCards(
+  ctx: SceneContext,
+  cards: ReturnType<typeof buildCard>[],
+  foot: HTMLElement | null,
+  count: number,
+): void {
+  const pace = ctx.clamp((ctx.dur - 3.2) / (count + 1), 0.2, 0.55);
   let at = 0.4;
   for (const c of cards) {
     ctx.enter(c.card, at, {y: 3, dur: 0.65});
@@ -120,4 +120,25 @@ registerScene('compare', (ctx, scene) => {
   if (foot) {
     ctx.enter(foot, at, {y: 1.5});
   }
+}
+
+registerScene('compare', (ctx, scene) => {
+  const s = scene as CompareSceneSpec;
+  const {el, u} = ctx;
+  const sides: [Side, Side] = [
+    parseSide(s, 'left', ['bad', 'neutral'], 'neutral'),
+    parseSide(s, 'right', ['good', 'accent'], 'accent'),
+  ];
+  const {heading, foot, wrap} = buildFrame(ctx, s);
+  const cards = sides.map(side => {
+    const c = buildCard(ctx, side);
+    wrap.append(c.card);
+    return c;
+  });
+  const availH = () =>
+    innerBox(el).h -
+    (heading ? heading.offsetHeight + 3 * u : 0) -
+    (foot ? foot.offsetHeight + 3 * u : 0);
+  fitCards(cards, wrap, availH, u);
+  animateCards(ctx, cards, foot, sides[0].items.length + sides[1].items.length);
 });

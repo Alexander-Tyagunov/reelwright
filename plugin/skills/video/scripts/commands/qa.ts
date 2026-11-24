@@ -25,7 +25,8 @@ function emit(outcome: QaOutcome, json: boolean): void {
  * with `--video`: probe, motion and audio on that file alone.
  *
  * Verdicts: `pass`, `warn`, `fail`, `incomplete` (no video was checked).
- * The report is also written to `out/qa-report[-WxH].json`.
+ * The report is also written to `out/qa-report[-WxH].json`, or to
+ * `out/qa-report-<video name>[-WxH].json` when `--video` names a file.
  *
  * @param args `qa [film.json] [--size WxH] [--video file.mp4] [--page-only]
  *   [--strict] [--json] [--loop] [--max-hold S] [--gpu]`.

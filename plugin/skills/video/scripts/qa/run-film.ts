@@ -3,7 +3,7 @@
  * video exists, the probe, motion and audio gates.
  */
 import {existsSync} from 'node:fs';
-import {join, resolve} from 'node:path';
+import {basename, join, resolve} from 'node:path';
 import type {OpenFilm} from '../browser/film.ts';
 import {openFilm, pageErrors} from '../browser/film.ts';
 import {UserError} from '../core/errors.ts';
@@ -15,7 +15,12 @@ import {auditAudio} from './gates/audio.ts';
 import {gateDeterminism} from './gates/determinism.ts';
 import {gateHolds} from './gates/holds.ts';
 import {gateLayout} from './gates/layout.ts';
-import {applyPageErrors, gateLoad, loadFailure} from './gates/load.ts';
+import {
+  applyDrawFailures,
+  applyPageErrors,
+  gateLoad,
+  loadFailure,
+} from './gates/load.ts';
 import {gateMotion} from './gates/motion.ts';
 import {gatePacing} from './gates/pacing.ts';
 import {gateProbe, readRenderSummary, streamFps} from './gates/probe.ts';
@@ -25,9 +30,19 @@ import type {QaOptions} from './options.ts';
 import type {FilmSummary, GateResult} from './report.ts';
 import {buildReport} from './report.ts';
 import type {QaOutcome} from './run-video.ts';
+import {findDrawFailures} from './scene-draws.ts';
 
 function sizeSuffix(options: QaOptions): string {
   return options.size ? `-${options.size}` : '';
+}
+
+/** Report file suffix: the video's name when `--video` is given. */
+function reportSuffix(options: QaOptions): string {
+  if (!options.video) {
+    return sizeSuffix(options);
+  }
+  const name = basename(options.video).replace(/\.[^.]+$/, '');
+  return `-${name}${sizeSuffix(options)}`;
 }
 
 /** Reads the probe gate's inputs and runs the gate. */
@@ -84,6 +99,21 @@ async function videoGates(
   gates.push(await guarded('audio', () => auditAudio(video, hasAudio)));
 }
 
+/** Says why no video was checked and what to do next. */
+function missingVideoText(
+  video: string,
+  given: boolean,
+  draftExists: boolean,
+): string {
+  if (given) {
+    return `video not found: ${video}`;
+  }
+  return draftExists
+    ? 'only a draft render exists and a draft is not checked: run render ' +
+        'in full, or pass --video out/film-draft.mp4'
+    : 'no video: run render first';
+}
+
 /** Adds the three video gates, or marks them missing. Returns `incomplete`. */
 async function addVideoGates(
   film: OpenFilm,
@@ -97,9 +127,8 @@ async function addVideoGates(
     await videoGates(film, video, gates);
     return video;
   }
-  const why = given
-    ? `video not found: ${video}`
-    : 'no video: run render first';
+  const draft = join(outDir, `film${sizeSuffix(options)}-draft.mp4`);
+  const why = missingVideoText(video, given !== null, existsSync(draft));
   for (const id of ['probe', 'motion', 'audio'] as const) {
     gates.push({
       id,
@@ -135,6 +164,7 @@ async function gateOpenFilm(
   const dir = join(spec.dir, 'out');
   const load = gateLoad(info);
   const gates: GateResult[] = [load];
+  applyDrawFailures(load, await findDrawFailures(film.page, info));
   gates.push(await guarded('determinism', () => gateDeterminism(film)));
   gates.push(await guarded('layout', () => gateLayout(film)));
   gates.push(await guarded('holds', () => gateHolds(info)));
@@ -153,7 +183,7 @@ async function gateOpenFilm(
     incomplete,
     pageOnly: options.pageOnly,
   });
-  return {report, dir, suffix: sizeSuffix(options)};
+  return {report, dir, suffix: reportSuffix(options)};
 }
 
 /**
@@ -180,7 +210,7 @@ export async function qaFilm(
         pageOnly: options.pageOnly,
       }),
       dir: reportDirFor(specPath),
-      suffix: sizeSuffix(options),
+      suffix: reportSuffix(options),
     };
   }
   try {

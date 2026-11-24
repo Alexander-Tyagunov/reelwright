@@ -80,9 +80,7 @@ registerScene('outro', (ctx, scene) => {
   const s = scene as OutroSceneSpec;
   const {el, h} = ctx;
   if (typeof s.title !== 'string' || !s.title.trim()) {
-    throw new Error(
-      'scene "outro": field "title" is required (a non-empty string)',
-    );
+    throw new Error('field "title" is required (a non-empty string)');
   }
   el.classList.add('center');
   const logo = buildLogo(ctx, s.logo);

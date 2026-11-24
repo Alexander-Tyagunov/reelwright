@@ -105,16 +105,15 @@ export function findings(): Findings {
 
 /**
  * Builds the result of a gate that threw. The gate is a failure, so a broken
- * gate never lets a film pass.
+ * gate never lets a film pass. The result carries the message, not the stack.
  */
 export function crashedGate(id: GateId, error: unknown): GateResult {
-  const text = error instanceof Error ? (error.stack ?? error.message) : error;
-  const first = String(error instanceof Error ? error.message : error);
+  const message = String(error instanceof Error ? error.message : error);
   return {
     id,
     status: 'FAIL',
-    summary: `gate crashed: ${first.split('\n')[0]}`,
-    details: [`FAIL ${String(text).slice(0, 900)}`],
+    summary: `gate crashed: ${message.split('\n')[0]}`,
+    details: [`FAIL ${message.slice(0, 900)}`],
   };
 }
 

@@ -85,9 +85,7 @@ registerScene('quote', (ctx, scene) => {
   const s = scene as QuoteSceneSpec;
   const {el, h} = ctx;
   if (typeof s.quote !== 'string' || !s.quote.trim()) {
-    throw new Error(
-      'scene "quote": field "quote" is required (a non-empty string)',
-    );
+    throw new Error('field "quote" is required (a non-empty string)');
   }
   el.classList.add('center');
   const landscape = ctx.aspect === 'landscape';

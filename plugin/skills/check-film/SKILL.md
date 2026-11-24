@@ -7,6 +7,7 @@ description: Check and fix an existing Reelwright film - run the measured qualit
 
 A model that looks at stills will pass a frozen film. So measure first, look second, and report numbers.
 CLI: `node ${CLAUDE_SKILL_DIR}/../video/scripts/reel.ts <command>` (written `reel` below).
+If that folder is not next to this one, load this plugin's `video` skill and use the CLI path it gives.
 
 1. `reel stills film.json` and open `out/contact.jpg`. For a film with several formats repeat with `--size`.
 2. `reel qa film.json --page-only` is a quick check of the page gates without a render. For the full check,

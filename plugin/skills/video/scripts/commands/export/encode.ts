@@ -47,7 +47,8 @@ export function gifPlan(
   if (ctx.audio) {
     ctx.warnings.push('--audio is ignored: GIF has no sound');
   }
-  const width = Math.min(Math.round(want / 2) * 2, ctx.facts.video.width);
+  const even = Math.max(2, Math.round(want / 2) * 2);
+  const width = Math.min(even, ctx.facts.video.width);
   const graph =
     `fps=${fps},scale=${width}:-2:flags=lanczos,split[a][b];` +
     '[a]palettegen=stats_mode=diff[p];' +

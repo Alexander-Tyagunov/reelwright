@@ -35,7 +35,7 @@ describe('timeline', () => {
   it('a loop has no lead and its last scene fades out', () => {
     const t = computeTimeline({...meta, loop: true}, scenes);
     assert.equal(t.lead, 0);
-    assert.ok(t.slots[0]?.start === 0);
+    assert.ok(Object.is(t.slots[0]?.start, 0), 'start is 0, not -0');
     assert.equal(t.slots[2]?.tout, 0.45);
     close(t.duration, 12 - 2 * 0.45);
   });

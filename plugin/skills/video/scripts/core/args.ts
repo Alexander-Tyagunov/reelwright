@@ -15,8 +15,25 @@ export interface Args {
 }
 
 /**
+ * Flags that never take a value. The word after one of them stays
+ * positional, so `--page-only film.json` finds the spec.
+ */
+export const BOOLEAN_FLAGS: ReadonlySet<string> = new Set([
+  'draft',
+  'force',
+  'gpu',
+  'json',
+  'loop',
+  'md',
+  'page-only',
+  'png',
+  'strict',
+]);
+
+/**
  * Splits an argument list into positional words and flags.
- * A word after a flag is its value unless it starts with `--`.
+ * A word after a flag is its value unless it starts with `--` or the flag
+ * is in {@link BOOLEAN_FLAGS}.
  *
  * @param argv Arguments after the command name.
  */
@@ -40,7 +57,8 @@ export function parseArgs(argv: readonly string[]): Args {
       continue;
     }
     const next = argv[i + 1];
-    if (next !== undefined && !next.startsWith('--')) {
+    const takesValue = !BOOLEAN_FLAGS.has(key);
+    if (takesValue && next !== undefined && !next.startsWith('--')) {
       flags[key] = next;
       i++;
     } else {

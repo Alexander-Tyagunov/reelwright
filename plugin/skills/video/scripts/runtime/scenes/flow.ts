@@ -10,8 +10,9 @@
 
 import type {SceneSpec} from '../../shared/contract.ts';
 import {registerScene} from '../registry.ts';
+import type {SceneContext, SceneFrameFn} from '../types.ts';
 import {buildArrow, drawArrow} from './lib/flow-arrows.ts';
-import type {FlowStep, Layout} from './lib/flow-build.ts';
+import type {FlowStep, Layout, Parts} from './lib/flow-build.ts';
 import {buildDiagram} from './lib/flow-build.ts';
 import {fitDiagram, paintActive} from './lib/flow-diagram.ts';
 import {compact} from './lib/layout.ts';
@@ -31,15 +32,13 @@ export interface FlowSceneSpec extends SceneSpec {
 function parseSteps(s: FlowSceneSpec): FlowStep[] {
   if (!Array.isArray(s.steps) || s.steps.length < 2 || s.steps.length > 5) {
     throw new Error(
-      'scene "flow": field "steps" is required and must hold 2 to 5 items ({title, detail?})',
+      'field "steps" is required and must hold 2 to 5 items ({title, detail?})',
     );
   }
   return s.steps.map((st, i) => {
     const o = typeof st === 'string' ? {title: st} : st;
     if (!o || typeof o.title !== 'string' || !o.title.trim()) {
-      throw new Error(
-        `scene "flow": steps[${i}] needs a non-empty string "title"`,
-      );
+      throw new Error(`steps[${i}] needs a non-empty string "title"`);
     }
     return o;
   });
@@ -52,49 +51,74 @@ function parseActive(s: FlowSceneSpec, n: number): number {
     !(Number.isInteger(active) && active >= 0 && active < n)
   ) {
     throw new Error(
-      `scene "flow": field "active" must be an integer from 0 to ${n - 1}, got ${JSON.stringify(s.active)}`,
+      `field "active" must be an integer from 0 to ${n - 1}, ` +
+        `got ${JSON.stringify(s.active)}`,
     );
   }
   return active;
 }
 
-registerScene('flow', (ctx, scene) => {
-  const s = scene as FlowSceneSpec;
-  const {el, h, u} = ctx;
-  const steps = parseSteps(s);
-  const n = steps.length;
-  const active = parseActive(s, n);
-  const horizontal = ctx.aspect === 'landscape';
-  const inline = !horizontal && ctx.aspect === 'square' && n >= 4;
-  const lay: Layout = {horizontal, inline, n};
+/** The heading, the diagram box and the note, added to the scene. */
+interface Frame {
+  heading: HTMLElement | null;
+  note: HTMLElement | null;
+  diagram: HTMLElement;
+}
+
+function buildFrame(ctx: SceneContext, s: FlowSceneSpec, lay: Layout): Frame {
   const heading = s.heading ? ctx.text('h2', 'rw-h2', s.heading) : null;
-  const diagram = h('div', {
+  const diagram = ctx.h('div', {
     style: {
       display: 'flex',
-      flexDirection: horizontal ? 'row' : 'column',
+      flexDirection: lay.horizontal ? 'row' : 'column',
       alignItems: 'stretch',
       alignSelf: 'stretch',
       flex: 'none',
     },
   });
   const note = s.note ? ctx.text('div', 'rw-small', s.note) : null;
-  el.append(...compact([heading, diagram, note]));
+  ctx.el.append(...compact([heading, diagram, note]));
   if (heading) {
     ctx.fit(heading, {maxLines: 2});
   }
-  const parts = buildDiagram(ctx, steps, diagram, lay);
-  const extra = (e: HTMLElement | null) => (e ? e.offsetHeight + 3 * u : 0);
-  const availH = el.clientHeight - 2 * ctx.safe - extra(heading) - extra(note);
-  fitDiagram(lay, parts, diagram, availH);
+  return {heading, note, diagram};
+}
+
+/** Height left for the diagram once the heading and note are placed. */
+function diagramRoom(ctx: SceneContext, frame: Frame): number {
+  const extra = (e: HTMLElement | null) => (e ? e.offsetHeight + 3 * ctx.u : 0);
+  return (
+    ctx.el.clientHeight -
+    2 * ctx.safe -
+    extra(frame.heading) -
+    extra(frame.note)
+  );
+}
+
+/** What the entrance and the per-frame drawing of a diagram need. */
+interface Motion {
+  frame: Frame;
+  parts: Parts;
+  lay: Layout;
+  /** Index of the emphasised step, or -1. */
+  active: number;
+}
+
+/** Adds the entrances and returns the function that draws the arrows. */
+function animateFlow(ctx: SceneContext, m: Motion): SceneFrameFn {
+  const {frame, parts, lay, active} = m;
+  const {heading, note} = frame;
+  const n = lay.n;
   const arrows = parts.connectors.map(c => buildArrow(ctx, c));
-  const ivl = ctx.clamp((s.duration - 0.35 - 0.55 - 1.6) / (n - 1), 0.6, 1.0);
+  const room = ctx.dur - 0.35 - 0.55 - 1.6;
+  const ivl = ctx.clamp(room / (n - 1), 0.6, 1.0);
   const boxAt = (i: number) => 0.35 + i * ivl;
   const allDone = boxAt(n - 1) + 0.55;
   if (heading) {
     ctx.enter(heading, 0.1, {y: 2.5});
   }
   parts.wraps.forEach((wrap, i) => {
-    ctx.enter(wrap, boxAt(i), {y: horizontal ? 2.4 : 2, dur: 0.55});
+    ctx.enter(wrap, boxAt(i), {y: lay.horizontal ? 2.4 : 2, dur: 0.55});
   });
   if (note) {
     ctx.enter(note, allDone, {y: 1.6});
@@ -113,10 +137,24 @@ registerScene('flow', (ctx, scene) => {
   return t => {
     arrows.forEach((a, i) => {
       const p = ctx.ease.inOut(ctx.prog(t, boxAt(i) + 0.45, 0.45));
-      drawArrow(a, p, horizontal);
+      drawArrow(a, p, lay.horizontal);
     });
     if (active >= 0) {
       paintActive(parts, active, ctx.ease.inOut(ctx.prog(t, accentAt, 0.6)));
     }
   };
+}
+
+registerScene('flow', (ctx, scene) => {
+  const s = scene as FlowSceneSpec;
+  const steps = parseSteps(s);
+  const n = steps.length;
+  const active = parseActive(s, n);
+  const horizontal = ctx.aspect === 'landscape';
+  const inline = !horizontal && ctx.aspect === 'square' && n >= 4;
+  const lay: Layout = {horizontal, inline, n};
+  const frame = buildFrame(ctx, s, lay);
+  const parts = buildDiagram(ctx, steps, frame.diagram, lay);
+  fitDiagram(lay, parts, frame.diagram, diagramRoom(ctx, frame));
+  return animateFlow(ctx, {frame, parts, lay, active});
 });

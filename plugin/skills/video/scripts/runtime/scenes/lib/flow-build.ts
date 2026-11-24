@@ -69,17 +69,15 @@ function buildTexts(
   return {num, title, detail};
 }
 
-function buildStep(
+/** The title and detail, stacked or side by side. */
+function buildTextCol(
   ctx: SceneContext,
-  st: FlowStep,
-  i: number,
   lay: Layout,
-  parts: Parts,
-): void {
-  const {h} = ctx;
+  title: HTMLElement,
+  detail: HTMLElement | null,
+): HTMLElement {
   const {horizontal, inline} = lay;
-  const {num, title, detail} = buildTexts(ctx, st, i, inline);
-  const textCol = h(
+  return ctx.h(
     'div',
     {
       style: {
@@ -94,6 +92,19 @@ function buildStep(
     title,
     detail,
   );
+}
+
+function buildStep(
+  ctx: SceneContext,
+  st: FlowStep,
+  i: number,
+  lay: Layout,
+  parts: Parts,
+): void {
+  const {h} = ctx;
+  const {horizontal, inline} = lay;
+  const {num, title, detail} = buildTexts(ctx, st, i, inline);
+  const textCol = buildTextCol(ctx, lay, title, detail);
   const box = h(
     'div',
     {

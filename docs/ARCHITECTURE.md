@@ -27,7 +27,7 @@ changes the code.
       scripts/          TypeScript, run directly by Node 24 (no build step)
         reel.ts         CLI entry
         commands/       one file per command
-        core/           args, errors, process, hashing, spec loading, paths
+        core/           args, errors, process, cleanup on stop, option checks, hashing, spec loading, paths
         browser/        Chrome discovery, DevTools Protocol session, film page
         server/         static server and on-the-fly type stripping
         video/          ffmpeg encoder, probe, contact sheet, loudness
@@ -55,7 +55,8 @@ install packages on every user's machine, and a `CLAUDE.md` at a plugin root is 
 3. **Every frame is a pure function of time.** `renderAt(t)` uses no clock, no unseeded randomness and no state
    from an earlier frame. The determinism gate enforces it.
 4. **Nothing goes through a shell.** Subprocesses get argument arrays.
-5. **The server binds to 127.0.0.1 and serves only the runtime and the project folder.**
+5. **The server binds to 127.0.0.1 and serves only the runtime and the project folder.** It refuses hidden
+   files, links that resolve outside those folders, and requests whose Host is not 127.0.0.1 or localhost.
 6. **No network access, no telemetry.**
 
 ## Code style

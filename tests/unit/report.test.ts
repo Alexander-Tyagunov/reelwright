@@ -55,6 +55,7 @@ describe('qa verdict', () => {
     const g = crashedGate('motion', new Error('ffmpeg exited 1\nmore'));
     assert.equal(g.status, 'FAIL');
     assert.equal(g.summary, 'gate crashed: ffmpeg exited 1');
+    assert.doesNotMatch(g.details.join('\n'), /\n\s+at /, 'no stack');
   });
 
   it('a page-only run says that the video gates are still to do', () => {

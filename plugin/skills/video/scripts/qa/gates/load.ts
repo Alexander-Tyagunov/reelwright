@@ -40,15 +40,35 @@ export function loadFailure(message: string): GateResult {
 
 /**
  * Turns the load gate into a failure when the page reported errors while
- * the other gates drew frames. Does nothing for an empty list.
+ * the gates drew frames. Errors already listed are not repeated. Does
+ * nothing for an empty list.
  *
  * @param errors Page error messages, without duplicates.
  */
 export function applyPageErrors(gate: GateResult, errors: string[]): void {
-  if (!errors.length) {
+  const fresh = errors.filter(e => !gate.details.some(d => d.includes(e)));
+  if (!fresh.length) {
     return;
   }
   gate.status = 'FAIL';
-  gate.summary = `${errors.length} page error(s) while drawing frames`;
-  gate.details.push(...errors.map(e => `FAIL page error: ${e}`));
+  gate.summary = `${fresh.length} page error(s) while drawing frames`;
+  gate.details.push(...fresh.map(e => `FAIL page error: ${e}`));
+}
+
+/**
+ * Turns the load gate into a failure when scenes threw while they were
+ * drawn. Does nothing for an empty list.
+ *
+ * @param failures One message per failing scene, as the scene reports it.
+ */
+export function applyDrawFailures(
+  gate: GateResult,
+  failures: readonly string[],
+): void {
+  if (!failures.length) {
+    return;
+  }
+  gate.status = 'FAIL';
+  gate.summary = `${failures.length} scene(s) threw while drawing frames`;
+  gate.details.push(...failures.map(f => `FAIL ${f}`));
 }

@@ -28,10 +28,11 @@ function summarise(film: OpenFilm, totals: Totals, details: string[]): string {
   const contrast = Number.isFinite(totals.contrast)
     ? `${r2(totals.contrast)}:1`
     : '-';
+  const overflow = r2(Math.max(0, totals.overflow));
   return (
     `${n} text items in ${film.info.scenes.length} scenes: ${fails} fail, ` +
-    `${warns} warn; max safe-area overflow ${r2(Math.max(0, totals.overflow))}` +
-    ` px; min font ${font}% of short side; min contrast ${contrast}`
+    `${warns} warn; max safe-area overflow ${overflow} px; ` +
+    `min font ${font}% of short side; min contrast ${contrast}`
   );
 }
 
@@ -50,6 +51,7 @@ function inspect(
     safe: report.safe,
     t,
     scene: sceneIndex,
+    type: info.scenes[sceneIndex]?.type,
   };
   const items = report.items.filter(
     i => i.opacity >= 0.5 && (i.scene === sceneIndex || i.scene === -1),

@@ -7,9 +7,15 @@ import type {FilmSpec, SceneSpec} from '../shared/contract.ts';
 import type {FrameGeometry, SceneState} from './context.ts';
 import {createContext} from './context.ts';
 import {h} from './dom.ts';
-import {getScene} from './registry.ts';
+import {messageOf} from './errors.ts';
+import {getScene, sceneFile} from './registry.ts';
 import type {SceneSlot} from './timeline.ts';
-import type {ResolvedBrand, ResolvedMeta, SceneContext} from './types.ts';
+import type {
+  ResolvedBrand,
+  ResolvedMeta,
+  SceneContext,
+  SceneFactory,
+} from './types.ts';
 
 /** One built scene: its layer, context, state and timing. */
 export interface BuiltScene {
@@ -33,6 +39,26 @@ export interface BuildInput {
   /** The stage that receives the scene layers. */
   stage: HTMLElement;
   slots: readonly SceneSlot[];
+}
+
+/**
+ * Runs a factory. A failure names the scene, its number and its type, and
+ * the project file for a custom scene.
+ */
+function runFactory(
+  factory: SceneFactory,
+  ctx: SceneContext,
+  spec: SceneSpec,
+  index: number,
+): ReturnType<SceneFactory> {
+  try {
+    return factory(ctx, spec);
+  } catch (err) {
+    const label = `scene ${index + 1} (${spec.type})`;
+    const file = sceneFile(spec.type);
+    const head = file ? `${label} from ${file} could not be built` : label;
+    throw new Error(`${head}: ${messageOf(err)}`);
+  }
 }
 
 /**
@@ -64,7 +90,7 @@ export function buildScenes(input: BuildInput): BuiltScene[] {
       index,
       layer,
     });
-    const frameFn = factory(ctx, spec);
+    const frameFn = runFactory(factory, ctx, spec, index);
     if (typeof frameFn === 'function') {
       ctx.onFrame(frameFn);
     }

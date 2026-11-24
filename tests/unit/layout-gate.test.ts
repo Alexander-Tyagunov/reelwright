@@ -77,6 +77,32 @@ describe('layout checks', () => {
     );
   });
 
+  it('text that reads NaN fails the layout gate', () => {
+    const found = messages(item({text: 'NaN'}));
+    assert.equal(found.length, 1);
+    assert.equal(found[0]?.status, 'FAIL');
+    assert.match(found[0]?.message ?? '', /shows "NaN"/);
+  });
+
+  it('a label that contains undefined or [object Object] fails the layout gate', () => {
+    assert.equal(messages(item({text: 'Value: undefined'}))[0]?.status, 'FAIL');
+    assert.equal(messages(item({text: '[object Object]'}))[0]?.status, 'FAIL');
+  });
+
+  it('a word that only contains null, such as nullable, does not fail', () => {
+    assert.equal(messages(item({text: 'A nullable column'})).length, 0);
+  });
+
+  it('a code line that shows null is not a failure', () => {
+    const inCode = {...spot, type: 'code'};
+    const found = measureItem(
+      item({text: 'return null'}),
+      inCode,
+      'scene 2 (code)',
+    ).findings;
+    assert.equal(found.length, 0);
+  });
+
   it('the same text gets the same key at two times, so it is reported once', () => {
     const a = measureItem(item({x: 0}), {...spot, t: 1}, 'scene 2');
     const b = measureItem(item({x: 0}), {...spot, t: 2}, 'scene 2');

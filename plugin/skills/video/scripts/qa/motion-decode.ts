@@ -68,7 +68,8 @@ function frameReader() {
  * @throws UserError when ffmpeg cannot start or fails.
  */
 export function decodeMotion(path: string): Promise<DecodedMotion> {
-  const filter = `scale=${MOTION_WIDTH}:${MOTION_HEIGHT}:flags=area,format=gray`;
+  const size = `${MOTION_WIDTH}:${MOTION_HEIGHT}`;
+  const filter = `scale=${size}:flags=area,format=gray`;
   const args = ['-hide_banner', '-loglevel', 'error', '-i', path, '-an'];
   args.push('-vf', filter, '-f', 'rawvideo', '-');
   return new Promise((resolve, reject) => {

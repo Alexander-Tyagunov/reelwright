@@ -30,7 +30,7 @@ export interface TimelineScene {
 /** Timing of one scene, in seconds from the start of the film. */
 export interface SceneSlot {
   index: number;
-  /** Film time at which the scene starts. Negative for the first scene. */
+  /** Film time at which the scene starts. Negative for a led first scene. */
   start: number;
   /** Film time at which the scene ends. */
   end: number;
@@ -77,7 +77,8 @@ function checkScene(
   }
   if (index > 0 && scene.duration <= overlap * 2) {
     throw new Error(
-      `${label} (${scene.type}): duration ${scene.duration}s is too short for a ${overlap}s transition`,
+      `${label} (${scene.type}): duration ${scene.duration}s is too short ` +
+        `for a ${overlap}s transition`,
     );
   }
 }
@@ -107,7 +108,7 @@ export function computeTimeline(
   const slots = scenes.map((scene, index): SceneSlot => {
     checkScene(scene, index, overlap, known);
     // The film opens already in motion, so frame 0 is not empty.
-    const start = index === 0 ? -lead : cursor - overlap;
+    const start = index === 0 ? (lead ? -lead : 0) : cursor - overlap;
     cursor = start + scene.duration;
     const loopOut = meta.loop ? overlap || LOOP_FADE : 0;
     return {

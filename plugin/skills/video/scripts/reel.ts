@@ -10,23 +10,33 @@ import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import type {Args} from './core/args.ts';
+import {isStopping} from './core/cleanup.ts';
 
 const MIN_NODE_MAJOR = 24;
 
 /** Command names with a one-line help text each. */
 const COMMANDS: Readonly<Record<string, string>> = {
   doctor: 'check Node, ffmpeg and a browser are available',
-  init: 'create a film project from a template: init <dir> [--template release|metrics|explainer|blank] [--size WxH]',
-  scenes: 'list the scene types and their fields [--json]',
+  init:
+    'create a film project from a template: init <dir> ' +
+    '[--template release|metrics|explainer|blank] [--size WxH]',
+  scenes:
+    'list the scene types and their fields [--json | --md] ' +
+    '(--md prints references/scenes.md)',
   preview:
     'serve the film with a scrubbing player: preview film.json [--port N]',
   stills:
-    'draw full-size stills and a contact sheet: stills film.json [--at 1.5,3] [--every S --from S --to S] [--size WxH]',
+    'draw full-size stills and a contact sheet: stills film.json ' +
+    '[--at 1.5,3] [--every S --from S --to S] [--size WxH]',
   render:
-    'render the film to MP4, scene by scene, reusing unchanged scenes: render film.json [--size WxH] [--draft]',
-  qa: 'measure the film against the motion and layout gates: qa film.json [--page-only | --video out/film.mp4] [--size WxH]',
+    'render the film to MP4, scene by scene, reusing unchanged scenes: ' +
+    'render film.json [--size WxH] [--draft]',
+  qa:
+    'measure the film against the motion and layout gates: qa film.json ' +
+    '[--page-only | --video out/film.mp4] [--size WxH]',
   export:
-    'make platform files (mp4, gif, webm, poster) with optional audio: export film.json --preset master|x|linkedin|youtube|slack|web|gif|webm',
+    'make platform files (mp4, gif, webm, poster) with optional audio: ' +
+    'export film.json --preset master|x|linkedin|youtube|slack|web|gif|webm',
   build: 'bundle the film into one self-contained HTML file: build film.json',
 };
 
@@ -34,9 +44,8 @@ function printHelp(): void {
   const lines = Object.entries(COMMANDS).map(
     ([name, help]) => `  ${name.padEnd(8)} ${help}`,
   );
-  console.log(
-    `Reelwright\n\nUsage: node reel.ts <command> [film.json] [options]\n\n${lines.join('\n')}`,
-  );
+  const usage = 'Usage: node reel.ts <command> [film.json] [options]';
+  console.log(`Reelwright\n\n${usage}\n\n${lines.join('\n')}`);
 }
 
 type CommandModule = {
@@ -60,6 +69,9 @@ async function runCommand(name: string, rest: string[]): Promise<number> {
     }
     return (await mod.run(parseArgs(rest))) ?? 0;
   } catch (e) {
+    if (isStopping()) {
+      return 1;
+    }
     if (e instanceof UserError) {
       console.error(`error: ${e.message}`);
       return 1;

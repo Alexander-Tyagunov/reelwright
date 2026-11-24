@@ -52,18 +52,19 @@ export interface CodeSceneSpec extends SceneSpec {
 function parseLines(s: CodeSceneSpec): ParsedLine[] {
   if (!Array.isArray(s.lines) || !s.lines.length) {
     throw new Error(
-      'scene "code": field "lines" is required (a non-empty array of strings or {text, kind?, highlight?})',
+      'field "lines" is required (a non-empty array of strings or ' +
+        '{text, kind?, highlight?})',
     );
   }
   const kinds = ['add', 'remove', 'dim'];
   return s.lines.slice(0, 14).map((l, i) => {
     const o: Partial<CodeLine> = typeof l === 'string' ? {text: l} : l;
     if (!o || typeof o.text !== 'string') {
-      throw new Error(`scene "code": lines[${i}] needs a string "text"`);
+      throw new Error(`lines[${i}] needs a string "text"`);
     }
     if (o.kind != null && !kinds.includes(o.kind)) {
       throw new Error(
-        `scene "code": lines[${i}].kind must be "add", "remove" or "dim", got "${o.kind}"`,
+        `lines[${i}].kind must be "add", "remove" or "dim", got "${o.kind}"`,
       );
     }
     const text = o.text.replace(/\t/g, '  ').replace(/\s+$/, '');
@@ -75,7 +76,7 @@ function parseReveal(s: CodeSceneSpec): RevealMode {
   const reveal = s.reveal || 'lines';
   if (!['lines', 'type', 'none'].includes(reveal)) {
     throw new Error(
-      `scene "code": field "reveal" must be "lines", "type" or "none", got "${reveal}"`,
+      `field "reveal" must be "lines", "type" or "none", got "${reveal}"`,
     );
   }
   return reveal;
@@ -125,7 +126,8 @@ function drawRows(
     }
     if (r.tint) {
       const pct = (16 * started).toFixed(1);
-      r.row.style.backgroundColor = `color-mix(in srgb, ${r.tint} ${pct}%, transparent)`;
+      const mix = `color-mix(in srgb, ${r.tint} ${pct}%, transparent)`;
+      r.row.style.backgroundColor = mix;
     }
     if (r.bar) {
       const p = ctx.ease.out(ctx.prog(t, plan.revealEnd + 0.15, 0.5));

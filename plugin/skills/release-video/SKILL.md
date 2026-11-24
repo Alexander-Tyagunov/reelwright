@@ -7,6 +7,7 @@ description: Turn release notes, a changelog, a list of merged pull requests or 
 
 A release video answers one question in under 40 seconds: what can I do now that I could not do before? Follow
 the pipeline in `${CLAUDE_SKILL_DIR}/../video/SKILL.md`; this file only changes steps 2 to 4.
+CLI: `node ${CLAUDE_SKILL_DIR}/../video/scripts/reel.ts <command>` (written `reel` below). If that folder is not next to this one, load this plugin's `video` skill and use the CLI path it gives.
 Start from the template: `reel init <dir> --template release`.
 
 ## Facts (step 2)

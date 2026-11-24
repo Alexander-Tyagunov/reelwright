@@ -1,6 +1,7 @@
 /**
  * @fileoverview Pure checks of text boxes in one drawn frame: safe area,
- * clipping, type size, contrast and overlap. Pixels unless stated.
+ * clipping, placeholder words, type size, contrast and overlap. Pixels
+ * unless stated.
  */
 import type {LayoutItem} from '../shared/contract.ts';
 import {contrastLevel, contrastRatio, parseColor} from './contrast.ts';
@@ -31,6 +32,8 @@ export interface Spot {
   t: number;
   /** Zero-based scene index of the frame being checked. */
   scene: number;
+  /** Type of that scene. Code scenes may show `null` as code. */
+  type?: string;
 }
 
 /** What {@link measureItem} found out about one text. */
@@ -115,6 +118,32 @@ function fontFinding(
   ];
 }
 
+const PLACEHOLDER =
+  /(?<![\w$.])(NaN|undefined|null)(?![\w$])|\[object Object\]/;
+
+function placeholderFinding(
+  item: LayoutItem,
+  spot: Spot,
+  scope: string,
+  label: string,
+): Finding[] {
+  const found = PLACEHOLDER.exec(item.text);
+  const token = found?.[0];
+  if (!token || (spot.type === 'code' && token !== 'NaN')) {
+    return [];
+  }
+  return [
+    {
+      status: 'FAIL',
+      key: `${scope}:placeholder`,
+      message:
+        `${label} ${quoted(item.text)}: the text shows "${token}", which ` +
+        'means a value is missing or not a number (check the scene fields ' +
+        'for a misspelt name or a wrong type)',
+    },
+  ];
+}
+
 function contrastFinding(
   item: LayoutItem,
   scope: string,
@@ -138,8 +167,9 @@ function contrastFinding(
 }
 
 /**
- * Measures one text box against the safe area, its own box, the minimum type
- * size and the contrast limits.
+ * Measures one text box against the safe area, its own box, the words that
+ * mean a missing value (`NaN`, `undefined`, `null`, `[object Object]`), the
+ * minimum type size and the contrast limits.
  *
  * @param label Name of the scene or overlay for messages.
  */
@@ -158,6 +188,7 @@ export function measureItem(
     findings: [
       ...edges.out,
       ...clipFinding(item, scope, label),
+      ...placeholderFinding(item, spot, scope, label),
       ...fontFinding(item, scope, label, short),
       ...contrastFinding(item, scope, label, contrast),
     ],

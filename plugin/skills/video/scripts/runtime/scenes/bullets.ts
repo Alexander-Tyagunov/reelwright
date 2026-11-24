@@ -9,6 +9,7 @@ import type {SceneSpec} from '../../shared/contract.ts';
 import {registerScene} from '../registry.ts';
 import type {SceneContext} from '../types.ts';
 import {compact} from './lib/layout.ts';
+import {sceneChecks} from './lib/validate.ts';
 
 /** One point of a `bullets` scene. */
 export interface BulletItem {
@@ -81,9 +82,23 @@ function buildRow(
   return {row, text};
 }
 
+const FIELDS = ['heading', 'items', 'numbered', 'pace'];
+
+/** Checks that the points are a list of strings or `{text}` objects. */
+function checkItems(s: BulletsSceneSpec): void {
+  const check = sceneChecks(s, FIELDS);
+  const list = check.list('items', s.items, 1, 5);
+  list.forEach((it, i) => {
+    const text = typeof it === 'string' ? it : (it as BulletItem | null)?.text;
+    check.text(`items[${i}]`, text);
+  });
+  check.optionalNumber('pace', s.pace);
+}
+
 registerScene('bullets', (ctx, scene) => {
   const s = scene as BulletsSceneSpec;
   const {el, h} = ctx;
+  checkItems(s);
   const items = (s.items ?? [])
     .slice(0, 5)
     .map(it => (typeof it === 'string' ? {text: it} : it));

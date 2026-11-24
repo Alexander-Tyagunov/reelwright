@@ -73,8 +73,15 @@ function planShots(args: Args, info: FilmInfo): Plan {
       );
     }
     const lastFrame = (info.frames - 1) / info.fps;
-    const shots = everyShots(every, from ?? 0, to ?? lastFrame);
-    return {shots, kind: 'strip'};
+    const start = from ?? 0;
+    const end = to ?? lastFrame;
+    if (!(start < end)) {
+      throw new UserError(
+        `--from (${start}s) must be less than --to (${end}s). ` +
+          'Give --from a time before --to, both in seconds.',
+      );
+    }
+    return {shots: everyShots(every, start, end), kind: 'strip'};
   }
   if (at !== undefined) {
     const shots = parseAt(at).map(t => ({t, name: timeName(t)}));
@@ -87,22 +94,33 @@ function planShots(args: Args, info: FilmInfo): Plan {
   return {shots, kind: 'stills'};
 }
 
+/** Checks every shot time before anything on disk is changed. */
+function checkShots(shots: Shot[], info: FilmInfo): void {
+  if (!shots.length) {
+    throw new UserError(
+      'no stills to draw. Check --at, or --every with --from and --to.',
+    );
+  }
+  for (const s of shots) {
+    if (!(s.t >= 0 && s.t <= info.duration)) {
+      throw new UserError(
+        `still time ${s.t}s is outside the film (0 to ${info.duration}s). ` +
+          'Pick times inside that range.',
+      );
+    }
+  }
+}
+
 /** Draws each shot, saves it as a JPEG and returns the encoded frames. */
 async function drawShots(
   page: FilmPage,
   shots: Shot[],
-  info: FilmInfo,
   dir: string,
 ): Promise<Buffer[]> {
   rmSync(dir, {recursive: true, force: true});
   mkdirSync(dir, {recursive: true});
   const frames: Buffer[] = [];
   for (const s of shots) {
-    if (!(s.t >= 0 && s.t <= info.duration)) {
-      throw new UserError(
-        `still time ${s.t}s is outside the film (0 to ${info.duration}s)`,
-      );
-    }
     const buf = await frameAt(page, s.t);
     writeFileSync(join(dir, `${s.name}.jpg`), buf);
     frames.push(buf);
@@ -156,8 +174,9 @@ export async function run(args: Args): Promise<number> {
     const {info, page, spec} = film;
     const suffix = size ? `-${size}` : '';
     const {shots, kind} = planShots(args, info);
+    checkShots(shots, info);
     const dir = join(spec.dir, 'out', `${kind}${suffix}`);
-    const frames = await drawShots(page, shots, info, dir);
+    const frames = await drawShots(page, shots, dir);
     const sheetName = kind === 'strip' ? 'strip' : 'contact';
     const sheet = join(spec.dir, 'out', `${sheetName}${suffix}.jpg`);
     const grid = await makeContactSheet(frames, sheet, film);

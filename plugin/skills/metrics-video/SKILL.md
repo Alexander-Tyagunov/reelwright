@@ -7,7 +7,9 @@ description: Turn numbers into a short animated video with Reelwright - KPIs, a 
 
 One video, one conclusion. The viewer cannot pause to study a chart, so every scene states its point in the
 heading and the chart is the evidence. Follow the pipeline in `${CLAUDE_SKILL_DIR}/../video/SKILL.md`;
-this file changes steps 2 to 4. Start from the template: `reel init <dir> --template metrics`.
+this file changes steps 2 to 4. CLI: `node ${CLAUDE_SKILL_DIR}/../video/scripts/reel.ts <command>` (written
+`reel` below). If that folder is not next to this one, load this plugin's `video` skill and use the CLI path it gives.
+Start from the template: `reel init <dir> --template metrics`.
 
 ## Facts (step 2)
 

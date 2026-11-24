@@ -11,6 +11,8 @@ import {h} from './dom.ts';
 import {recordError} from './errors.ts';
 import {buildFilmInfo} from './film-info.ts';
 import {loadFonts} from './fonts.ts';
+import type {FrameGuard} from './frame-guard.ts';
+import {createFrameGuard} from './frame-guard.ts';
 import {createLayoutReport} from './layout-report.ts';
 import {clamp, round3} from './math.ts';
 import type {Overlays} from './overlays.ts';
@@ -105,13 +107,17 @@ function waitForImages(stage: HTMLElement): Promise<unknown> {
   return Promise.all(pending);
 }
 
+/** Everything `drawFrame` reads that does not change between frames. */
+interface FrameSetup {
+  scenes: readonly BuiltScene[];
+  meta: ResolvedMeta;
+  u: number;
+  guard: FrameGuard;
+}
+
 /** Draws the scenes and overlays for film time `t`. */
-function drawFrame(
-  scenes: readonly BuiltScene[],
-  meta: ResolvedMeta,
-  u: number,
-  t: number,
-): void {
+function drawFrame(setup: FrameSetup, t: number): void {
+  const {scenes, meta, u, guard} = setup;
   const last = scenes.length - 1;
   for (const s of scenes) {
     const {start, duration, tin, tout} = s.slot;
@@ -131,12 +137,14 @@ function drawFrame(
     s.layer.style.transform = look.dx
       ? `translateX(${round3(look.dx * u)}px)`
       : '';
-    for (const [el, list] of s.state.tracks) {
-      applyTracks(el, list, local, u);
-    }
-    for (const fn of s.state.frameFns) {
-      fn(local);
-    }
+    guard.run(s, t, () => {
+      for (const [el, list] of s.state.tracks) {
+        applyTracks(el, list, local, u);
+      }
+      for (const fn of s.state.frameFns) {
+        fn(local);
+      }
+    });
   }
 }
 
@@ -148,11 +156,16 @@ function createRenderer(
   overlays: Overlays,
 ) {
   let current = 0;
+  const setup = {scenes, meta, u, guard: createFrameGuard()};
   const renderAt = (time: number) => {
     const t = clamp(time, 0, timeline.duration);
-    drawFrame(scenes, meta, u, t);
+    drawFrame(setup, t);
     overlays.update(t, timeline.duration);
     current = t;
+    const [failure] = setup.guard.take();
+    if (failure) {
+      throw new Error(failure);
+    }
   };
   return {renderAt, getTime: () => current};
 }

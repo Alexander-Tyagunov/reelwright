@@ -7,7 +7,15 @@ import {FREEZE_DIFF, SPARK_BIN_S} from './thresholds.ts';
 const CHARS_PER_ROW = 60;
 
 /** Explains the characters in the order of {@link sparkChar}. */
-export const SPARK_LEGEND = `_ <${FREEZE_DIFF} frozen, . <0.1, : <0.3, - <1, = <3, + <10, # more`;
+export const SPARK_LEGEND = [
+  `_ <${FREEZE_DIFF} frozen`,
+  '. <0.1',
+  ': <0.3',
+  '- <1',
+  '= <3',
+  '+ <10',
+  '# more',
+].join(', ');
 
 /** Maps a mean frame difference, in grey levels, to one character. */
 export function sparkChar(value: number): string {

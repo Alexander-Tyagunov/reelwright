@@ -2,13 +2,16 @@
  * @fileoverview `export`: turns the rendered master into delivery files.
  * It never redraws frames. ffmpeg converts the master.
  */
-import {copyFileSync, mkdirSync, renameSync} from 'node:fs';
+import {copyFileSync, mkdirSync, renameSync, rmSync} from 'node:fs';
 import {dirname, extname} from 'node:path';
 import type {Args} from '../core/args.ts';
 import {numberFlag} from '../core/args.ts';
+import {onStop} from '../core/cleanup.ts';
 import {UserError} from '../core/errors.ts';
 import {run as exec} from '../core/process.ts';
 import {loadSpec} from '../core/spec.ts';
+import {checkPositive} from '../core/validate.ts';
+import {LUFS_MAX, LUFS_MIN, TRUE_PEAK_MAX} from '../qa/thresholds.ts';
 import type {Loudness} from '../video/loudness.ts';
 import {measureLoudness} from '../video/loudness.ts';
 import {probe} from '../video/probe.ts';
@@ -27,14 +30,24 @@ import {PRESETS, presetListing} from './export/presets.ts';
 import type {ExportResult} from './export/report.ts';
 import {megabytes, printResult, recordResult} from './export/report.ts';
 
+/** Bytes in one megabyte, as the size limits below count them. */
+const MB = 1048576;
+
+/** Largest GIF, in megabytes, before the export warns. */
+const GIF_MAX_MB = 15;
+
+/** Size in megabytes above which Slack may not play a file inline. */
+const SLACK_HINT_MB = 25;
+
 async function buildPlan(
   name: string,
   args: Args,
   ctx: EncodeContext,
 ): Promise<EncodePlan> {
   if (name === 'gif') {
-    const fps = numberFlag(args, 'gif-fps') ?? 15;
-    return gifPlan(ctx, fps, numberFlag(args, 'gif-width') ?? 960);
+    const fps = checkPositive('--gif-fps', numberFlag(args, 'gif-fps') ?? 15);
+    const width = numberFlag(args, 'gif-width') ?? 960;
+    return gifPlan(ctx, fps, checkPositive('--gif-width', width));
   }
   return name === 'webm' ? webmPlan(ctx) : mp4Plan(ctx);
 }
@@ -44,27 +57,32 @@ async function checkLoudness(
   warnings: string[],
 ): Promise<Loudness> {
   const loud = await measureLoudness(out);
-  if (loud.lufs < -16 || loud.lufs > -12) {
+  if (loud.lufs < LUFS_MIN || loud.lufs > LUFS_MAX) {
     warnings.push(
-      `integrated loudness ${loud.lufs} LUFS is outside -16..-12 LUFS`,
+      `integrated loudness ${loud.lufs} LUFS is outside ` +
+        `${LUFS_MIN}..${LUFS_MAX} LUFS`,
     );
   }
-  if (loud.truePeak > -1.0) {
-    warnings.push(`true peak ${loud.truePeak} dBTP is above -1.0 dBTP`);
+  if (loud.truePeak > TRUE_PEAK_MAX) {
+    warnings.push(
+      `true peak ${loud.truePeak} dBTP is above ${TRUE_PEAK_MAX} dBTP`,
+    );
   }
   return loud;
 }
 
 function sizeWarnings(name: string, bytes: number, warnings: string[]): void {
   const mb = megabytes(bytes);
-  if (name === 'gif' && bytes > 15 * 1048576) {
+  if (name === 'gif' && bytes > GIF_MAX_MB * MB) {
     warnings.push(
-      `the GIF is ${mb} MB, over 15 MB; lower --gif-fps or --gif-width, ` +
-        'or use the webm/mp4 preset',
+      `the GIF is ${mb} MB, over ${GIF_MAX_MB} MB; ` +
+        'lower --gif-fps or --gif-width, or use the webm/mp4 preset',
     );
   }
-  if (name === 'slack' && bytes > 25 * 1048576) {
-    warnings.push(`${mb} MB is over the ~25 MB hint for inline play in Slack`);
+  if (name === 'slack' && bytes > SLACK_HINT_MB * MB) {
+    warnings.push(
+      `${mb} MB is over the ~${SLACK_HINT_MB} MB hint for inline play in Slack`,
+    );
   }
 }
 
@@ -86,8 +104,17 @@ async function produce(
     return {command: `copy ${ctx.master} ${out}`, note: ''};
   }
   const plan = await buildPlan(name, args, ctx);
-  await exec('ffmpeg', plan.args);
-  renameSync(ctx.tmp, out);
+  const dropTmp = (): void => rmSync(ctx.tmp, {force: true});
+  const forget = onStop(dropTmp);
+  try {
+    await exec('ffmpeg', plan.args);
+    renameSync(ctx.tmp, out);
+  } catch (e) {
+    dropTmp();
+    throw e;
+  } finally {
+    forget();
+  }
   return {command: `ffmpeg ${plan.args.join(' ')}`, note: plan.note};
 }
 

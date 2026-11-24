@@ -3,7 +3,7 @@
  * of `qa` with and without a video.
  */
 import assert from 'node:assert/strict';
-import {readFileSync, writeFileSync} from 'node:fs';
+import {existsSync, readFileSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {after, describe, it} from 'node:test';
 import {missingTools, reel} from '../helpers/cli.ts';
@@ -72,6 +72,11 @@ describe('video gates', {skip, timeout: 900_000}, () => {
     ]);
     assert.equal(run.code, 1);
     assert.match(run.output, /video not found/);
+    assert.equal(
+      existsSync(join(ws.root, 'qa-report-nothing.json')),
+      false,
+      'no report file for a video that is not there',
+    );
   });
 
   it('frozen: a static scene of 6.5 s with a 4 s limit fails motion', async () => {
@@ -121,10 +126,16 @@ describe('video gates', {skip, timeout: 900_000}, () => {
       builtInFilm('Wrong video', {width: 1920, height: 1080}),
     );
     await render(p, ['--size', '1280x720']);
-    const {report, code} = await qa(p, [
-      '--video',
-      join(p.dir, 'out', 'film-1280x720.mp4'),
-    ]);
+    const {report, code} = await qa(
+      p,
+      ['--video', join(p.dir, 'out', 'film-1280x720.mp4')],
+      '-film-1280x720',
+    );
+    assert.equal(
+      existsSync(join(p.dir, 'out', 'qa-report.json')),
+      false,
+      'the master report is not written for another video file',
+    );
     const gate = gateOf(report, 'probe');
     assert.equal(gate.status, 'FAIL');
     assert.match(
@@ -161,6 +172,36 @@ describe('video gates', {skip, timeout: 900_000}, () => {
       page.report.gates.map(g => g.id),
       ['load', 'determinism', 'layout', 'holds', 'pacing'],
     );
+  });
+
+  it('a draft render alone tells the user to render in full', async () => {
+    const p = ws.project('draftonly', builtInFilm('Draft only'));
+    await render(p, ['--draft']);
+    const {report, code} = await qa(p);
+    const gate = gateOf(report, 'probe');
+    assert.equal(gate.status, 'SKIP');
+    assert.match(gate.summary, /a draft is not checked/);
+    assert.match(gate.summary, /--video out\/film-draft\.mp4/);
+    assert.equal(report.verdict, 'incomplete');
+    assert.equal(code, 1);
+  });
+
+  it('a custom scene that throws stops the render with the scene and the time and no stack', async () => {
+    const film = withScene('Render throws', {
+      type: 'throws-late',
+      duration: 8,
+      heading: 'This scene breaks',
+    });
+    const p = ws.project('renderthrows', film, {
+      'throws.ts': scenes.THROWS_LATE,
+    });
+    const run = await reel(p.dir, ['render', p.spec]);
+    assert.equal(run.code, 1);
+    assert.match(
+      run.output,
+      /scene 2 \(throws-late\) threw at t=\d+\.\d\ds: boom at four seconds/,
+    );
+    assert.doesNotMatch(run.output, /\n\s+at .*[(:]\d+/, 'no stack lines');
   });
 
   it('--size checks another format and writes its own report file', async () => {

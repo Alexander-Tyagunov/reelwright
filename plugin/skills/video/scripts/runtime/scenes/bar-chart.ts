@@ -50,7 +50,7 @@ export interface BarChartSceneSpec extends SceneSpec {
 const GROW = 0.9;
 
 function parseData(s: BarChartSceneSpec): BarDatum[] {
-  const fail = makeFail('bar-chart: ');
+  const fail = makeFail('');
   if (!Array.isArray(s.data) || !s.data.length) {
     fail('"data" is required: an array of {label, value} with 1 to 10 items');
   }
@@ -128,34 +128,28 @@ function chooseOrientation(
   return orient;
 }
 
-registerScene('bar-chart', (ctx, scene) => {
-  const s = scene as BarChartSceneSpec;
-  const {el, h} = ctx;
-  const data = parseData(s);
-  const n = data.length;
-  const fmt = (v: number) =>
+/** Makes the function that formats a value as the spec asks. */
+function makeFormat(ctx: SceneContext, s: BarChartSceneSpec) {
+  return (v: number) =>
     ctx.fmt(v, {
       decimals: s.decimals || 0,
       prefix: s.prefix || '',
       suffix: s.suffix ?? s.unit ?? '',
       compact: !!s.compact,
     });
-  const anyHighlight = data.some(d => d.highlight);
-  const colorOf = (d: BarDatum) =>
-    d.highlight || !anyHighlight
-      ? 'var(--accent)'
-      : 'color-mix(in srgb, var(--muted) 55%, transparent)';
-  const finals = data.map(d => fmt(d.value));
-  const valStyle = {
-    fontSize: `calc(var(--u) * ${VALUE_SIZE})`,
-    fontWeight: '700',
-  };
-  const widths = finals.map(t =>
-    measureWidth(el, t, 'rw-body rw-num', valStyle),
-  );
+}
+
+/** The heading, the chart box and the note, added to the scene. */
+interface Frame {
+  heading: HTMLElement | null;
+  note: HTMLElement | null;
+  chart: HTMLElement;
+}
+
+function buildFrame(ctx: SceneContext, s: BarChartSceneSpec): Frame {
   const heading = s.heading ? ctx.text('h2', 'rw-h2', s.heading) : null;
   const note = s.note ? ctx.text('div', 'rw-small', s.note) : null;
-  const chart = h('div', {
+  const chart = ctx.h('div', {
     style: {
       position: 'relative',
       flex: '1 1 0',
@@ -165,7 +159,7 @@ registerScene('bar-chart', (ctx, scene) => {
       flexDirection: 'column',
     },
   });
-  el.append(...compact([heading, chart, note]));
+  ctx.el.append(...compact([heading, chart, note]));
   if (heading) {
     ctx.fit(heading, {maxLines: 2});
     ctx.enter(heading, 0.1, {y: 2.5});
@@ -173,10 +167,37 @@ registerScene('bar-chart', (ctx, scene) => {
   if (note) {
     ctx.fit(note, {maxLines: 2});
   }
-  const avail = innerBox(el);
+  return {heading, note, chart};
+}
+
+/** Bar colour: accent for highlighted bars, or for all when none is. */
+function makeColorOf(data: readonly BarDatum[]) {
+  const anyHighlight = data.some(d => d.highlight);
+  return (d: BarDatum) =>
+    d.highlight || !anyHighlight
+      ? 'var(--accent)'
+      : 'color-mix(in srgb, var(--muted) 55%, transparent)';
+}
+
+registerScene('bar-chart', (ctx, scene) => {
+  const s = scene as BarChartSceneSpec;
+  const data = parseData(s);
+  const n = data.length;
+  const fmt = makeFormat(ctx, s);
+  const finals = data.map(d => fmt(d.value));
+  const valStyle = {
+    fontSize: `calc(var(--u) * ${VALUE_SIZE})`,
+    fontWeight: '700',
+  };
+  const widths = finals.map(t =>
+    measureWidth(ctx.el, t, 'rw-body rw-num', valStyle),
+  );
+  const {note, chart} = buildFrame(ctx, s);
+  const avail = innerBox(ctx.el);
   const maxValW = Math.max(...widths);
   const stagger =
     n > 1 ? ctx.clamp((s.duration - 3.4) / (n - 1), 0.08, 0.3) : 0;
+  const colorOf = makeColorOf(data);
   const env: BarEnv = {
     ctx,
     data,

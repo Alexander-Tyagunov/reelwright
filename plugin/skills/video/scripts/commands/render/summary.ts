@@ -58,7 +58,8 @@ export function writeSummary(input: SummaryInput): void {
   const missing = film.info.missingFonts;
   if (missing.length) {
     console.log(
-      `warning: fonts not available, a fallback was drawn: ${missing.join(', ')}`,
+      'warning: fonts not available, a fallback was drawn: ' +
+        missing.join(', '),
     );
   }
 }

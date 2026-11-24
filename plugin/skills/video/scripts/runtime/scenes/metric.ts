@@ -11,6 +11,7 @@ import type {SceneSpec} from '../../shared/contract.ts';
 import {registerScene} from '../registry.ts';
 import type {SceneContext} from '../types.ts';
 import {compact, innerBox} from './lib/layout.ts';
+import {sceneChecks} from './lib/validate.ts';
 
 /** One metric tile. */
 export interface MetricItem {
@@ -40,6 +41,37 @@ export interface MetricSceneSpec extends SceneSpec, Partial<MetricItem> {
   items?: MetricItem[];
   /** Footnote under the tiles. */
   note?: string;
+}
+
+const FIELDS = [
+  'heading',
+  'items',
+  'note',
+  'label',
+  'value',
+  'from',
+  'decimals',
+  'prefix',
+  'suffix',
+  'compact',
+  'delta',
+  'good',
+];
+
+/** Reads the tiles of the scene and checks the fields each one needs. */
+function parseItems(s: MetricSceneSpec): MetricItem[] {
+  const check = sceneChecks(s, FIELDS);
+  const flat = s.items === undefined;
+  const raw = flat ? [s] : check.list('items', s.items, 1, 3);
+  return raw.map((entry, i) => {
+    const it = entry as MetricItem;
+    const at = (field: string) => (flat ? field : `items[${i}].${field}`);
+    check.number(at('value'), it?.value);
+    check.text(at('label'), it?.label);
+    check.optionalNumber(at('from'), it.from);
+    check.optionalNumber(at('decimals'), it.decimals);
+    return it;
+  });
 }
 
 function chipClass(it: MetricItem): string {
@@ -162,7 +194,7 @@ function animateTile(ctx: SceneContext, t: Tile, i: number): void {
 registerScene('metric', (ctx, scene) => {
   const s = scene as MetricSceneSpec;
   const {el, h} = ctx;
-  const items = (s.items ?? [s as MetricItem & SceneSpec]).slice(0, 3);
+  const items = parseItems(s);
   const n = items.length;
   el.classList.add('center');
   const heading = s.heading ? ctx.text('h2', 'rw-h2', s.heading) : null;

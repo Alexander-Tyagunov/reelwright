@@ -45,7 +45,7 @@ done; a failed render, a QA failure or a missing font is ordinary work, not a re
 
 For a film longer than about 45 seconds, or whenever the person asked to approve the direction first, stop
 after step 5: show the storyboard and the contact sheet, and offer a quick `reel render film.json --draft`
-(quarter size, 15 fps). Build the full film once they agree. Fixing a storyboard costs seconds; fixing a
+(half the width and height, 15 fps). Build the full film once they agree. Fixing a storyboard costs seconds; fixing a
 finished render costs a re-render.
 
 ## Who does what

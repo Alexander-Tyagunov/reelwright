@@ -10,6 +10,7 @@ import type {SceneSpec} from '../../shared/contract.ts';
 import {registerScene} from '../registry.ts';
 import type {SceneContext} from '../types.ts';
 import {compact} from './lib/layout.ts';
+import {sceneChecks} from './lib/validate.ts';
 
 /** Spec of a `title` scene. */
 export interface TitleSceneSpec extends SceneSpec {
@@ -27,6 +28,8 @@ export interface TitleSceneSpec extends SceneSpec {
   /** Substring of `title` whose words use the accent colour. */
   accent?: string;
 }
+
+const FIELDS = ['title', 'kicker', 'subtitle', 'logo', 'align', 'accent'];
 
 function colourAccent(
   words: readonly HTMLElement[],
@@ -64,6 +67,7 @@ function buildLogo(ctx: SceneContext, s: TitleSceneSpec) {
 registerScene('title', (ctx, scene) => {
   const s = scene as TitleSceneSpec;
   const {el, h} = ctx;
+  sceneChecks(s, FIELDS).text('title', s.title);
   if (s.align !== 'left') {
     el.classList.add('center');
   }

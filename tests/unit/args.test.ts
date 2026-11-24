@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import {describe, it} from 'node:test';
 import {
+  BOOLEAN_FLAGS,
   boolFlag,
   numberFlag,
   parseArgs,
@@ -41,6 +42,28 @@ describe('argument parsing', () => {
     const a = parseArgs(['--strict', '--json']);
     assert.equal(boolFlag(a, 'strict'), true);
     assert.equal(boolFlag(a, 'json'), true);
+  });
+
+  it('--page-only before the spec path leaves the spec as the first word', () => {
+    const a = parseArgs(['--page-only', 'p1/film.json']);
+    assert.deepEqual(a.positional, ['p1/film.json']);
+    assert.equal(boolFlag(a, 'page-only'), true);
+  });
+
+  it('--json before another word does not take that word as its value', () => {
+    const a = parseArgs(['--json', 'extra']);
+    assert.equal(boolFlag(a, 'json'), true);
+    assert.deepEqual(a.positional, ['extra']);
+  });
+
+  it('every on/off flag that a command reads takes no value', () => {
+    for (const name of BOOLEAN_FLAGS) {
+      const a = parseArgs([`--${name}`, 'film.json']);
+      assert.deepEqual(a.positional, ['film.json'], name);
+    }
+    for (const name of ['draft', 'force', 'gpu', 'json', 'loop', 'md']) {
+      assert.ok(BOOLEAN_FLAGS.has(name), name);
+    }
   });
 
   it('a flag that needs a value and has none says what to type', () => {

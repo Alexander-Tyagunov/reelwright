@@ -4,6 +4,10 @@
  * needs no browser.
  */
 import assert from 'node:assert/strict';
+import {symlinkSync} from 'node:fs';
+import {request} from 'node:http';
+import {connect} from 'node:net';
+import {networkInterfaces} from 'node:os';
 import {join} from 'node:path';
 import {after, before, describe, it} from 'node:test';
 import type {FilmServer} from '../../plugin/skills/video/scripts/server/server.ts';
@@ -19,6 +23,10 @@ before(async () => {
   put(root, 'secret.txt', 'TOP-SECRET-OUTSIDE');
   put(project, 'film.json', '{"scenes": []}');
   put(project, 'inside.txt', 'inside the project');
+  put(project, '.env', 'API_KEY=SECRET-DOTFILE');
+  put(project, '.git/config', 'SECRET-DOTDIR');
+  symlinkSync(join(root, 'secret.txt'), join(project, 'link.txt'));
+  symlinkSync(join(project, 'inside.txt'), join(project, 'alias.txt'));
   put(
     project,
     'scenes/typed.ts',
@@ -39,6 +47,30 @@ after(async () => {
   removeDir(root);
 });
 
+function connectTo(host: string, port: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const socket = connect({host, port}, () => {
+      socket.destroy();
+      resolve();
+    });
+    socket.on('error', reject);
+  });
+}
+
+function statusWithHost(port: number, host: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const req = request(
+      {host: '127.0.0.1', port, path: '/inside.txt', headers: {host}},
+      res => {
+        res.resume();
+        resolve(res.statusCode ?? 0);
+      },
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 async function get(path: string) {
   const res = await fetch(new URL(path, server.url));
   return {
@@ -49,8 +81,39 @@ async function get(path: string) {
 }
 
 describe('film server', () => {
-  it('listens on 127.0.0.1 only', () => {
-    assert.match(server.url, /^http:\/\/127\.0\.0\.1:\d+\/$/);
+  it('listens on 127.0.0.1 only', async () => {
+    assert.equal(server.boundAddress, '127.0.0.1');
+    const port = Number(new URL(server.url).port);
+    const outside = Object.values(networkInterfaces())
+      .flat()
+      .find(i => i?.family === 'IPv4' && !i.internal);
+    if (outside) {
+      await assert.rejects(connectTo(outside.address, port), /ECONNREFUSED/);
+    }
+  });
+
+  it('a dotfile or a file in a dot folder is not served', async () => {
+    for (const path of ['/.env', '/%2eenv', '/.git/config', '/a/../.env']) {
+      const r = await get(path);
+      assert.equal(r.status, 404, path);
+      assert.ok(!r.body.includes('SECRET'), path);
+    }
+  });
+
+  it('a link that points outside the project is refused, one inside is served', async () => {
+    const out = await get('/link.txt');
+    assert.equal(out.status, 404);
+    assert.ok(!out.body.includes('TOP-SECRET'));
+    assert.equal((await get('/alias.txt')).body, 'inside the project');
+  });
+
+  it('a request with a foreign Host header is refused with 403', async () => {
+    const port = Number(new URL(server.url).port);
+    for (const host of ['evil.example', `evil.example:${port}`, 'localhost']) {
+      assert.equal(await statusWithHost(port, host), 403, host);
+    }
+    assert.equal(await statusWithHost(port, `localhost:${port}`), 200);
+    assert.equal(await statusWithHost(port, `127.0.0.1:${port}`), 200);
   });
 
   it('serves the film page at the root and the spec at /__film.json', async () => {

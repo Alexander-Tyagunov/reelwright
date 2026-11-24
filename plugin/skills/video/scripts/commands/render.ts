@@ -11,6 +11,7 @@ import {openFilm, pageErrors} from '../browser/film.ts';
 import type {Args} from '../core/args.ts';
 import {boolFlag, numberFlag, stringFlag} from '../core/args.ts';
 import {UserError} from '../core/errors.ts';
+import {checkFps, checkRange} from '../core/validate.ts';
 import {drawSegments} from './render/draw.ts';
 import {joinSegments} from './render/join.ts';
 import type {RenderSettings, Segment} from './render/plan.ts';
@@ -22,10 +23,16 @@ const DEFAULT_JOBS = 2;
 function settingsFrom(args: Args, film: OpenFilm): RenderSettings {
   const draft = boolFlag(args, 'draft');
   const {info} = film;
+  const asked = numberFlag(args, 'fps');
   const fps = draft
     ? Math.min(15, info.fps)
-    : (numberFlag(args, 'fps') ?? info.fps);
-  const crf = numberFlag(args, 'crf') ?? (draft ? 28 : 18);
+    : checkFps('--fps', asked ?? info.fps);
+  const crf = checkRange(
+    '--crf',
+    numberFlag(args, 'crf') ?? (draft ? 28 : 18),
+    0,
+    51,
+  );
   const png = boolFlag(args, 'png');
   return {width: film.width, height: film.height, fps, crf, png, draft};
 }
@@ -98,7 +105,8 @@ async function renderFilm(args: Args, film: OpenFilm): Promise<void> {
  *
  * @param args `render film.json [--size WxH] [--draft] [--fps N] [--crf N]
  *   [--png] [--jobs N] [--force] [--out file.mp4] [--gpu]`.
- *   Draft mode uses at most 15 fps, quarter-size frames and CRF 28.
+ *   Draft mode uses at most 15 fps, frames with half the width and
+ *   half the height, and CRF 28.
  * @returns 0.
  * @throws UserError when the page reports errors or ffmpeg fails.
  */

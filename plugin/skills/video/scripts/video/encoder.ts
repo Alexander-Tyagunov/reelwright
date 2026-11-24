@@ -6,8 +6,9 @@
 
 import type {ChildProcessByStdio} from 'node:child_process';
 import {spawn} from 'node:child_process';
-import {renameSync} from 'node:fs';
+import {renameSync, rmSync} from 'node:fs';
 import type {Readable, Writable} from 'node:stream';
+import {onStop} from '../core/cleanup.ts';
 import {UserError} from '../core/errors.ts';
 
 /** Options for {@link openEncoder}. */
@@ -32,6 +33,8 @@ export interface Encoder {
   write(frame: Uint8Array): Promise<void>;
   /** Ends the input, waits for ffmpeg and moves the file to `out`. */
   finish(): Promise<void>;
+  /** Stops ffmpeg at once and deletes the temporary file. Safe to repeat. */
+  abort(): void;
 }
 
 /**
@@ -126,7 +129,8 @@ function watch(child: ChildProcessByStdio<Writable, null, Readable>) {
  * Starts ffmpeg to encode piped screenshots to H.264.
  *
  * The encoder writes to `<out>.tmp.mp4` and renames it when finished, so a
- * stopped render never leaves a short file that still plays.
+ * stopped render never leaves a short file that still plays. A stop signal
+ * or `abort()` kills ffmpeg and deletes the temporary file.
  *
  * @throws UserError from `write` or `finish` when ffmpeg fails.
  */
@@ -143,6 +147,13 @@ export function openEncoder(options: EncoderOptions): Encoder {
   child.stdin.on('error', e => {
     failure ??= new UserError(`ffmpeg closed its input early: ${e.message}`);
   });
+  const abort = (): void => {
+    forget();
+    failure ??= new UserError('the encoder was stopped');
+    child.kill('SIGKILL');
+    rmSync(tmp, {force: true});
+  };
+  const forget = onStop(abort);
   return {
     write(frame) {
       if (failure) {
@@ -151,12 +162,22 @@ export function openEncoder(options: EncoderOptions): Encoder {
       if (child.stdin.write(frame)) {
         return Promise.resolve();
       }
-      return new Promise(resolve => child.stdin.once('drain', resolve));
+      return new Promise((resolve, reject) => {
+        child.stdin.once('drain', resolve);
+        done.catch(reject);
+      });
     },
     async finish() {
       child.stdin.end();
-      await done;
-      renameSync(tmp, options.out);
+      try {
+        await done;
+        renameSync(tmp, options.out);
+        forget();
+      } catch (e) {
+        abort();
+        throw e;
+      }
     },
+    abort,
   };
 }

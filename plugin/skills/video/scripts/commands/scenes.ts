@@ -64,12 +64,37 @@ export function readScenes(): SceneDoc[] {
 }
 
 /**
- * Prints the scene types and their fields, or JSON with `--json`.
+ * Builds the scene reference as Markdown, the text of
+ * `references/scenes.md`. The summary starts with a capital letter and each
+ * scene's field lines sit in a code block.
+ *
+ * @param scenes Scene docs from {@link readScenes}.
+ * @returns The whole file, ending with one newline.
+ */
+export function sceneMarkdown(scenes: readonly SceneDoc[]): string {
+  const head =
+    '# Scene types\n\nGenerated from the scene files by `reel scenes --md`. ' +
+    'Every scene also takes `type` and `duration` (seconds).\n';
+  const blocks = scenes.map(s => {
+    const summary = s.summary.charAt(0).toUpperCase() + s.summary.slice(1);
+    const fields = s.fields.join('\n');
+    return `## \`${s.type}\`\n\n${summary}\n\n\`\`\`\n${fields}\n\`\`\`\n`;
+  });
+  return [head, ...blocks].join('\n');
+}
+
+/**
+ * Prints the scene types and their fields, JSON with `--json`, or the
+ * Markdown reference with `--md`.
  *
  * @returns 0.
  */
 export async function run(args: Args): Promise<number> {
   const scenes = readScenes();
+  if (boolFlag(args, 'md')) {
+    process.stdout.write(sceneMarkdown(scenes));
+    return 0;
+  }
   if (boolFlag(args, 'json')) {
     console.log(JSON.stringify(scenes, null, 2));
     return 0;

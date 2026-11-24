@@ -144,6 +144,55 @@ describe('page gates catch seeded defects', {skip, timeout: 600_000}, () => {
     );
   });
 
+  it('a metric with a misspelt items field fails the load gate and names the field', async () => {
+    const p = ws.project('misspelt', {
+      meta: {title: 'Misspelt', ...SMALL},
+      scenes: [
+        {type: 'title', duration: 3, title: 'Opening card'},
+        {
+          type: 'metric',
+          duration: 5,
+          metrics: [{value: 42, label: 'answers'}],
+        },
+      ],
+    });
+    const {report, code} = await qa(p, PAGE);
+    const gate = gateOf(report, 'load');
+    assert.equal(gate.status, 'FAIL');
+    const text = gate.details.join('\n');
+    assert.match(text, /scene 2 \(metric\): value must be a number/);
+    assert.match(text, /got undefined/);
+    assert.match(text, /Not a field of this scene: metrics/);
+    assert.equal(code, 1);
+  });
+
+  it('a custom scene that throws at 4 s fails the load gate with the scene and the time, and prints no stack', async () => {
+    const film = withScene('Throws late', {
+      type: 'throws-late',
+      duration: 8,
+      heading: 'This scene breaks',
+    });
+    const p = ws.project('throws', film, {'throws.ts': scenes.THROWS_LATE});
+    const {report, output} = await qa(p, PAGE);
+    const load = gateOf(report, 'load');
+    assert.equal(load.status, 'FAIL');
+    assert.match(
+      load.details.join('\n'),
+      /scene 2 \(throws-late\) threw at t=\d+\.\d\ds: boom at four seconds/,
+    );
+    assert.doesNotMatch(output, /\n\s+at .*[(:]\d+/, 'no stack lines');
+  });
+
+  it('a custom scene with a syntax error names the file', async () => {
+    const film = withScene('Syntax', {type: 'broken-scene', heading: 'Never'});
+    const p = ws.project('syntax', film, {'broken.ts': scenes.SYNTAX_ERROR});
+    const {report, code} = await qa(p, PAGE);
+    const text = gateOf(report, 'load').details.join('\n');
+    assert.match(text, /could not load custom scene script scenes\/broken\.ts/);
+    assert.match(text, /Expected/);
+    assert.equal(code, 1);
+  });
+
   it('a clean film passes every page gate', async () => {
     const p = ws.project('clean', goodFilm(), {'ticker.ts': scenes.TICKER});
     const {report, code} = await qa(p, PAGE);
