@@ -37,6 +37,15 @@ The contract:
 - **Only the premise is required.** References (images, links, a video file), style guidance, brand, tone, length
   and format may each be given or left out. What is missing, the agent decides and writes down. What is given,
   it follows.
+- **No predefined visuals.** The creative path has no default palette, typeface, scene type, layout or look, and
+  no list of styles to pick from. The look of each film is invented for that film, or taken from the owner's
+  guidance when there is any.
+- **No limit on the medium.** The range runs from flat graphics through hand-drawn, anime-like painted animation
+  to stylised and realistic 3D. The agent chooses the medium the film needs, not the one that is easiest to
+  code. What a given machine can actually render is reported up front, never silently substituted (see
+  "Rendering backends").
+- **No habit.** Two films must not come out alike because the same model made them. Variety is a measured
+  requirement with its own check (see "Variety").
 - **References are studied, not copied.** Images are read directly. A video file is turned into a contact sheet
   and a motion and cut-rhythm measurement. The agent states what it takes: palette, materials, composition,
   pacing. Other people's characters and designs are not reproduced.
@@ -63,12 +72,21 @@ enough before the plugin is changed.
 Remaining steps:
 
 1. Finish generated sound in the engine (see "Paused work").
-2. Finish both films from their treatments: style frames, animation, gates, one render each.
-3. Attach sound using each film's `soundPlan` and scene `cues`; run the full gate; look at the contact sheets.
-4. Show both films to the owner. **This is the decision point.** If the level is not high enough, stage 2
-   changes.
+2. Re-open the look of both films before building. Their stories stand; their look does not, because both
+   agents landed on the same printed, limited-ink style. Run the variety procedure below on each and require
+   the two films to use different media.
+3. Range test, so the ceiling of each medium is known before anything is promised. One 8 to 10 second shot of
+   the same story moment in each of:
+   - hand-drawn, anime-like painted animation: painted background, cel-shaded character, multiplane camera
+   - stylised 3D drawn in the browser
+   - realistic 3D rendered in Blender on the owner's Mac (its Blender connection is already present)
+   - one generated-footage shot, only if the owner allows a generation service
+4. Finish both films in their chosen media: style frames, animation, gates, one render each.
+5. Attach sound using each film's `soundPlan` and scene `cues`; run the full gate; look at the contact sheets.
+6. Show the range test and both films to the owner. **This is the decision point.** If the level is not high
+   enough in a medium, stage 2 changes for that medium.
 
-Estimate: 1 to 1.5 hours.
+Estimate: 2.5 to 4 hours, most of it the range test and the Blender and painted shots.
 
 ### Stage 2: put the creative pipeline in the plugin
 
@@ -79,8 +97,9 @@ Only after stage 1 is accepted.
 1. Intake: premise, source, and whatever optional direction was given. One question at most.
 2. Reference study, when references are given.
 3. Treatment: three loglines with the most obvious one discarded; genre and tone; central metaphor; cast of
-   original characters designed to be built from simple shapes; world, palette, type, materials, light, camera;
-   the signature moment; the last line; a table mapping each story beat to the fact it carries.
+   original characters; at least six pitches for the look that differ in medium, the one chosen and why, and
+   the backend it needs (see "Variety" and "Rendering backends"); world, palette, type, materials, light,
+   camera; the signature moment; the last line; a table mapping each story beat to the fact it carries.
 4. Shot list: every shot with time, framing, camera move, action, exact on-screen words and sound cues.
 5. Style frames of the three most important shots. Optional approval point.
 6. Animation shot by shot, checked on motion strips.
@@ -88,12 +107,71 @@ Only after stage 1 is accepted.
 8. Critic pass, then fixes. At most two rounds.
 9. Deliver, with the treatment and the sound.
 
+**Variety: no house style, by construction**
+
+What went wrong in the first attempt: both agents were told which look to avoid, and both avoided it in the same
+direction. A list of things to avoid is itself an anchor. So:
+
+1. *No avoid-lists and no defaults.* The brief describes the film's purpose and audience. It names no look to
+   use and none to avoid.
+2. *Diverge before choosing.* The director first writes at least six one-paragraph pitches that differ in
+   medium, not only in colour: for example drawn, painted, cut paper, stop-motion, miniature, stylised 3D,
+   realistic 3D, photographic, typographic, pixel, or something on no list. The list is a prompt to spread out,
+   not a menu; a pitch outside it is welcome.
+3. *Choose by fit, and say why.* The pick is argued from the premise, the audience and the owner's guidance.
+   "Feasible in 2D code" is not an argument; if the best pitch needs a backend this machine lacks, the treatment
+   says so and names the runner-up.
+4. *A look ledger.* Each finished film records its medium, palette, type, texture and camera language in the
+   project. A new film must differ from the last several on at least medium or palette family, unless the
+   owner asks for a series.
+5. *Measure sameness.* Style frames are compared with the ledger and with the fingerprints of known default
+   looks: colour histogram, edge density, texture statistics, typefaces. Too close sends the look back.
+6. *Independent pitches for important films.* Several pitch agents with different starting constraints, then a
+   separate selector, so one model's first instinct does not decide.
+7. *The owner's guidance always wins.* "Anime-like", "realistic", a reference image or "same as last time"
+   overrides all of the above.
+
+A named studio or artist given as a reference is translated into traits (painted backgrounds, soft natural
+light, limited animation) and applied to original characters and scenes. Their characters and frames are not
+reproduced.
+
+**Rendering backends: capable of any visual**
+
+Code-drawn 2D cannot produce a painted anime frame or a photoreal shot. Pretending otherwise is how every film
+ended up flat. The engine becomes a timeline that accepts shots from any backend and still owns text, sound,
+assembly and measurement.
+
+| Backend | Good for | Needs | State |
+|---|---|---|---|
+| Code-drawn 2D (DOM, SVG, canvas) | Graphic, typographic, cut-out, diagram, cel-like shapes | Nothing extra | Exists |
+| Real-time 3D in the browser | Stylised 3D, camera moves, particles, lighting | A GPU for speed; a 3D library carried by the film project | Planned |
+| Blender | Realistic materials and light, physics, cinematic camera, also toon shading | Blender on the machine; renders run there | Planned; a Blender connection exists on the owner's Mac |
+| Generated images | Painted backgrounds, character sheets, textures, matte paintings | An image-generation service the owner allows | Planned, opt-in |
+| Generated footage | Shots that cannot be drawn or modelled in the time | A video-generation service the owner allows | Planned, opt-in |
+| Supplied assets | Footage, illustrations, 3D models, screen recordings | Files from the owner | Partly exists (images) |
+
+What this requires:
+
+- A shot can be a code scene, an image sequence or a video clip. Text and graphics can be composited over any
+  of them.
+- `reel doctor` reports capabilities: GPU, Blender, connected generation services. The director chooses within
+  them and states which backend it wanted and could not use.
+- Character and style consistency across generated shots: a character sheet and style frames made first and
+  used as conditioning for every later shot.
+- Gates per backend. Determinism applies to code shots only. Motion, file and audio gates apply to everything.
+  Layout and reading time apply to composited text. Generated shots get their own checks: continuity of
+  character and palette between shots, and artefacts flagged for a person to look at.
+- Honest cost and time reporting. A Blender or generated shot costs minutes or money per shot; the treatment
+  carries a budget and the owner can cap it.
+- Nothing leaves the machine unless a generation service was enabled; the README says which backends send data.
+
 **Agents and model tiers**
 
 | Agent | Model | Change |
 |---|---|---|
-| `reel-director` | Fable or Opus, high | Writes the treatment and shot list. Few tokens, largest effect on the result |
-| `reel-auteur` | Fable, high | Becomes the main builder of a creative film, not an exception for one scene |
+| `reel-director` | Fable or Opus, high | Writes the pitches, the treatment and the shot list, and chooses the medium. Few tokens, largest effect on the result |
+| `reel-auteur` | Fable, high | Becomes the main builder of a creative film, not an exception for one scene. Works in whichever backend the treatment chose |
+| `reel-selector` (new) | Opus, medium | Picks among independent pitches and runs the sameness check against the ledger |
 | `reel-critic` (new) | Opus, medium | Did not build the film. Scores idea, character appeal, staging, rhythm and finish against a rubric and returns frame-specific corrections |
 | `reel-builder` | Sonnet, medium | Re-uses an existing film's look and rigs for the next episode of a series |
 | `reel-ingest`, `reel-runner` | Haiku | Unchanged |
@@ -118,8 +196,7 @@ stage 1 agents have to build for themselves (each writes a `NOTES.md` for this):
 - Words that are part of the picture need a way to be marked as decoration, so tilted, cropped or overlapping
   lettering does not fail layout.
 - Add a facts check: every number and product name on screen appears in `content.json`.
-- Add a sameness check against the default look: fail a creative film that uses the bundled fonts with the
-  default palette and built-in scene types.
+- Add the sameness check described under "Variety": against the look ledger and against known default looks.
 
 **The 0.1.0 scene library stays**, as the fast path for recurring videos, but its default look is replaced and
 it is no longer what "make me a video" means.
@@ -127,7 +204,9 @@ it is no longer what "make me a video" means.
 **Then:** tests for every new piece, docs and skills updated, the research report corrected (it filed camera,
 depth and illustration under "wrong genre"), an independent review, version 0.2.0, repackage.
 
-Estimate: 2 to 3 hours after stage 1.
+Estimate: 2 to 3 hours for the pipeline, the variety mechanism and the 2D toolkit. Each further backend is its
+own piece of work: roughly 2 hours for browser 3D, 3 to 4 for Blender, 2 to 3 for generated images and footage
+once a service is chosen. These are rough; the range test in stage 1 will correct them.
 
 ### Later
 
@@ -174,9 +253,10 @@ idea and wrote a specific one:
   seconds, so it is always late; one evening the news streams down the lamp's beam and the gull, out of work,
   falls asleep on her hat.
 
-**One warning from this:** both agents independently chose a printed, limited-ink look. They were both told what
-to avoid, and avoided it in the same direction. Stage 2 needs a mechanism for variety, for example having the
-director name the three most likely looks for a premise and choose outside them.
+**What this exposed:** both agents independently chose a printed, limited-ink look. They were both told what to
+avoid, and avoided it in the same direction, inside the one medium they had. That is now a requirement, not a
+note: see "No predefined visuals", "No limit on the medium" and "No habit" in the contract, and "Variety" and
+"Rendering backends" in stage 2. Neither film is built in that look until the variety procedure has been run.
 
 ## Where the files are
 
@@ -197,13 +277,19 @@ To bring the paused branch into the repository on the Mac:
 
 1. Read this file and the two `treatment.md` files.
 2. `git switch wip/generated-sound`, finish and verify the sound work, then merge to `master`.
-3. Start a build agent on each film with its treatment as the brief. The engine rules it must be told are in
-   `plugin/skills/video/references/scene-api.md`; the process is the nine steps of the `film` skill above.
-4. Attach sound, run the gates, show both films, and get the decision on stage 2.
+3. Run the variety procedure on both films and do the range test (stage 1, steps 2 and 3).
+4. Build each film from its treatment in the medium chosen. The engine rules a build agent must be told are in
+   `plugin/skills/video/references/scene-api.md`; the process is the nine steps of the `film` skill.
+5. Attach sound, run the gates, show the range test and both films, and get the decision on stage 2.
 
 ## Decisions still open for the owner
 
 - Whether the two test films clear the bar. Everything in stage 2 depends on it.
 - Whether a creative film should stop for approval at the treatment and style frames by default, or run through.
 - Whether a keyed voice service is acceptable for narration later, or local voices only.
+- Which generation services, if any, may be used for images and footage. They cost money per shot and send the
+  prompt and reference frames to the provider. Without one, painted and photoreal looks rest on Blender and on
+  what can be drawn in code.
+- Whether Blender on the Mac may be driven for renders, and whether long renders there are acceptable.
+- A budget per film in time and money, so the director can choose a medium inside it.
 - The author name in `plugin.json`, `marketplace.json` and `LICENSE`. It is set to "Alex Tyagunov".
