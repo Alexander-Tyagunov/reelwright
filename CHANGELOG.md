@@ -15,8 +15,11 @@ First release of the plugin.
   `flow`, `image`, `quote` and `outro`. Each re-lays itself out at 16:9, 1:1 and 9:16.
 - **Project scenes.** `.js` or `.ts` files that call `Reel.scene`, listed in `customScenes`.
 - **Templates (4).** `release`, `metrics`, `explainer` and `blank`, created with `reel init`.
-- **Quality gates.** Determinism, layout, reading holds, pacing, file properties, motion and audio, run by
-  `reel qa`. `--page-only` runs the page gates in seconds without a render.
+- **Quality gates.** Load, determinism, layout, reading holds, pacing, file properties, motion and audio, run by
+  `reel qa`. `--page-only` runs the page gates in seconds without a render; `--size WxH` checks another format.
+  A scene with a missing or misspelt field, a scene that throws, and text that reads `NaN` all fail.
+- **Safe to stop.** A stop signal ends the browser, the encoder and the local server and removes temporary
+  files. The server answers only local requests and does not serve hidden files or links out of the project.
 - **Export presets (8).** `master`, `x`, `linkedin`, `youtube`, `slack`, `web`, `gif` and `webm`, with optional
   audio normalised to -14 LUFS and a poster frame.
 - **Single-file build.** `reel build` bundles a film into one HTML file that plays in a browser.
