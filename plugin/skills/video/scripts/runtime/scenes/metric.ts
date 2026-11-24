@@ -10,7 +10,7 @@
 import type {SceneSpec} from '../../shared/contract.ts';
 import {registerScene} from '../registry.ts';
 import type {SceneContext} from '../types.ts';
-import {compact} from './lib/layout.ts';
+import {compact, innerBox} from './lib/layout.ts';
 
 /** One metric tile. */
 export interface MetricItem {
@@ -68,12 +68,24 @@ function tileFontSize(ctx: SceneContext, n: number): number {
   return 11;
 }
 
-/** Creates the tile and its texts. Returns the tile, number and chip. */
-function buildTile(ctx: SceneContext, it: MetricItem, n: number) {
+/** Size multiplier of stacked tiles. `shrinkStack` lowers it to fit. */
+const TILE_K = 'var(--rw-tile-k, 1)';
+
+/** One built tile and what its animation needs. */
+interface Tile {
+  it: MetricItem;
+  tile: HTMLElement;
+  num: HTMLElement;
+  delta: HTMLElement | null;
+  fmt: (v: number) => string;
+}
+
+/** Creates the tile and its texts. */
+function buildTile(ctx: SceneContext, it: MetricItem, n: number): Tile {
   const fmt = formatter(ctx, it);
-  const num = ctx.text('div', 'rw-h1', fmt(it.value), {
+  const num = ctx.text('div', 'rw-h1 rw-num', fmt(it.value), {
     style: {
-      fontSize: `calc(var(--u) * ${tileFontSize(ctx, n)})`,
+      fontSize: `calc(var(--u) * ${tileFontSize(ctx, n)} * ${TILE_K})`,
       whiteSpace: 'nowrap',
     },
   });
@@ -95,7 +107,8 @@ function buildTile(ctx: SceneContext, it: MetricItem, n: number) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 'calc(var(--u) * 1.6)',
+        gap: `calc(var(--u) * 1.6 * ${TILE_K})`,
+        ...(n > 1 ? {padding: `calc(var(--u) * 3.2 * ${TILE_K})`} : {}),
       },
     },
     label,
@@ -103,18 +116,32 @@ function buildTile(ctx: SceneContext, it: MetricItem, n: number) {
     delta,
     note,
   );
-  return {tile, num, delta, fmt};
+  return {it, tile, num, delta, fmt};
 }
 
-function addTile(
-  ctx: SceneContext,
-  wrap: HTMLElement,
-  it: MetricItem,
-  i: number,
-  n: number,
-): void {
-  const {tile, num, delta, fmt} = buildTile(ctx, it, n);
-  wrap.append(tile);
+/**
+ * Makes stacked tiles smaller until the scene fits its safe area. Three
+ * tiles under a heading are taller than a square frame at full size.
+ */
+function shrinkStack(ctx: SceneContext, wrap: HTMLElement): void {
+  if (ctx.aspect === 'landscape') {
+    return;
+  }
+  const first = ctx.el.firstElementChild as HTMLElement | null;
+  const last = ctx.el.lastElementChild as HTMLElement | null;
+  if (!first || !last) {
+    return;
+  }
+  const room = innerBox(ctx.el).h;
+  const height = () => last.offsetTop + last.offsetHeight - first.offsetTop;
+  for (let k = 0.95; height() > room && k > 0.6; k -= 0.05) {
+    wrap.style.setProperty('--rw-tile-k', k.toFixed(2));
+  }
+}
+
+/** Adds the entrance, the chip pop and the count of one tile. */
+function animateTile(ctx: SceneContext, t: Tile, i: number): void {
+  const {it, tile, num, delta, fmt} = t;
   num.style.minWidth = `${Math.ceil(num.offsetWidth)}px`;
   const at = 0.35 + i * 0.3;
   ctx.enter(tile, at, {y: 3});
@@ -122,8 +149,8 @@ function addTile(
     ctx.pop(delta, at + 1.25);
   }
   const from = it.from ?? 0;
-  ctx.onFrame(t => {
-    const p = ctx.ease.out(ctx.prog(t, at + 0.15, 1.2));
+  ctx.onFrame(time => {
+    const p = ctx.ease.out(ctx.prog(time, at + 0.15, 1.2));
     const v = p >= 1 ? it.value : from + (it.value - from) * p;
     const txt = fmt(v);
     if (num.textContent !== txt) {
@@ -143,7 +170,7 @@ registerScene('metric', (ctx, scene) => {
     style: {
       display: 'flex',
       flexDirection: ctx.aspect === 'landscape' ? 'row' : 'column',
-      gap: 'calc(var(--u) * 3)',
+      gap: `calc(var(--u) * 3 * ${TILE_K})`,
       justifyContent: 'center',
       alignItems: 'stretch',
       alignSelf: 'stretch',
@@ -154,13 +181,18 @@ registerScene('metric', (ctx, scene) => {
     ctx.fit(heading, {maxLines: 2});
     ctx.enter(heading, 0.1, {y: 2.5});
   }
-  items.forEach((it, i) => {
-    addTile(ctx, wrap, it, i, n);
-  });
+  const tiles = items.map(it => buildTile(ctx, it, n));
+  wrap.append(...tiles.map(t => t.tile));
   const foot = s.note ? ctx.text('div', 'rw-small', s.note) : null;
   if (foot) {
     el.append(foot);
     ctx.fit(foot, {maxLines: 2});
+  }
+  shrinkStack(ctx, wrap);
+  tiles.forEach((t, i) => {
+    animateTile(ctx, t, i);
+  });
+  if (foot) {
     ctx.enter(foot, 0.35 + (n - 1) * 0.3 + 0.6, {y: 1.5});
   }
 });

@@ -41,7 +41,7 @@ export const PAD_X = 2.8;
 /** Line height in `em`. */
 export const LINE_HEIGHT = 1.5;
 const MAX_SIZE = 5;
-const MIN_SIZE = 2.4;
+const MIN_SIZE = 2.7;
 
 function tintOf(kind: CodeLineKind | undefined): string | null {
   if (kind === 'add') {

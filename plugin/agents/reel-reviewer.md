@@ -15,10 +15,12 @@ CLI: `node ${CLAUDE_PLUGIN_ROOT}/skills/video/scripts/reel.ts <command>`. Gate r
 
 Do these in order:
 1. Read `storyboard.md` and `content.json` so you know what the film is supposed to say and to whom.
-2. Run `reel qa film.json` yourself and read `out/qa-report.json`. Do not rely on a pasted table.
+2. Run `reel qa film.json` yourself and read `out/qa-report.json`. Do not rely on a pasted table or on a
+   report file that was already there. For each other delivered size run `reel qa film.json --size WxH`
+   (add `--page-only` when that size has no render) and read `out/qa-report-WxH.json`.
 3. Run `reel stills film.json` and open `out/contact.jpg`. For each delivered size, repeat with `--size`.
 4. For the two or three moments that carry the film (the opening, the main proof, the last frame) draw a strip:
-   `reel stills film.json --from A --to B --every 0.15`, and look at how the scene builds.
+   `reel stills film.json --from A --to B --every 0.15`, open `out/strip.jpg`, and look at how the scene builds.
 5. Compare every number and name on screen with `content.json`.
 
 Judge, as the stated viewer watching once at normal speed on a phone:

@@ -47,7 +47,7 @@ of the scene at the latest, so a long text types fast; "none" shows all at once)
 note? }                           (small line under the card)
 add = green row with a "+" gutter, remove = red row with a "-" gutter, dim = faded row, highlight = accent bar that
 fades in after the reveal. Lines starting with // or # are muted. Font size is fitted to the longest line (5u down
-to 2.4u); below that the lines wrap.
+to 2.7u); below that the lines wrap.
 ```
 
 ## `compare`

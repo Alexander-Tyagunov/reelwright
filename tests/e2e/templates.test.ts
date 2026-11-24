@@ -1,7 +1,7 @@
 /**
  * @fileoverview The four starter templates: each passes the page gates in
- * landscape, portrait feed and vertical story sizes, and the release template
- * renders and passes the full gate.
+ * landscape, square, portrait feed and vertical story sizes, and the release
+ * template renders and passes the full gate.
  */
 import assert from 'node:assert/strict';
 import {join} from 'node:path';
@@ -13,7 +13,7 @@ const ws = workspace();
 after(() => ws.dispose());
 
 const TEMPLATES = ['release', 'metrics', 'explainer', 'blank'] as const;
-const SIZES = ['1920x1080', '1080x1350', '1080x1920'] as const;
+const SIZES = ['1920x1080', '1080x1080', '1080x1350', '1080x1920'] as const;
 
 async function fromTemplate(name: string) {
   const dir = join(ws.root, name);
@@ -24,7 +24,7 @@ async function fromTemplate(name: string) {
 
 describe('templates', {skip: missingTools(), timeout: 1_800_000}, () => {
   for (const name of TEMPLATES) {
-    it(`the ${name} template passes the page gates at ${SIZES.join(', ')}`, async () => {
+    it(`the ${name} template passes the page gates at every delivery size`, async () => {
       const p = await fromTemplate(name);
       for (const size of SIZES) {
         const suffix = size === '1920x1080' ? '' : `-${size}`;

@@ -24,7 +24,7 @@ const COMMANDS: Readonly<Record<string, string>> = {
     'draw full-size stills and a contact sheet: stills film.json [--at 1.5,3] [--every S --from S --to S] [--size WxH]',
   render:
     'render the film to MP4, scene by scene, reusing unchanged scenes: render film.json [--size WxH] [--draft]',
-  qa: 'measure the film against the motion and layout gates: qa film.json [--page-only | --video out/film.mp4]',
+  qa: 'measure the film against the motion and layout gates: qa film.json [--page-only | --video out/film.mp4] [--size WxH]',
   export:
     'make platform files (mp4, gif, webm, poster) with optional audio: export film.json --preset master|x|linkedin|youtube|slack|web|gif|webm',
   build: 'bundle the film into one self-contained HTML file: build film.json',

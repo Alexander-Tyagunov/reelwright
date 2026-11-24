@@ -65,7 +65,7 @@ export function valueEl(
   i: number,
   extra: StyleObject,
 ): HTMLElement {
-  const el = env.ctx.text('div', 'rw-body', env.finals[i], {
+  const el = env.ctx.text('div', 'rw-body rw-num', env.finals[i], {
     style: {
       whiteSpace: 'nowrap',
       lineHeight: '1.2',

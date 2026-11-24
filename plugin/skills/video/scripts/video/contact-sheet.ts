@@ -18,8 +18,9 @@ interface Size {
 
 /**
  * Tiles JPEG frames into one JPEG, in reading order (left to right, top to
- * bottom). Portrait films get 5 columns of 360 px tiles. Landscape films
- * get 2 to 4 columns, with tiles of 960 or 640 px.
+ * bottom). Portrait films get up to 5 columns of 360 px tiles. Landscape
+ * films get up to 4 columns, with tiles of 960 or 640 px. Rows are filled
+ * evenly, so six frames make a 3x2 grid.
  *
  * @param frames JPEG bytes, one per tile.
  * @param out Output `.jpg` path.
@@ -34,8 +35,9 @@ export async function makeContactSheet(
   const portrait = size.height > size.width;
   const count = frames.length;
   const landscapeCols = count <= 4 ? 2 : count <= 9 ? 3 : 4;
-  const cols = Math.min(count, portrait ? 5 : landscapeCols);
-  const rows = Math.ceil(count / cols);
+  const maxCols = Math.min(count, portrait ? 5 : landscapeCols);
+  const rows = Math.ceil(count / maxCols);
+  const cols = Math.ceil(count / rows);
   const tileWidth = portrait ? 360 : cols <= 2 ? 960 : 640;
   const filter =
     `scale=${tileWidth}:-2,tile=${cols}x${rows}:padding=10:margin=10:` +

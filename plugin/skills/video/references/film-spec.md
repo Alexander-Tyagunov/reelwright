@@ -90,5 +90,5 @@ my-film/
   storyboard.md     scene table and exact copy
   assets/           logo, screenshots, fonts, audio
   scenes/           optional project scene types (.js or .ts)
-  out/              stills/, contact.jpg, film.mp4, render.json, film.html, qa-report.json, export/, .segments/
+  out/              stills/, contact.jpg, strip/, strip.jpg, film.mp4, render.json, film.html, qa-report.json, export/, .segments/
 ```

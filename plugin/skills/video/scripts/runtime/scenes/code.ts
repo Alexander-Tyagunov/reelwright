@@ -7,7 +7,7 @@
  *   note? }                           (small line under the card)
  * add = green row with a "+" gutter, remove = red row with a "-" gutter, dim = faded row, highlight = accent bar that
  * fades in after the reveal. Lines starting with // or # are muted. Font size is fitted to the longest line (5u down
- * to 2.4u); below that the lines wrap.
+ * to 2.7u); below that the lines wrap.
  */
 
 /** @fileoverview The `code` scene: a code card with typed or revealed rows. */

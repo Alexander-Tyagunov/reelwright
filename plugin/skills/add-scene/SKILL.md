@@ -31,7 +31,7 @@ to what you need in `${CLAUDE_SKILL_DIR}/../video/scripts/runtime/scenes/` and f
 5. Make a test film that uses the scene with short content and with the longest realistic content. Draw stills at
    three sizes and look at each contact sheet:
    `reel stills film.json`, `--size 1080x1080`, `--size 1080x1920`.
-6. Look at the motion, not only the settled frame: `reel stills film.json --from A --to B --every 0.15`.
+6. Look at the motion, not only the settled frame: `reel stills film.json --from A --to B --every 0.15`, then open `out/strip.jpg`.
 7. `reel render film.json` and `reel qa film.json` must pass, including determinism.
 
 Hand a project scene to `reel-builder` (Sonnet) with the description of the scene and the spec fields you decided;

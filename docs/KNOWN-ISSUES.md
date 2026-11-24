@@ -67,6 +67,26 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
 - **Cause:** `flex: 1 1 0` in a column gives each tile a zero basis.
 - **Fix:** use the growing flex rule only in a row. The layout gate catches this class of problem.
 
+### Three metric tiles run past a square frame
+
+- **Symptom:** the layout gate fails the `metric` scene at 1080x1080: the first label and the last chip are
+  about 10 px outside the safe area.
+- **Cause:** three stacked tiles at full size are taller than a square frame.
+- **Fix:** stacked tiles share one size multiplier (`--rw-tile-k`). The scene lowers it in steps until the
+  content fits. Landscape rows are not changed.
+- **Check:** the template scenario runs every template at 16:9, 1:1, 4:5 and 9:16.
+
+### Hyphens in prose look too wide
+
+- **Symptom:** "error-rate" is drawn with a gap on both sides of the hyphen.
+- **Cause:** tabular figures were set on the whole stage. In Inter that feature also swaps in a wider hyphen.
+- **Fix:** only numbers that count carry the `rw-num` class. Prose uses proportional figures.
+
+### A code line is smaller than the layout gate allows
+
+- **Cause:** the code scene fitted long lines down to 2.4u, under the 2.6% minimum of the gate.
+- **Fix:** the floor is 2.7u. A line that is still too long wraps.
+
 ### Typed text was never checked for reading time
 
 - **Symptom:** a typed code scene passes the holds gate although typing ends after the scene.

@@ -31,7 +31,7 @@ Work in this order, and keep going until the last step is done:
 1. Write the timing first: a small table of events in seconds inside the scene file's header comment.
 2. Build, then `reel stills film.json --at <times>` at the key moments and look. Expect the first stills to frame
    the subject too small; fix framing here, before any render.
-3. Draw a strip through the main motion (`--from A --to B --every 0.1`) and check spacing and arcs.
+3. Draw a strip through the main motion (`--from A --to B --every 0.1`, written to `out/strip.jpg`) and check spacing and arcs.
 4. `reel render film.json` then `reel qa film.json`. Determinism, layout and motion must pass.
 5. Check 1080x1080 and 1080x1920 if the film ships in those sizes.
 

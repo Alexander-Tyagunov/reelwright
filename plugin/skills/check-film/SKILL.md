@@ -16,7 +16,7 @@ CLI: `node ${CLAUDE_SKILL_DIR}/../video/scripts/reel.ts <command>` (written `ree
 4. Fix one failure at a time with the smallest edit that addresses the measured problem, keeping everything else
    as it was. Re-render (only changed scenes are redrawn) and re-run `reel qa`.
 5. For a motion problem that a still cannot show, draw a strip of the moment:
-   `reel stills film.json --from 4.0 --to 5.2 --every 0.1`.
+   `reel stills film.json --from 4.0 --to 5.2 --every 0.1` (written to `out/strip/` and `out/strip.jpg`).
 6. Stop when every gate passes, or after 3 rounds on the same failure; then report what still fails and why.
 
 Report: the final gate table, what you changed, and what remains for a person to judge by pressing play: rhythm,

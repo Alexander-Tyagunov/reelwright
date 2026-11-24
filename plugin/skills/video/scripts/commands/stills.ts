@@ -1,6 +1,8 @@
 /**
  * @fileoverview `stills`: draws full-size stills and one contact sheet.
  * By default it draws each scene at the moment it has the most on screen.
+ * With `--at` or `--every` it draws a strip into its own folder, so the
+ * scene stills stay in place.
  */
 import {mkdirSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
@@ -39,8 +41,25 @@ function parseAt(text: string): number[] {
   });
 }
 
+/** The stills to draw and the output name they are saved under. */
+interface Plan {
+  shots: Shot[];
+  /** `stills` for one still per scene, `strip` for chosen times. */
+  kind: 'stills' | 'strip';
+}
+
+/** Times from `--from` to `--to` in steps of `--every`, both ends included. */
+function everyShots(every: number, from: number, end: number): Shot[] {
+  const shots: Shot[] = [];
+  for (let i = 0; from + i * every <= end + 1e-9; i++) {
+    const t = Number((from + i * every).toFixed(3));
+    shots.push({t, name: timeName(t)});
+  }
+  return shots;
+}
+
 /** Chooses the stills from `--at`, `--every`, or the scene check times. */
-function planShots(args: Args, info: FilmInfo): Shot[] {
+function planShots(args: Args, info: FilmInfo): Plan {
   const seconds = 'a number of seconds';
   const from = numberFlag(args, 'from', seconds);
   const to = numberFlag(args, 'to', seconds);
@@ -53,20 +72,19 @@ function planShots(args: Args, info: FilmInfo): Shot[] {
           `(seconds between stills), got "${every}"`,
       );
     }
-    const shots: Shot[] = [];
-    const end = to ?? info.duration;
-    for (let t = from ?? 0; t < end - 1e-9; t += every) {
-      shots.push({t: Number(t.toFixed(3)), name: timeName(t)});
-    }
-    return shots;
+    const lastFrame = (info.frames - 1) / info.fps;
+    const shots = everyShots(every, from ?? 0, to ?? lastFrame);
+    return {shots, kind: 'strip'};
   }
   if (at !== undefined) {
-    return parseAt(at).map(t => ({t, name: timeName(t)}));
+    const shots = parseAt(at).map(t => ({t, name: timeName(t)}));
+    return {shots, kind: 'strip'};
   }
-  return info.scenes.map(s => ({
+  const shots = info.scenes.map(s => ({
     t: s.check,
     name: `${String(s.index + 1).padStart(2, '0')}-${s.type}`,
   }));
+  return {shots, kind: 'stills'};
 }
 
 /** Draws each shot, saves it as a JPEG and returns the encoded frames. */
@@ -119,8 +137,9 @@ function printReport(
 }
 
 /**
- * Draws the stills into `out/stills[-WxH]/` and a contact sheet into
- * `out/contact[-WxH].jpg`, next to the spec.
+ * Draws one still per scene into `out/stills[-WxH]/` with the contact sheet
+ * `out/contact[-WxH].jpg`, next to the spec. With `--at` or `--every` the
+ * stills go to `out/strip[-WxH]/` and the sheet to `out/strip[-WxH].jpg`.
  *
  * @param args `stills film.json [--at 1.5,3 | --every S [--from S] [--to S]]
  *   [--size WxH] [--gpu]`. Times are in seconds.
@@ -136,10 +155,11 @@ export async function run(args: Args): Promise<number> {
   try {
     const {info, page, spec} = film;
     const suffix = size ? `-${size}` : '';
-    const dir = join(spec.dir, 'out', `stills${suffix}`);
-    const shots = planShots(args, info);
+    const {shots, kind} = planShots(args, info);
+    const dir = join(spec.dir, 'out', `${kind}${suffix}`);
     const frames = await drawShots(page, shots, info, dir);
-    const sheet = join(spec.dir, 'out', `contact${suffix}.jpg`);
+    const sheetName = kind === 'strip' ? 'strip' : 'contact';
+    const sheet = join(spec.dir, 'out', `${sheetName}${suffix}.jpg`);
     const grid = await makeContactSheet(frames, sheet, film);
     printReport(info, shots, dir, sheet, grid);
     const errors = await pageErrors(page);

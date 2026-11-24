@@ -188,6 +188,8 @@ Project scene files get the helpers they need from `Reel`, before any `ctx` exis
 
 - Size everything in `u`: `calc(var(--u) * 4)`. Never hard-code px for a 1920-wide frame.
 - Use the type classes: `rw-kicker`, `rw-h1`, `rw-h2`, `rw-h3`, `rw-sub`, `rw-body`, `rw-small`, `rw-mono`.
+- Add `rw-num` to a number that counts, so its digits keep one width and the number does not shake. Do not put it
+  on prose: tabular figures also widen hyphens.
   Helpers: `rw-card`, `rw-chip` (add `good`, `bad` or `neutral`), `rw-row`, `rw-col`, `rw-grow`, `rw-muted`,
   `rw-accent`, `rw-rule` (an accent bar 9u wide; set `transform: scaleX(...)` to draw it).
 - Colours come from CSS variables only: `--bg --surface --ink --muted --accent --accent-ink --good --good-ink --bad
@@ -219,7 +221,7 @@ Project scene files get the helpers they need from `Reel`, before any `ctx` exis
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/reel.ts stills film.json                  # one still per scene + out/contact.jpg
 node ${CLAUDE_SKILL_DIR}/scripts/reel.ts stills film.json --size 1080x1920 # out/stills-1080x1920/, out/contact-1080x1920.jpg
-node ${CLAUDE_SKILL_DIR}/scripts/reel.ts stills film.json --from 4 --to 6 --every 0.2   # motion strip of a time range
+node ${CLAUDE_SKILL_DIR}/scripts/reel.ts stills film.json --from 4 --to 6 --every 0.2   # motion strip: out/strip/, out/strip.jpg
 node ${CLAUDE_SKILL_DIR}/scripts/reel.ts stills film.json --at 1.5,3       # stills at chosen seconds
 node ${CLAUDE_SKILL_DIR}/scripts/reel.ts qa film.json                      # determinism, layout, holds, freezes
 ```

@@ -150,7 +150,9 @@ registerScene('bar-chart', (ctx, scene) => {
     fontSize: `calc(var(--u) * ${VALUE_SIZE})`,
     fontWeight: '700',
   };
-  const widths = finals.map(t => measureWidth(el, t, 'rw-body', valStyle));
+  const widths = finals.map(t =>
+    measureWidth(el, t, 'rw-body rw-num', valStyle),
+  );
   const heading = s.heading ? ctx.text('h2', 'rw-h2', s.heading) : null;
   const note = s.note ? ctx.text('div', 'rw-small', s.note) : null;
   const chart = h('div', {
