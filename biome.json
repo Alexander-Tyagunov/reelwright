@@ -1,0 +1,64 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "plugin/**/*.ts",
+      "tests/**/*.ts",
+      "*.json",
+      "plugin/**/*.json"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "bracketSpacing": false,
+      "arrowParentheses": "asNeeded"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noDefaultExport": "error",
+        "useConst": "error",
+        "useImportType": "error",
+        "useExportType": "error",
+        "noNonNullAssertion": "error",
+        "noParameterProperties": "error",
+        "noNamespace": "error",
+        "noEnum": "error",
+        "useNamingConvention": {
+          "level": "error",
+          "options": { "strictCase": false }
+        },
+        "useBlockStatements": "error",
+        "useTemplate": "error",
+        "noInferrableTypes": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noVar": "error",
+        "noDoubleEquals": "error"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": { "maxAllowedComplexity": 15 }
+        }
+      },
+      "correctness": {
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error"
+      }
+    }
+  }
+}

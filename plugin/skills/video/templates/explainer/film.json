@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "title": "How feature flags work",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "brand": { "theme": "dark", "accent": "#5B8DEF", "accentInk": "#0B1220" },
+  "scenes": [
+    {
+      "type": "title",
+      "duration": 4,
+      "kicker": "Explained in a minute",
+      "title": "How do feature flags work?"
+    },
+    {
+      "type": "compare",
+      "duration": 8,
+      "heading": "Shipping and releasing are two decisions",
+      "left": {
+        "title": "Without flags",
+        "tone": "bad",
+        "items": [
+          "Deploy means everyone gets it",
+          "Rollback means a new deploy"
+        ]
+      },
+      "right": {
+        "title": "With flags",
+        "tone": "good",
+        "items": [
+          "Deploy code that is switched off",
+          "Switch it on for 1% of users, then more",
+          "Switch it off in seconds"
+        ]
+      }
+    },
+    {
+      "type": "flow",
+      "duration": 8.5,
+      "heading": "What happens on each request",
+      "steps": [
+        { "title": "Request", "detail": "user and context" },
+        { "title": "Evaluate rules", "detail": "in memory" },
+        { "title": "On or off", "detail": "per user" },
+        { "title": "Code path" }
+      ],
+      "active": 1
+    },
+    {
+      "type": "code",
+      "duration": 7.0,
+      "heading": "In code it is one branch",
+      "filename": "checkout.ts",
+      "lines": [
+        "const flags = await client.forUser(user)",
+        "",
+        { "text": "if (flags.enabled('new-checkout')) {", "highlight": true },
+        "  return renderNewCheckout(cart)",
+        "}",
+        "return renderCheckout(cart)"
+      ]
+    },
+    {
+      "type": "bullets",
+      "duration": 7,
+      "heading": "Three rules that keep flags safe",
+      "numbered": true,
+      "items": [
+        "Every flag has an owner and an end date",
+        "Default to off when the service is unreachable",
+        "Delete the flag once it is fully on"
+      ]
+    },
+    {
+      "type": "quote",
+      "duration": 6,
+      "quote": "Deploy when the code is ready. Release when the users are."
+    },
+    {
+      "type": "outro",
+      "duration": 3.5,
+      "title": "Feature flags in one minute",
+      "subtitle": "Deploy and release, separately",
+      "url": "docs.example/flags"
+    }
+  ]
+}

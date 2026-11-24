@@ -1,0 +1,24 @@
+{
+  "name": "reelwright-dev",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Development workspace for the Reelwright plugin. The installable plugin is the plugin/ folder.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.runtime.json",
+    "lint": "biome check .",
+    "fix": "biome check --write .",
+    "test": "node --test \"tests/unit/**/*.test.ts\"",
+    "test:e2e": "node --test --test-concurrency=1 \"tests/e2e/**/*.test.ts\"",
+    "check": "npm run typecheck && npm run lint && npm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.8",
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

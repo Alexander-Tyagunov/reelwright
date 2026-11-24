@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "title": "Acme 2.4 release",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "brand": { "theme": "dark", "accent": "#E8613C" },
+  "scenes": [
+    {
+      "type": "title",
+      "duration": 4.9,
+      "logo": "assets/logo.svg",
+      "kicker": "Acme 2.4",
+      "title": "Exports are three times faster",
+      "subtitle": "Plus scheduled reports and a workspace audit log"
+    },
+    {
+      "type": "metric",
+      "duration": 5,
+      "heading": "Exporting one million rows",
+      "items": [
+        { "label": "Acme 2.3", "value": 184, "suffix": " s" },
+        {
+          "label": "Acme 2.4",
+          "value": 58,
+          "suffix": " s",
+          "delta": "3.2x faster",
+          "good": true
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "duration": 5.5,
+      "src": "assets/exports.png",
+      "heading": "Large exports finish while you wait",
+      "callouts": [{ "x": 20, "y": 15, "w": 78, "h": 19 }]
+    },
+    {
+      "type": "changelog",
+      "duration": 8,
+      "heading": "Also in this release",
+      "items": [
+        {
+          "tag": "new",
+          "title": "Scheduled reports",
+          "detail": "Daily, weekly or on a cron expression"
+        },
+        {
+          "tag": "new",
+          "title": "Workspace audit log",
+          "detail": "Every change, searchable for 12 months"
+        },
+        { "tag": "improved", "title": "Charts load twice as fast" },
+        { "tag": "fixed", "title": "CSV dates keep their time zone" }
+      ]
+    },
+    {
+      "type": "outro",
+      "duration": 4,
+      "logo": "assets/logo.svg",
+      "title": "Acme 2.4 is available now",
+      "cta": "Read the release notes",
+      "url": "acme.example/changelog"
+    }
+  ]
+}

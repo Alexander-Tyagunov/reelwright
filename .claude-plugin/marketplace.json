@@ -1,0 +1,12 @@
+{
+  "name": "reelwright",
+  "owner": { "name": "Alex Tyagunov" },
+  "metadata": { "description": "Code-drawn video for Claude: release videos, explainers and animated metrics." },
+  "plugins": [
+    {
+      "name": "reelwright",
+      "source": "./plugin",
+      "description": "Release videos, explainers and animated metrics from code, with a measured quality gate and model-tiered agents."
+    }
+  ]
+}

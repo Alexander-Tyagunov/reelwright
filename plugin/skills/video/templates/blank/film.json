@@ -1,0 +1,23 @@
+{
+  "meta": { "title": "My film", "width": 1920, "height": 1080, "fps": 30 },
+  "brand": { "theme": "dark" },
+  "scenes": [
+    {
+      "type": "title",
+      "duration": 5,
+      "kicker": "Edit me",
+      "title": "A new Reelwright film",
+      "subtitle": "Change this text in film.json, then run preview"
+    },
+    {
+      "type": "bullets",
+      "duration": 5.6,
+      "heading": "Three things to know",
+      "items": [
+        "Every scene is a block of JSON",
+        "Frames are drawn from code, so they are exact",
+        "Run render when it looks right"
+      ]
+    }
+  ]
+}

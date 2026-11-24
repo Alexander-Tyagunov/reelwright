@@ -1,0 +1,36 @@
+{
+  "subject": "Acme 2.4 release (sample content: replace with your own)",
+  "sources": ["CHANGELOG.md"],
+  "items": [
+    {
+      "kind": "improved",
+      "title": "Streaming export engine",
+      "detail": "Exports of 1M rows take 58 s, down from 184 s",
+      "value": 58,
+      "unit": "s",
+      "source": "CHANGELOG.md: 2.4.0, Performance"
+    },
+    {
+      "kind": "new",
+      "title": "Scheduled reports",
+      "detail": "Daily, weekly or on a cron expression",
+      "source": "CHANGELOG.md: 2.4.0, Added"
+    },
+    {
+      "kind": "new",
+      "title": "Workspace audit log",
+      "detail": "Every change, searchable for 12 months",
+      "source": "CHANGELOG.md: 2.4.0, Added"
+    },
+    {
+      "kind": "improved",
+      "title": "Charts load twice as fast",
+      "source": "CHANGELOG.md: 2.4.0, Performance"
+    },
+    {
+      "kind": "fixed",
+      "title": "CSV dates keep their time zone",
+      "source": "CHANGELOG.md: 2.4.0, Fixed"
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+/**
+ * @fileoverview `stills`: draws full-size stills and one contact sheet.
+ * By default it draws each scene at the moment it has the most on screen.
+ */
+import {mkdirSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import type {FilmPage} from '../browser/film.ts';
+import {frameAt, openFilm, pageErrors} from '../browser/film.ts';
+import type {Args} from '../core/args.ts';
+import {boolFlag, numberFlag, stringFlag} from '../core/args.ts';
+import {UserError} from '../core/errors.ts';
+import type {FilmInfo} from '../shared/contract.ts';
+import type {SheetGrid} from '../video/contact-sheet.ts';
+import {makeContactSheet} from '../video/contact-sheet.ts';
+
+/** One still to draw. */
+interface Shot {
+  /** Time in seconds from the start of the film. */
+  t: number;
+  /** File name without extension. */
+  name: string;
+}
+
+function timeName(t: number): string {
+  return `t${t.toFixed(2)}`;
+}
+
+/** Reads `--at 1.5,3` into times in seconds. */
+function parseAt(text: string): number[] {
+  return text.split(',').map(part => {
+    const t = Number(part);
+    if (part.trim() === '' || !Number.isFinite(t)) {
+      throw new UserError(
+        '--at must be a comma-separated list of times in seconds, ' +
+          `e.g. --at 1.5,3; got "${text}"`,
+      );
+    }
+    return t;
+  });
+}
+
+/** Chooses the stills from `--at`, `--every`, or the scene check times. */
+function planShots(args: Args, info: FilmInfo): Shot[] {
+  const seconds = 'a number of seconds';
+  const from = numberFlag(args, 'from', seconds);
+  const to = numberFlag(args, 'to', seconds);
+  const every = numberFlag(args, 'every', seconds);
+  const at = stringFlag(args, 'at');
+  if (every !== undefined) {
+    if (!(every > 0)) {
+      throw new UserError(
+        '--every must be a number greater than 0 ' +
+          `(seconds between stills), got "${every}"`,
+      );
+    }
+    const shots: Shot[] = [];
+    const end = to ?? info.duration;
+    for (let t = from ?? 0; t < end - 1e-9; t += every) {
+      shots.push({t: Number(t.toFixed(3)), name: timeName(t)});
+    }
+    return shots;
+  }
+  if (at !== undefined) {
+    return parseAt(at).map(t => ({t, name: timeName(t)}));
+  }
+  return info.scenes.map(s => ({
+    t: s.check,
+    name: `${String(s.index + 1).padStart(2, '0')}-${s.type}`,
+  }));
+}
+
+/** Draws each shot, saves it as a JPEG and returns the encoded frames. */
+async function drawShots(
+  page: FilmPage,
+  shots: Shot[],
+  info: FilmInfo,
+  dir: string,
+): Promise<Buffer[]> {
+  rmSync(dir, {recursive: true, force: true});
+  mkdirSync(dir, {recursive: true});
+  const frames: Buffer[] = [];
+  for (const s of shots) {
+    if (!(s.t >= 0 && s.t <= info.duration)) {
+      throw new UserError(
+        `still time ${s.t}s is outside the film (0 to ${info.duration}s)`,
+      );
+    }
+    const buf = await frameAt(page, s.t);
+    writeFileSync(join(dir, `${s.name}.jpg`), buf);
+    frames.push(buf);
+  }
+  return frames;
+}
+
+function printReport(
+  info: FilmInfo,
+  shots: Shot[],
+  dir: string,
+  sheet: string,
+  grid: SheetGrid,
+): void {
+  const clock = `${info.fps} fps, ${info.duration}s`;
+  console.log(
+    `film: ${info.width}x${info.height} ${clock}, ${info.scenes.length} scenes`,
+  );
+  console.log(`stills: ${dir} (${readdirSync(dir).length} files)`);
+  shots.forEach((s, i) => {
+    const row = String(i + 1).padStart(2);
+    console.log(`  ${row}  ${s.t.toFixed(2)}s  ${join(dir, `${s.name}.jpg`)}`);
+  });
+  console.log(
+    `contact sheet: ${sheet} (${grid.cols}x${grid.rows}, ` +
+      'reading order = the list above)',
+  );
+  if (info.missingFonts.length) {
+    const names = info.missingFonts.join(', ');
+    console.log(`warning: fonts not available, a fallback is drawn: ${names}`);
+  }
+}
+
+/**
+ * Draws the stills into `out/stills[-WxH]/` and a contact sheet into
+ * `out/contact[-WxH].jpg`, next to the spec.
+ *
+ * @param args `stills film.json [--at 1.5,3 | --every S [--from S] [--to S]]
+ *   [--size WxH] [--gpu]`. Times are in seconds.
+ * @returns 0, or 1 when the page reported errors.
+ * @throws UserError for a bad option or a time outside the film.
+ */
+export async function run(args: Args): Promise<number> {
+  const size = stringFlag(args, 'size');
+  const film = await openFilm(args.positional[0], {
+    size,
+    gpu: boolFlag(args, 'gpu'),
+  });
+  try {
+    const {info, page, spec} = film;
+    const suffix = size ? `-${size}` : '';
+    const dir = join(spec.dir, 'out', `stills${suffix}`);
+    const shots = planShots(args, info);
+    const frames = await drawShots(page, shots, info, dir);
+    const sheet = join(spec.dir, 'out', `contact${suffix}.jpg`);
+    const grid = await makeContactSheet(frames, sheet, film);
+    printReport(info, shots, dir, sheet, grid);
+    const errors = await pageErrors(page);
+    if (errors.length) {
+      console.log(`page errors:\n  ${errors.join('\n  ')}`);
+      return 1;
+    }
+    return 0;
+  } finally {
+    await film.close();
+  }
+}

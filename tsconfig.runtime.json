@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": []
+  },
+  "include": [
+    "plugin/skills/video/scripts/runtime/**/*.ts",
+    "plugin/skills/video/scripts/shared/**/*.ts"
+  ],
+  "exclude": []
+}

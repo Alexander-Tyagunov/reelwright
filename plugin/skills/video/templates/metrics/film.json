@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "title": "Q3 growth update",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "brand": { "theme": "light" },
+  "scenes": [
+    {
+      "type": "title",
+      "duration": 3.8,
+      "kicker": "Q3 2026",
+      "title": "Growth update",
+      "subtitle": "July to September, all regions"
+    },
+    {
+      "type": "metric",
+      "duration": 5.5,
+      "items": [
+        {
+          "label": "Active teams",
+          "value": 12480,
+          "delta": "+18% vs Q2",
+          "good": true
+        },
+        {
+          "label": "Net revenue retention",
+          "value": 117,
+          "suffix": "%",
+          "delta": "+4 pts",
+          "good": true
+        },
+        {
+          "label": "Median response time",
+          "value": 310,
+          "suffix": " ms",
+          "delta": "-62%",
+          "good": true
+        }
+      ]
+    },
+    {
+      "type": "line-chart",
+      "duration": 7,
+      "heading": "Weekly signups doubled after the July redesign",
+      "labels": ["Apr", "May", "Jun", "Jul", "Aug", "Sep"],
+      "series": [
+        { "name": "Signups", "values": [410, 432, 455, 610, 790, 905] }
+      ]
+    },
+    {
+      "type": "bar-chart",
+      "duration": 6.2,
+      "heading": "EMEA added the most new teams",
+      "data": [
+        { "label": "EMEA", "value": 820, "highlight": true },
+        { "label": "Americas", "value": 640 },
+        { "label": "APAC", "value": 410 },
+        { "label": "Other", "value": 55 }
+      ]
+    },
+    {
+      "type": "bullets",
+      "duration": 6.5,
+      "heading": "What we do next",
+      "items": [
+        "Bring the new onboarding to mobile",
+        "Open a second EMEA region",
+        "Hold response time under 350 ms"
+      ]
+    }
+  ]
+}
