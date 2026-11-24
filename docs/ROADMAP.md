@@ -282,14 +282,39 @@ To bring the paused branch into the repository on the Mac:
    `plugin/skills/video/references/scene-api.md`; the process is the nine steps of the `film` skill.
 5. Attach sound, run the gates, show the range test and both films, and get the decision on stage 2.
 
+## Decisions made by the owner (24 November 2026)
+
+- **Blender plus code comes first.** It is the primary way to make a film; generated imagery is secondary. The
+  owner will start Blender on the Mac; it must be running with its MCP add-on server for the session to reach it.
+- **Blender may be driven** for scene building and renders.
+- **Generation services: Google only, through the owner's own Google Cloud project** on the Gemini Enterprise
+  Agent Platform (the renamed Vertex AI). No aggregator, no other provider.
+- **Budget: $1 to $5 of external spend per 30 to 90 second film.** Blender and code cost nothing external, so
+  they carry the film. Generated footage is an accent of a few shots, not the body.
+
+What the Google research found, read from Google's documentation and price list on 24 November 2026:
+
+| Use | Model ID | Price | Notes |
+|---|---|---|---|
+| Video | `gemini-omni-1.2-flash` (GA 5 Nov 2026) | Billed in tokens: 1,931 / 5,792 / 8,688 / 17,376 per second at 360p / 720p / 1080p / 4K. Secondary sources give $12 per million, about $0.07/s at 720p; Google's page showed only the 1.1 rate of $17.50 | Interactions API at `locations/global`. 3 to 15 s. Text, image, first and last frame, references, extend, edit. Named by Google as the replacement for Veo 3.1 |
+| Video, cheapest | `veo-3.1-lite-generate-001` (preview) | $0.03/s at 720p, $0.05/s at 1080p, without audio | `predictLongRunning` in `us-central1`. 4, 6 or 8 s |
+| Images | `gemini-nano-banana-2.1`, `gemini-3.1-flash-lite-image` | About $0.034 per 1K image; batch is half | Imagen was retired on 30 June 2026 |
+| Images, best | `gemini-3-pro-image` | $0.134 per 1K or 2K image | For hero frames only at this budget |
+| Music | Lyria 3, Lyria 3 Pro | $0.04 per 30 s clip, $0.08 per full song | An alternative to the synthesised bed |
+| Watching the film | Gemini 4 family (`gemini-4-argon` GA; `-carbon`, `-hydrogen`, `-neon` short-term availability) | Token-priced reasoning models | They do not generate media. They accept video and audio as input, so one could review a finished film at speed. To be verified |
+
+There is no Veo 4. What $5 buys at these prices: about 70 s of Omni footage at 720p, or about 165 s of silent
+Veo Lite at 720p, before retakes. With three takes per shot that is roughly 20 to 55 s of usable footage, which
+is why generated shots stay an accent.
+
+Calls to Google must run where the owner's `gcloud` credentials are, which is the Mac, not the cloud session.
+The engine needs a project ID and a Cloud Storage bucket for video output.
+
 ## Decisions still open for the owner
 
 - Whether the two test films clear the bar. Everything in stage 2 depends on it.
 - Whether a creative film should stop for approval at the treatment and style frames by default, or run through.
 - Whether a keyed voice service is acceptable for narration later, or local voices only.
-- Which generation services, if any, may be used for images and footage. They cost money per shot and send the
-  prompt and reference frames to the provider. Without one, painted and photoreal looks rest on Blender and on
-  what can be drawn in code.
-- Whether Blender on the Mac may be driven for renders, and whether long renders there are acceptable.
-- A budget per film in time and money, so the director can choose a medium inside it.
+- Whether long Blender renders on the Mac are acceptable, and a time budget per film.
+- The Google Cloud project ID and bucket to use, when generated shots are wanted.
 - The author name in `plugin.json`, `marketplace.json` and `LICENSE`. It is set to "Alex Tyagunov".
