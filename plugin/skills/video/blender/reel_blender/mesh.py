@@ -118,6 +118,18 @@ def new_object(name, part, collection=None, material=None, smooth=False, fix_nor
     return ob
 
 
+def card(name, poly_xy, thickness, collection=None, face_material=None, edge_material=None, z0=0.0):
+    """A sheet of card cut to a counter-clockwise polygon [(x, y)], lying in XY, `thickness` metres up from z0.
+
+    Slot 0 (face_material) is on the two faces, slot 1 (edge_material) on the cut edge, where real card shows
+    its core. Stand it up with rotation_euler = (pi / 2, 0, 0): local Y becomes up, the front face looks at -Y."""
+    ob = new_object(name, prism(poly_xy, z0, z0 + thickness), collection, face_material)
+    if edge_material is not None:
+        ob.data.materials.append(edge_material)
+        ob.data.polygons.foreach_set("material_index", [0, 0] + [1] * len(poly_xy))
+    return ob
+
+
 def set_point_attribute(mesh, name, values):
     """Store one float per vertex as attribute `name` (read it with an Attribute node)."""
     attr = mesh.attributes.get(name) or mesh.attributes.new(name, "FLOAT", "POINT")

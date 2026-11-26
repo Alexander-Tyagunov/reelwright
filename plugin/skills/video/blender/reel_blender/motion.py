@@ -94,11 +94,14 @@ def _catmull(p0, p1, p2, p3, t):
 class Path:
     """Smooth path through control points (2D or 3D, metres), addressed by arc length s.
 
+    eps: tangents are measured over a chord of +-eps metres (0.08 suits a set tens of metres across; pass
+    about 1% of the path length for a table-top set, or headings are averaged over the whole curve).
     at(s) position; tangent(s) unit direction; heading(s) yaw about Z in radians;
     left(s) unit vector to the left of travel in the XY plane; offset(s, lateral, dz).
     """
 
-    def __init__(self, points, samples_per_span=24):
+    def __init__(self, points, samples_per_span=24, eps=0.08):
+        self.eps = eps  # half-length (m) of the chord that tangent() and heading() measure; scale it with the set
         pts = [tuple(float(c) for c in p) + (0.0,) * (3 - len(p)) for p in points]
         n = len(pts)
         dense, self._ctrl = [], []
@@ -125,7 +128,8 @@ class Path:
         t = (s - self._cum[j]) / seg if seg > 1e-12 else 0.0
         return lerp3(self._pts[j], self._pts[j + 1], t)
 
-    def tangent(self, s, eps=0.08):
+    def tangent(self, s, eps=None):
+        eps = self.eps if eps is None else eps
         a, b = self.at(s - eps), self.at(s + eps)
         return _norm((b[0] - a[0], b[1] - a[1], b[2] - a[2]))
 

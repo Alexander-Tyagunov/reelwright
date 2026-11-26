@@ -57,3 +57,23 @@ def set_dof(cam, focus_object=None, distance=None, fstop=2.8):
         dof.focus_distance = distance
     dof.aperture_fstop = fstop
     return dof
+
+
+def lens_character(cam, blades=7, rotation=0.3, ratio=1.0):
+    """Give the out-of-focus highlights the shape of a real iris: blade count, rotation (radians), and
+    ratio (1 = round lens, 2 = anamorphic ovals)."""
+    dof = cam.data.dof
+    dof.aperture_blades, dof.aperture_rotation, dof.aperture_ratio = int(blades), rotation, ratio
+    return dof
+
+
+def slider(obj, frames, start, end, progress, jitter=None):
+    """Stop-motion camera (or target) on a slider: at frames[i] it stands at start + (end - start) * progress[i]
+    plus jitter[i][:3] (metres), and stays there until the next frame (constant keys, no glide).
+    progress: e.g. craft.hand_slide(); jitter: e.g. craft.pose_jitter(). Returns the positions."""
+    pos = []
+    for i in range(len(frames)):
+        j = jitter[i] if jitter else (0.0, 0.0, 0.0)
+        pos.append(tuple(start[k] + (end[k] - start[k]) * progress[i] + j[k] for k in range(3)))
+    anim.bake_vec(obj, "location", frames, pos, "CONSTANT")
+    return pos

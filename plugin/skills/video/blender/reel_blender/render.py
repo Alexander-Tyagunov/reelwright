@@ -16,6 +16,10 @@ PRESETS = {
     "draft": dict(engine="EEVEE", scale=50, samples=20, raytracing=True, rt_resolution="2", shadow_rays=1, shadow_steps=6, dof_jitter=True),
     "final": dict(engine="EEVEE", scale=100, samples=40, raytracing=True, rt_resolution="2", shadow_rays=2, shadow_steps=6, dof_jitter=True),
     "cycles_still": dict(engine="CYCLES", scale=100, samples=96, denoise=True),
+    # Cycles on the Metal GPU: physical soft shadows, light through paper, bounce. noise: adaptive sampling threshold.
+    "cycles_preview": dict(engine="CYCLES", scale=50, samples=24, denoise=True, noise=0.1, bounces=4, diffuse=2),
+    "cycles_final": dict(engine="CYCLES", scale=100, samples=96, denoise=True, noise=0.03, bounces=6, diffuse=3,
+                         persistent=True),
 }
 
 
@@ -40,10 +44,33 @@ def apply_preset(scene, name, **overrides):
             bpy.context.preferences.addons["cycles"].preferences.compute_device_type = "METAL"
         except Exception:
             skipped.append("compute_device_type")
+        try:
+            cp = bpy.context.preferences.addons["cycles"].preferences
+            cp.get_devices()
+            if not any(d.use for d in cp.devices if d.type == "METAL"):
+                for d in cp.devices:
+                    d.use = d.type == "METAL"
+        except Exception:
+            skipped.append("devices")
         c = scene.cycles
         put(c, "device", "GPU")
         put(c, "samples", p["samples"])
+        put(c, "use_adaptive_sampling", p.get("noise") is not None)
+        put(c, "adaptive_threshold", p.get("noise") or 0.01)
         put(c, "use_denoising", p.get("denoise", True))
+        put(c, "denoiser", "OPENIMAGEDENOISE")
+        put(c, "denoising_use_gpu", True)
+        put(c, "max_bounces", p.get("bounces", 6))
+        put(c, "diffuse_bounces", p.get("diffuse", 3))
+        put(c, "glossy_bounces", 2)
+        put(c, "transmission_bounces", 4)
+        put(c, "transparent_max_bounces", 8)
+        put(c, "volume_bounces", 0)
+        put(c, "caustics_reflective", False)
+        put(c, "caustics_refractive", False)
+        put(c, "sample_clamp_indirect", p.get("clamp", 6.0))
+        put(c, "use_animated_seed", True)
+        put(r, "use_persistent_data", bool(p.get("persistent", False)))
     else:
         for eid in ("BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
             try:
@@ -81,9 +108,11 @@ def set_output(scene, path, quality=95):
     scene.render.filepath = path
 
 
-def render_still(scene, path, frame=None, preset="preview", quality=90, **overrides):
-    """Render one frame to `path` in the foreground. Keep it short: preview-size Eevee only.
+def render_still(scene, path, frame=None, preset="preview", quality=90, develop=None, **overrides):
+    """Render one frame to `path` in the foreground. Keep it short: preview size only.
 
+    develop: dict of photo.develop() amounts (grain, vignette, fringe, flicker); the frame is rendered to a
+    PNG beside `path`, developed with the frame number as seed, and written as JPEG.
     Returns dict(path, seconds, frame).
     """
     if preset:
@@ -91,9 +120,17 @@ def render_still(scene, path, frame=None, preset="preview", quality=90, **overri
     if frame is not None:
         scene.frame_set(int(frame))
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    set_output(scene, path, quality)
     t = time.time()
-    bpy.ops.render.render(write_still=True)
+    if develop is not None:
+        from . import photo
+        raw = os.path.splitext(path)[0] + "_raw.png"
+        set_output(scene, raw)
+        bpy.ops.render.render(write_still=True)
+        photo.develop(raw, path, seed=scene.frame_current, quality=quality, **develop)
+        os.remove(raw)
+    else:
+        set_output(scene, path, quality)
+        bpy.ops.render.render(write_still=True)
     return {"path": path, "seconds": round(time.time() - t, 2), "frame": scene.frame_current}
 
 
@@ -126,7 +163,7 @@ def contact_sheet(paths, out_path, cols=3):
     return out_path
 
 
-def render_strip(scene, frames, out_path, preset="preview", cols=3, **overrides):
+def render_strip(scene, frames, out_path, preset="preview", cols=3, develop=None, **overrides):
     """Render several frames small and tile them into one image: one look for a whole action.
 
     Returns dict(path, seconds_per_frame). Keep frames * seconds under a minute.
@@ -134,7 +171,7 @@ def render_strip(scene, frames, out_path, preset="preview", cols=3, **overrides)
     tmp = os.path.join(os.path.dirname(out_path), "_strip")
     paths, secs = [], []
     for f in frames:
-        r = render_still(scene, os.path.join(tmp, "f%04d.jpg" % f), frame=f, preset=preset, **overrides)
+        r = render_still(scene, os.path.join(tmp, "f%04d.jpg" % f), frame=f, preset=preset, develop=develop, **overrides)
         paths.append(r["path"])
         secs.append(r["seconds"])
     contact_sheet(paths, out_path, cols=cols)

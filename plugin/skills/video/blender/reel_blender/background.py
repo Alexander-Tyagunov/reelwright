@@ -13,11 +13,14 @@ import bpy
 
 def render_background(blend_path, out_dir, frame_start, frame_end, preset="final", overrides=None,
                       first=1, frame_pattern="frames/%04d.jpg", quality=95, resume=False,
-                      progress_path=None, log_path=None):
+                      progress_path=None, log_path=None, frames=None, develop=None, sheet=None, sheet_cols=3):
     """Start `blender --background <blend> --python _bg_worker.py` for scene frames frame_start..frame_end.
 
     Writes out_dir/<frame_pattern % n> with n = first + (frame - frame_start), JPEG `quality` (or PNG by
     extension). preset / overrides: see render.apply_preset. resume=True skips frames already on disk.
+    frames: explicit list of scene frames instead of the whole range (file number = first + frame - frame_start).
+    develop: dict for photo.develop() applied to every frame (seed = frame number). sheet: path of a contact
+    sheet of all frames written at the end (`sheet_cols` across): one look for a background preview.
     The .blend must be saved first: the worker reads the file, not the live session.
     Returns dict(pid, progress, log, total, dirty) immediately.
     """
@@ -30,13 +33,14 @@ def render_background(blend_path, out_dir, frame_start, frame_end, preset="final
         "out_dir": out_dir, "frame_start": int(frame_start), "frame_end": int(frame_end),
         "preset": preset, "overrides": overrides or {}, "first": int(first),
         "frame_pattern": frame_pattern, "quality": int(quality), "resume": bool(resume),
-        "progress": progress_path,
+        "progress": progress_path, "frames": [int(f) for f in frames] if frames else None,
+        "develop": develop, "sheet": sheet, "sheet_cols": int(sheet_cols),
     }
     job_path = os.path.join(out_dir, "render_job.json")
     with open(job_path, "w") as fh:
         json.dump(job, fh, indent=1)
     with open(progress_path, "w") as fh:
-        json.dump({"state": "starting", "done": 0, "total": job["frame_end"] - job["frame_start"] + 1,
+        json.dump({"state": "starting", "done": 0, "total": len(frames) if frames else job["frame_end"] - job["frame_start"] + 1,
                    "started": time.time()}, fh)
     worker = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_bg_worker.py")
     cmd = [bpy.app.binary_path, "--background", blend_path, "--python", worker, "--", job_path]
@@ -44,7 +48,7 @@ def render_background(blend_path, out_dir, frame_start, frame_end, preset="final
     proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                             start_new_session=True)
     return {"pid": proc.pid, "progress": progress_path, "log": log_path,
-            "total": job["frame_end"] - job["frame_start"] + 1,
+            "total": len(frames) if frames else job["frame_end"] - job["frame_start"] + 1,
             "dirty": bool(bpy.data.is_dirty), "blend": blend_path}
 
 

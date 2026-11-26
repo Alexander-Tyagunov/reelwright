@@ -75,9 +75,10 @@ def key(idb, data_path, keys, index=0, interpolation="BEZIER", easing="AUTO", ha
     return out
 
 
-def bake_vertices(mesh, frames, positions):
-    """Animate mesh vertices: positions[i][v] = (x, y, z) of vertex v at frames[i] (object space, m)."""
+def bake_vertices(mesh, frames, positions, interpolation="LINEAR"):
+    """Animate mesh vertices: positions[i][v] = (x, y, z) of vertex v at frames[i] (object space, m).
+    interpolation="CONSTANT" holds every pose (stop motion)."""
     for v in range(len(positions[0])):
         path = "vertices[%d].co" % v
         for idx in range(3):
-            bake(mesh, path, frames, [p[v][idx] for p in positions], idx)
+            bake(mesh, path, frames, [p[v][idx] for p in positions], idx, interpolation)
