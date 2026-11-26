@@ -17,7 +17,10 @@ function scenesWith(output: string, verb: 'rendered' | 'reused'): number[] {
     `scene\\s+(\\d+)\\s+\\S+\\s+\\d+ frames ${verb}`,
     'g',
   );
-  return [...output.matchAll(pattern)].map(m => Number(m[1]));
+  // Two workers draw scenes at once, so the lines arrive in any order.
+  return [...output.matchAll(pattern)]
+    .map(m => Number(m[1]))
+    .sort((a, b) => a - b);
 }
 
 describe('render cache', {skip: missingTools(), timeout: 900_000}, () => {

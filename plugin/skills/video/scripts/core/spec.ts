@@ -3,6 +3,8 @@
  */
 import {existsSync, readFileSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
+import {sceneCues} from '../audio/scene-cues.ts';
+import {resolveSound} from '../audio/sound-spec.ts';
 import type {FilmSpec} from '../shared/contract.ts';
 import {UserError} from './errors.ts';
 import {checkFps, checkSide} from './validate.ts';
@@ -52,7 +54,10 @@ export function loadSpec(path: string | undefined): LoadedSpec {
   return {abs, dir: dirname(abs), film: film as FilmSpec};
 }
 
-/** Checks `meta.width`, `meta.height` and `meta.fps` when they are set. */
+/**
+ * Checks `meta.width`, `meta.height`, `meta.fps` and `meta.sound` when they
+ * are set, and the `cues` of every scene.
+ */
 function checkMeta(film: FilmSpec): void {
   const meta: Record<string, unknown> = {...film.meta};
   if (meta.width !== undefined) {
@@ -63,6 +68,10 @@ function checkMeta(film: FilmSpec): void {
   }
   if (meta.fps !== undefined) {
     checkFps('meta.fps', meta.fps);
+  }
+  resolveSound(meta.sound);
+  for (const [i, scene] of (film.scenes ?? []).entries()) {
+    sceneCues(scene, i);
   }
 }
 

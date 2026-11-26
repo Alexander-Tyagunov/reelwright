@@ -140,7 +140,7 @@ follow: "both" (default) | "x" (the box keeps one height, just clear of the poin
 variant: "tag" (default, small panel behind the text) | "plain" (text with a soft shadow only).
 A label is hidden while its point is not visible, and is kept inside the safe area (the leader stretches).
 texts?: [{ text, class?, x, y, from?, to?, align? }]  free overlays. class is a type class (default "rw-body"). x and y are u from the top left, or "center". align: "left" (default) | "center" | "right" sets which edge x names.
-cues?: reserved for sound cues; ignored.
+cues?: sound cues at scene seconds, like on any scene: [{ at, kind: "tick"|"pop"|"whoosh"|"rise"|"chime"|"hit"|"boom"|"sting", gain?, duration? }]. They play only when meta.sound is on and change no pixel.
 ```
 
 ## `quote`

@@ -11,6 +11,7 @@ import {frameAt, openFilm, pageErrors} from '../browser/film.ts';
 import type {Args} from '../core/args.ts';
 import {boolFlag, numberFlag, stringFlag} from '../core/args.ts';
 import {UserError} from '../core/errors.ts';
+import {outputsOf} from '../core/outputs.ts';
 import type {FilmInfo} from '../shared/contract.ts';
 import type {SheetGrid} from '../video/contact-sheet.ts';
 import {makeContactSheet} from '../video/contact-sheet.ts';
@@ -159,7 +160,8 @@ function printReport(
 
 /**
  * Draws one still per scene into `out/stills[-WxH]/` with the contact sheet
- * `out/contact[-WxH].jpg`, next to the spec. With `--at` or `--every` the
+ * `out/contact[-WxH].jpg`, next to the spec; a spec not called `film.json`
+ * prefixes every name with its own, as in `out/film-desk.stills/`. With `--at` or `--every` the
  * stills go to `out/strip[-WxH]/` and the sheet to `out/strip[-WxH].jpg`.
  *
  * @param args `stills film.json [--at 1.5,3 | --every S [--from S] [--to S]]
@@ -178,10 +180,10 @@ export async function run(args: Args): Promise<number> {
     const suffix = size ? `-${size}` : '';
     const {shots, kind} = planShots(args, info);
     checkShots(shots, info);
-    const dir = join(spec.dir, 'out', `${kind}${suffix}`);
+    const names = outputsOf(spec.abs, spec.dir);
+    const dir = names.stills(kind, suffix);
     const frames = await drawShots(page, shots, dir);
-    const sheetName = kind === 'strip' ? 'strip' : 'contact';
-    const sheet = join(spec.dir, 'out', `${sheetName}${suffix}.jpg`);
+    const sheet = names.sheet(kind, suffix);
     const grid = await makeContactSheet(frames, sheet, film);
     printReport(info, shots, dir, sheet, grid);
     const errors = await pageErrors(page);

@@ -9,6 +9,59 @@ export type Aspect = 'landscape' | 'square' | 'portrait';
 /** How one scene hands over to the next. */
 export type TransitionKind = 'fade' | 'slide' | 'cut';
 
+/** Kinds of sound cue, for the scene `cues` field and `sound.json`. */
+export type CueKind =
+  | 'tick'
+  | 'whoosh'
+  | 'rise'
+  | 'chime'
+  | 'hit'
+  | 'boom'
+  | 'pop'
+  | 'sting';
+
+/** One explicit sound cue inside a scene, in the scene's own time. */
+export interface SceneCue {
+  /** Seconds from the start of the scene, 0 to the scene's duration. */
+  at: number;
+  kind: CueKind;
+  /** Loudness of this cue from 0 to 1. Default 1. */
+  gain?: number;
+  /** Seconds a `rise` builds before it ends. Default 2. Only for `rise`. */
+  duration?: number;
+}
+
+/** One point of the sound intensity curve. */
+export interface IntensityPoint {
+  /** Film time in seconds. */
+  at: number;
+  /** Bed density and level from 0 (quiet and sparse) to 1 (full). */
+  value: number;
+}
+
+/** The detailed form of `meta.sound`. All fields are optional. */
+export interface SoundSpec {
+  /** Palette name: calm, bright, tense, minimal, epic or storybook. */
+  palette?: string;
+  /** Play the background pad and pulse. Default true. */
+  bed?: boolean;
+  /** Play cues timed to the picture. Default true. */
+  cues?: boolean;
+  /** Level from 0 to 1 relative to -14 LUFS. Default 1. */
+  volume?: number;
+  /** Integer seed. The same seed gives the same sound. Default 0. */
+  seed?: number;
+  /** Root note of the key, such as `C`, `F#` or `Bb`. Palette default. */
+  key?: string;
+  /** Beats per minute from 30 to 200. Palette default. */
+  tempo?: number;
+  /**
+   * Bed density and level from 0 to 1, or points in film time with linear
+   * steps between them. Default 0.75.
+   */
+  intensity?: number | IntensityPoint[];
+}
+
 /** The `meta` block of a film spec. All fields are optional. */
 export interface FilmMeta {
   /** Name of the film, used in reports. */
@@ -41,6 +94,11 @@ export interface FilmMeta {
   watermark?: string;
   /** Seed for the per-scene random generator. Default 0. */
   seed?: number;
+  /**
+   * Generated background sound. `false` or absent: silent. `true`: palette
+   * `calm` with bed and cues. An object sets the details.
+   */
+  sound?: boolean | SoundSpec;
 }
 
 /** A font file that belongs to the project. */
@@ -83,6 +141,8 @@ export interface SceneSpec {
   duration: number;
   /** Optional name used in reports. */
   id?: string;
+  /** Explicit sound cues for scenes whose motion the tool cannot see. */
+  cues?: SceneCue[];
   [field: string]: unknown;
 }
 

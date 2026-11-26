@@ -71,7 +71,7 @@ enough before the plugin is changed.
 
 Remaining steps:
 
-1. Finish generated sound in the engine (see "Paused work").
+1. Generated sound in the engine: finished (see "Paused work").
 2. Re-open the look of both films before building. Their stories stand; their look does not, because both
    agents landed on the same printed, limited-ink style. Run the variety procedure below on each and require
    the two films to use different media.
@@ -219,19 +219,7 @@ once a service is chosen. These are rough; the range test in stage 1 will correc
 
 ### Generated background sound
 
-Branch `wip/generated-sound`, commit `84ff410`. **Unfinished and unverified.**
-
-- Present: a pure-TypeScript synthesiser under `plugin/skills/video/scripts/audio/` (oscillators, envelopes,
-  filters, noise, reverb, limiter, WAV writer, seeded random, scales and chords, a bed, cue sounds, palettes), a
-  `sound` command, and edits to render, export, the audio gate, the spec loader and the contract.
-- Verified: `npm run typecheck` passes. Nothing else.
-- Missing: unit and end-to-end tests, lint, measurement of loudness and peak, docs, changelog.
-- Intended design: `meta.sound` is `false`, `true` or `{ palette, bed, cues, volume, seed, key, tempo, intensity }`.
-  Six palettes: `calm`, `bright`, `tense`, `minimal`, `epic`, `storybook`. Cues are derived from scene
-  transitions and text settle times, and a scene can list its own: `tick`, `whoosh`, `rise`, `chime`, `hit`,
-  `boom`, `pop`, `sting`. `reel render` attaches the track without re-encoding the video; `--no-sound` skips it.
-  The finished track sits at -14 LUFS, true peak at or below -1 dBTP. Same spec, same samples.
-- It is sound design, not composed music. Whether it is good enough has to be heard.
+Finished: merged onto `master` (synthesiser in `scripts/audio/`, `reel sound`, render and export wiring, audio gate, tests, docs); whether it sounds good still has to be heard.
 
 ### The two films
 
@@ -276,7 +264,7 @@ To bring the paused branch into the repository on the Mac:
 ## To resume
 
 1. Read this file and the two `treatment.md` files.
-2. `git switch wip/generated-sound`, finish and verify the sound work, then merge to `master`.
+2. The sound work is already on `master`; the branch `wip/generated-sound` is no longer needed.
 3. Run the variety procedure on both films and do the range test (stage 1, steps 2 and 3).
 4. Build each film from its treatment in the medium chosen. The engine rules a build agent must be told are in
    `plugin/skills/video/references/scene-api.md`; the process is the nine steps of the `film` skill.

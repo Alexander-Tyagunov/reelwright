@@ -1,21 +1,23 @@
 /**
  * @fileoverview `render`: draws the film to an MP4, one file per scene,
  * joined without re-encoding. Unchanged scenes are reused from the cache in
- * `out/.segments/`.
+ * `out/.segments/`, or `out/.<spec name>.segments/` for another spec name.
  */
 import {existsSync, mkdirSync} from 'node:fs';
 import {cpus} from 'node:os';
-import {dirname, join, resolve} from 'node:path';
+import {dirname, resolve} from 'node:path';
 import type {FilmPage, OpenFilm} from '../browser/film.ts';
 import {openFilm, pageErrors} from '../browser/film.ts';
 import type {Args} from '../core/args.ts';
 import {boolFlag, numberFlag, stringFlag} from '../core/args.ts';
 import {UserError} from '../core/errors.ts';
+import {outputsOf} from '../core/outputs.ts';
 import {checkFps, checkRange} from '../core/validate.ts';
 import {drawSegments} from './render/draw.ts';
 import {joinSegments} from './render/join.ts';
 import type {RenderSettings, Segment} from './render/plan.ts';
 import {outputSize, planSegments} from './render/plan.ts';
+import {soundForRender} from './render/sound.ts';
 import {writeSummary} from './render/summary.ts';
 
 const DEFAULT_JOBS = 2;
@@ -75,10 +77,9 @@ async function renderFilm(args: Args, film: OpenFilm): Promise<void> {
   const size = stringFlag(args, 'size');
   const suffix = (size ? `-${size}` : '') + (draft ? '-draft' : '');
   const outArg = stringFlag(args, 'out');
-  const out = outArg
-    ? resolve(outArg)
-    : join(spec.dir, 'out', `film${suffix}.mp4`);
-  const segDir = join(spec.dir, 'out', '.segments');
+  const names = outputsOf(spec.abs, spec.dir);
+  const out = outArg ? resolve(outArg) : names.video(suffix);
+  const segDir = names.segments();
   mkdirSync(dirname(out), {recursive: true});
   mkdirSync(segDir, {recursive: true});
 
@@ -95,16 +96,24 @@ async function renderFilm(args: Args, film: OpenFilm): Promise<void> {
   });
   reportReused(segments, todo);
   await failOnPageErrors(pages);
-  await joinSegments(segments, segDir, out);
-  writeSummary({film, settings, out, suffix, frames, segments, todo, started});
+  const sound = await soundForRender(film, args);
+  await joinSegments(segments, segDir, out, sound?.file ?? null);
+  writeSummary({
+    ...{film, settings, out, suffix, frames, segments, todo, started},
+    sound,
+  });
 }
 
 /**
- * Renders the film to `out/film[-WxH][-draft].mp4` next to the spec, and
- * writes `render[...].json` with the facts `qa` checks.
+ * Renders the film to `out/<spec name>[-WxH][-draft].mp4` next to the spec,
+ * and writes `render[...].json` with the facts `qa` checks. A spec called
+ * `film.json` writes `out/film.mp4`; `film-desk.json` writes
+ * `out/film-desk.mp4` and `out/film-desk.render.json`.
  *
  * @param args `render film.json [--size WxH] [--draft] [--fps N] [--crf N]
- *   [--png] [--jobs N] [--force] [--out file.mp4] [--gpu]`.
+ *   [--png] [--jobs N] [--force] [--out file.mp4] [--gpu] [--no-sound]`.
+ *   With `meta.sound` on, the generated sound is added as AAC audio and
+ *   the video is copied, not re-encoded. `--no-sound` renders silent.
  *   Draft mode uses at most 15 fps, frames with half the width and
  *   half the height, and CRF 28.
  * @returns 0.

@@ -1,7 +1,8 @@
 # The QA gates
 
 `reel qa film.json` measures a film and exits 1 if any gate fails. It writes `out/qa-report.json` (add `--json` to
-print it). Run it after `reel render`: without a render the three video gates cannot run and the verdict is
+print it); a spec not called `film.json` uses its own name (`film-desk.json` gives `out/film-desk.mp4` and
+`out/film-desk.qa-report.json`). Run it after `reel render`: without a render the three video gates cannot run and the verdict is
 INCOMPLETE (exit code 1; run render, then qa again). `--page-only` runs only load, determinism, layout, holds and
 pacing in seconds, without a render, and gives pass, warn or fail on those; render and run qa again for the video
 gates. `--size WxH` checks another format and writes `out/qa-report-WxH.json`. `--strict` also fails on warnings. With a spec and `--video file.mp4` the report is named after the video (`out/qa-report-<name>.json`), so the main report is not replaced. A draft render is not checked: render in full, or pass the draft with `--video`. For a video made with any other tool, `reel qa --video file.mp4`
@@ -19,7 +20,7 @@ the smallest change, re-render (unchanged scenes are reused) and run it again.
 | `pacing` | Scene lengths and the first and last frames. | Never fails. Warns on a scene under 1.5 s or over 12 s, and on a blank first or last frame (not for a film with `meta.loop`, where blank ends are the design). | Merge or split scenes. Export with `--poster auto` for a blank first frame. |
 | `probe` | The MP4's codec, pixel format, size, frame rate and frame count against the spec, and that the video is not older than the spec. | Any mismatch. Also when the render summary next to the video (`out/render*.json`) was made from a different spec, runtime or project file set than the current one ("the video is older than the spec or runtime"). | Render again at the size being checked, or pass the matching `--video`. |
 | `motion` | Frame-to-frame change across the whole video (160x90 grey, mean absolute difference). | A still stretch longer than the limit: `meta.maxHold` (4 s) or the scene's longest required reading hold + 1.5 s, whichever is larger. A scene with no motion in its first 1.5 s. A loop whose last frame does not flow into the first. Warns when over 85% of the film is still, and on a full-frame jump that is not at a scene boundary. | Shorten the scene or reveal its content in more steps. For a dead scene, check its spec fields against `reel scenes`. |
-| `audio` | Integrated loudness and true peak of the finished file. | Never fails. Warns outside -16 to -12 LUFS or above -1 dBTP. Skipped without an audio track. | Re-export with `--audio`; the export normalises to -14 LUFS. |
+| `audio` | That the sound is in the file and as long as the picture; integrated loudness and true peak of the finished file. | `meta.sound` is on and the video has no audio track; audio longer or shorter than the video by more than 0.1 s. Otherwise it only warns: outside -16 to -12 LUFS or above -1 dBTP. Skipped when sound is off and there is no audio track. | Render again without `--no-sound`. For a soundtrack of your own, re-export with `--audio`; the export normalises to -14 LUFS. |
 
 ## Plate scenes
 

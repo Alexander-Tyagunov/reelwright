@@ -27,10 +27,13 @@ changes the code.
       scripts/          TypeScript, run directly by Node 24 (no build step)
         reel.ts         CLI entry
         commands/       one file per command
-        core/           args, errors, process, cleanup on stop, option checks, hashing, spec loading, paths
+        core/           args, errors, process, cleanup on stop, option checks, hashing, spec loading, paths, output names (`outputs.ts`)
         browser/        Chrome discovery, DevTools Protocol session, film page
         server/         static server and on-the-fly type stripping
-        video/          ffmpeg encoder, probe, contact sheet, loudness
+        video/          ffmpeg encoder, probe, contact sheet, loudness, soundtrack files (`soundtrack.ts`)
+        audio/          generated sound, pure arithmetic on Float32Array, no Web Audio: oscillators, envelopes, filters,
+                        noise, reverb, soft limiter, WAV writer, seeded random, scales and chords, bed, cue sounds,
+                        palettes, cue planning, `meta.sound` checks. Imports nothing from the browser or from ffmpeg.
         qa/             one file per gate, thresholds, report
         shared/         types and pure helpers used by both Node code and the browser runtime (`plate.ts`: the plate data contract)
         runtime/        browser code: ES modules, DOM, no Node APIs
@@ -100,6 +103,22 @@ The `plate` scene is the one user of all four. Its files are `runtime/scenes/pla
 `runtime/scenes/lib/plate-*.ts`: `-spec` (fields, pure), `-place` (geometry, pure), `-load` (preload), `-frames`
 (decoded frame cache), `-labels`, `-texts` and `-sample` (contrast sampling). The cache key of a plate scene is in
 `core/plate-stamp.ts`.
+
+## Generated sound
+
+`audio/` turns a `FilmInfo` (scene starts, text settle times) and the spec's `meta.sound` and scene `cues` into stereo
+samples at 48 kHz. `cues.ts` plans the cue list, `compose.ts` mixes bed, cues, echo and reverb and applies the fades and the
+soft limiter, and `video/soundtrack.ts` scales the result to -14 LUFS with the same measurement the audio gate uses and
+writes `sound.wav` and `sound.json`. The same plan always gives the same samples: every random choice comes from
+`random.ts`, seeded by the spec. `commands/render/sound.ts` makes the track during `render` and `commands/render/join.ts`
+muxes it in with `-c:v copy`. `meta.sound` and `cues` are left out of the segment cache key (`render/plan.ts`), so a sound
+change redraws nothing.
+
+## Output names
+
+`core/outputs.ts` names every file a spec writes. `film.json` keeps `out/film.mp4`, `out/qa-report.json` and the other
+short names; any other spec prefixes its own base name, so two specs in one folder never share a file or a cache. Commands
+ask `outputsOf(spec.abs, spec.dir)`; none builds an `out/` path by hand.
 
 ## Server routes
 

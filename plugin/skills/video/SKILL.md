@@ -34,7 +34,9 @@ done; a failed render, a QA failure or a missing font is ordinary work, not a re
    the visual fixing here. For more formats add `--size 1080x1920`. `reel qa film.json --page-only` runs the
    determinism, layout, holds and pacing gates in seconds without a render; fix holds and layout failures there,
    before rendering.
-6. **Render.** `reel render film.json`. Scenes that did not change are reused, so later renders are fast.
+6. **Render.** `reel render film.json`. Scenes that did not change are reused, so later renders are fast. For sound,
+   set `meta.sound` and choose the palette that fits the tone (`calm`, `bright`, `tense`, `minimal`, `epic`,
+   `storybook`). It is generated sound design, not composed music: say so, and list the palette (`film-spec.md`, "sound").
 7. **Measure.** `reel qa film.json`. Every gate must pass: determinism, layout, reading holds, pacing, file
    properties, motion. Fix what it reports with a scoped edit, re-render, re-run. Details: `${CLAUDE_SKILL_DIR}/references/qa-gates.md`.
 8. **Deliver.** `reel export film.json --preset <x|linkedin|youtube|slack|web|gif|webm> --poster auto`. Report the file

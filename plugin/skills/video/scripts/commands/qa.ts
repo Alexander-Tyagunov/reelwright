@@ -10,8 +10,8 @@ import type {QaOutcome} from '../qa/run-video.ts';
 import {qaVideoFile} from '../qa/run-video.ts';
 
 function emit(outcome: QaOutcome, json: boolean): void {
-  const {report, dir, suffix} = outcome;
-  const file = dir ? writeReportFile(dir, suffix, report) : null;
+  const {report} = outcome;
+  const file = outcome.file ? writeReportFile(outcome.file, report) : null;
   console.log(
     json ? JSON.stringify(report, null, 2) : formatReport(report, file),
   );
@@ -21,12 +21,14 @@ function emit(outcome: QaOutcome, json: boolean): void {
  * Runs the quality gates and returns the exit code.
  *
  * With a spec: load, determinism, layout, holds and pacing, then probe,
- * motion and audio on `out/film[-WxH].mp4` or `--video`. Without a spec but
+ * motion and audio on `out/<spec name>[-WxH].mp4` or `--video`. Without a spec but
  * with `--video`: probe, motion and audio on that file alone.
  *
  * Verdicts: `pass`, `warn`, `fail`, `incomplete` (no video was checked).
  * The report is also written to `out/qa-report[-WxH].json`, or to
- * `out/qa-report-<video name>[-WxH].json` when `--video` names a file.
+ * `out/qa-report-<video name>[-WxH].json` when `--video` names a file. For a
+ * spec not called `film.json` the file names start with the spec's base
+ * name: `out/film-desk.mp4` and `out/film-desk.qa-report.json`.
  *
  * @param args `qa [film.json] [--size WxH] [--video file.mp4] [--page-only]
  *   [--strict] [--json] [--loop] [--max-hold S] [--gpu]`.

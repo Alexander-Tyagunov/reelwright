@@ -1,14 +1,20 @@
 /**
  * @fileoverview The audio gate: integrated loudness and true peak of the
- * finished file. It never fails. Levels are in LUFS and dBTP.
+ * finished file, and, when the film asks for sound, that the sound is in the
+ * file and as long as the picture. Levels are in LUFS and dBTP.
  */
 import {UserError} from '../../core/errors.ts';
 import type {Loudness} from '../../video/loudness.ts';
 import {measureLoudness} from '../../video/loudness.ts';
-import {r2} from '../labels.ts';
+import {r2, r3} from '../labels.ts';
 import type {GateResult} from '../report.ts';
 import {findings} from '../report.ts';
-import {LUFS_MAX, LUFS_MIN, TRUE_PEAK_MAX} from '../thresholds.ts';
+import {
+  AUDIO_SYNC_MAX_S,
+  LUFS_MAX,
+  LUFS_MIN,
+  TRUE_PEAK_MAX,
+} from '../thresholds.ts';
 
 /**
  * Judges a loudness measurement. Warns when the integrated loudness is
@@ -50,15 +56,64 @@ export function gateAudio(loudness: Loudness | null): GateResult {
   };
 }
 
+/** What the track check needs to know about the file and the spec. */
+export interface TrackFacts {
+  /** `meta.sound` is on in the spec. */
+  soundOn: boolean;
+  /** The file has an audio stream. */
+  hasAudio: boolean;
+  /** Length of the audio stream in seconds, or null when unknown. */
+  audioSeconds: number | null;
+  /** Length of the video stream in seconds, or null when unknown. */
+  videoSeconds: number | null;
+}
+
 /**
- * Measures a file and runs the gate. The gate is skipped for a file with no
- * audio track.
+ * Checks that the audio track exists when the film asks for sound and that
+ * audio and video have the same length.
+ *
+ * @returns A failed result, or null when the track is fine.
+ */
+export function gateAudioTrack(f: TrackFacts): GateResult | null {
+  const fail = (text: string): GateResult => ({
+    id: 'audio',
+    status: 'FAIL',
+    summary: text,
+    details: [`FAIL ${text}`],
+  });
+  if (f.soundOn && !f.hasAudio) {
+    return fail(
+      'meta.sound is on but the video has no audio track: run render again ' +
+        '(without --no-sound) to add the sound',
+    );
+  }
+  const {audioSeconds: a, videoSeconds: v} = f;
+  if (f.hasAudio && a !== null && v !== null) {
+    const diff = r3(a - v);
+    if (Math.abs(diff) > AUDIO_SYNC_MAX_S) {
+      const word = diff < 0 ? 'shorter' : 'longer';
+      return fail(
+        `audio is ${r3(a)}s, ${Math.abs(diff)}s ${word} than the video ` +
+          `(${r3(v)}s), limit ${AUDIO_SYNC_MAX_S}s: run render again`,
+      );
+    }
+  }
+  return null;
+}
+
+/**
+ * Measures a file and runs the gate. Without an audio track the gate is
+ * skipped, unless the film asks for sound, which fails it.
  */
 export async function auditAudio(
   video: string,
-  hasAudio: boolean,
+  track: TrackFacts,
 ): Promise<GateResult> {
-  if (!hasAudio) {
+  const broken = gateAudioTrack(track);
+  if (broken) {
+    return broken;
+  }
+  if (!track.hasAudio) {
     return {id: 'audio', status: 'SKIP', summary: 'no audio', details: []};
   }
   try {

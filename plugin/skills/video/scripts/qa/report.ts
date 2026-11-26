@@ -3,7 +3,7 @@
  * rules, the printed table and the report file.
  */
 import {mkdirSync, writeFileSync} from 'node:fs';
-import {join} from 'node:path';
+import {dirname} from 'node:path';
 import {table} from '../core/table.ts';
 import type {Freeze} from './freezes.ts';
 import {SPARK_LEGEND} from './sparkline.ts';
@@ -184,19 +184,13 @@ export function buildReport(parts: ReportParts): QaReport {
 }
 
 /**
- * Writes the report as pretty JSON to `qa-report<suffix>.json`.
+ * Writes the report as pretty JSON.
  *
- * @param dir Folder, created when missing.
- * @param suffix Text after `qa-report`, for example `-1080x1350`.
- * @returns The absolute path of the file.
+ * @param path Absolute file path. Its folder is created when missing.
+ * @returns The path.
  */
-export function writeReportFile(
-  dir: string,
-  suffix: string,
-  report: QaReport,
-): string {
-  mkdirSync(dir, {recursive: true});
-  const path = join(dir, `qa-report${suffix}.json`);
+export function writeReportFile(path: string, report: QaReport): string {
+  mkdirSync(dirname(path), {recursive: true});
   writeFileSync(path, JSON.stringify(report, null, 2));
   return path;
 }

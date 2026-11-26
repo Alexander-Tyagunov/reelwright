@@ -77,6 +77,29 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
   of the plate's scene and of the scene after it, which shows the end of the plate during the transition. Keep plates in
   a `plates/` folder: a plate inside `assets/` is hashed by the folder rule and invalidates every scene again.
 
+### Rendering a second spec overwrote the first film's files
+
+- **Symptom:** `reel render film-desk.json` wrote `out/film.mp4`, replacing the render of `film.json` in the same
+  folder, and `qa`, `stills`, `export` and the segment cache were shared the same way.
+- **Cause:** every command built its output names from the fixed word `film`, not from the spec's file name.
+- **Fix:** `core/outputs.ts` is the one place that names outputs. `film.json` keeps the short names; any other spec
+  prefixes its base name (`film-desk.mp4`, `film-desk.qa-report.json`, `film-desk.stills/`, `.film-desk.segments/`).
+  A command that needs a file asks `outputsOf(spec.abs, spec.dir)`. Do not write `join(dir, 'out', 'film...')` in a command.
+- **Check:** `tests/unit/outputs.test.ts` and the two-specs scenario in `tests/e2e/sound.test.ts`.
+
+### Generated sound: what to know before changing it
+
+- **Where:** `scripts/audio/` (synthesis), `video/soundtrack.ts` (loudness fit and files), `commands/render/sound.ts`.
+- **Slow copies:** `Float32Array.from(a, fn)` runs a closure per sample and took 1.8 s for a 90 s track. Use a plain
+  `for` loop in anything that touches every sample.
+- **Reverb on a pad:** a comb reverb that gets the low notes of a pad makes one channel several dB louder than the other,
+  chord by chord. The reverb send is high-passed at 300 Hz and only half of the tail's left-right difference is kept.
+- **Cues against the bed:** the bed alone at -14 LUFS leaves cues at about +1 dB over it, and the cue windows of a
+  measurement should sit a few dB above the bed windows. The cue bus is raised against the bed; the limiter keeps every
+  cue under -2 dBFS and the loudness fit keeps the true peak at or below -1.5 dBTP, also after AAC.
+- **What cannot be checked by a program:** whether it sounds good. Tests measure level, peak, timing, balance and
+  determinism; a person has to listen once.
+
 ### The frame count is one off
 
 - **Symptom:** the probe gate reports 289 frames expected, 290 found.

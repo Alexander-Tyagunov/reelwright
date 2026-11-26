@@ -9,6 +9,7 @@
 import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {PALETTE_NAMES} from './audio/palettes.ts';
 import type {Args} from './core/args.ts';
 import {isStopping} from './core/cleanup.ts';
 
@@ -30,10 +31,13 @@ const COMMANDS: Readonly<Record<string, string>> = {
     '[--at 1.5,3] [--every S --from S --to S] [--size WxH]',
   render:
     'render the film to MP4, scene by scene, reusing unchanged scenes: ' +
-    'render film.json [--size WxH] [--draft]',
+    'render film.json [--size WxH] [--draft] [--no-sound]',
   qa:
     'measure the film against the motion and layout gates: qa film.json ' +
     '[--page-only | --video out/film.mp4] [--size WxH]',
+  sound:
+    'generate background sound for a film: sound film.json [--size WxH] ' +
+    `[--palette ${PALETTE_NAMES.join('|')}]`,
   export:
     'make platform files (mp4, gif, webm, poster) with optional audio: ' +
     'export film.json --preset master|x|linkedin|youtube|slack|web|gif|webm',

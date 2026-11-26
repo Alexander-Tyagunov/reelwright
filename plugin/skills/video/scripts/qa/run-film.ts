@@ -3,10 +3,12 @@
  * video exists, the probe, motion and audio gates.
  */
 import {existsSync} from 'node:fs';
-import {basename, join, resolve} from 'node:path';
+import {basename, dirname, resolve} from 'node:path';
+import {isSoundOn} from '../audio/sound-spec.ts';
 import type {OpenFilm} from '../browser/film.ts';
 import {openFilm, pageErrors} from '../browser/film.ts';
 import {UserError} from '../core/errors.ts';
+import {outputsOf, summaryPathFor} from '../core/outputs.ts';
 import {loadSpec} from '../core/spec.ts';
 import {specHash} from '../core/stamp.ts';
 import type {StreamFacts} from '../video/probe.ts';
@@ -36,13 +38,14 @@ function sizeSuffix(options: QaOptions): string {
   return options.size ? `-${options.size}` : '';
 }
 
-/** Report file suffix: the video's name when `--video` is given. */
-function reportSuffix(options: QaOptions): string {
+/** Report file path: the video's name is part of it when `--video` is given. */
+function reportFile(specPath: string, options: QaOptions): string {
+  const out = outputsOf(resolve(specPath), dirname(resolve(specPath)));
   if (!options.video) {
-    return sizeSuffix(options);
+    return out.report(sizeSuffix(options));
   }
   const name = basename(options.video).replace(/\.[^.]+$/, '');
-  return `-${name}${sizeSuffix(options)}`;
+  return out.report(`-${name}${sizeSuffix(options)}`);
 }
 
 /** Reads the probe gate's inputs and runs the gate. */
@@ -52,7 +55,8 @@ function probeGate(
   stream: StreamFacts | undefined,
 ): GateResult {
   const {info, spec} = film;
-  const summary = readRenderSummary(video);
+  const path = summaryPathFor(video, outputsOf(spec.abs, spec.dir).stem);
+  const summary = readRenderSummary(path);
   const currentHash = summary?.specHash
     ? specHash(spec.abs, spec.dir, spec.film)
     : null;
@@ -62,7 +66,9 @@ function probeGate(
     fps: info.fps,
     frames: info.frames,
   };
-  return gateProbe({video, expected, summary, currentHash}, stream);
+  const summaryName = path ? basename(path) : undefined;
+  const probe = {video, expected, summary, currentHash, summaryName};
+  return gateProbe(probe, stream);
 }
 
 /** Runs the video gates on an existing file. */
@@ -95,8 +101,14 @@ async function videoGates(
     gates.push({id: 'audio', status: 'SKIP', summary, details: []});
     return;
   }
-  const hasAudio = streams.streams.some(s => s.type === 'audio');
-  gates.push(await guarded('audio', () => auditAudio(video, hasAudio)));
+  const audio = streams.streams.find(s => s.type === 'audio');
+  const track = {
+    soundOn: isSoundOn(film.spec.film),
+    hasAudio: audio !== undefined,
+    audioSeconds: audio?.duration ?? null,
+    videoSeconds: stream?.duration ?? null,
+  };
+  gates.push(await guarded('audio', () => auditAudio(video, track)));
 }
 
 /** Says why no video was checked and what to do next. */
@@ -118,16 +130,16 @@ function missingVideoText(
 async function addVideoGates(
   film: OpenFilm,
   options: QaOptions,
-  outDir: string,
   gates: GateResult[],
 ): Promise<string | null> {
+  const names = outputsOf(film.spec.abs, film.spec.dir);
   const given = options.video ? resolve(options.video) : null;
-  const video = given ?? join(outDir, `film${sizeSuffix(options)}.mp4`);
+  const video = given ?? names.video(sizeSuffix(options));
   if (existsSync(video)) {
     await videoGates(film, video, gates);
     return video;
   }
-  const draft = join(outDir, `film${sizeSuffix(options)}-draft.mp4`);
+  const draft = names.video(`${sizeSuffix(options)}-draft`);
   const why = missingVideoText(video, given !== null, existsSync(draft));
   for (const id of ['probe', 'motion', 'audio'] as const) {
     gates.push({
@@ -161,7 +173,6 @@ async function gateOpenFilm(
   options: QaOptions,
 ): Promise<QaOutcome> {
   const {info, spec} = film;
-  const dir = join(spec.dir, 'out');
   const load = gateLoad(info);
   const gates: GateResult[] = [load];
   applyDrawFailures(load, await findDrawFailures(film.page, info));
@@ -172,7 +183,7 @@ async function gateOpenFilm(
   applyPageErrors(load, [...new Set(await pageErrors(film.page))]);
   let video: string | null = null;
   if (!options.pageOnly) {
-    video = await addVideoGates(film, options, dir, gates);
+    video = await addVideoGates(film, options, gates);
   }
   const summary = summaryOf(film);
   const incomplete = !options.pageOnly && video === null;
@@ -183,7 +194,7 @@ async function gateOpenFilm(
     incomplete,
     pageOnly: options.pageOnly,
   });
-  return {report, dir, suffix: reportSuffix(options)};
+  return {report, file: reportFile(spec.abs, options)};
 }
 
 /**
@@ -209,8 +220,7 @@ export async function qaFilm(
         incomplete: false,
         pageOnly: options.pageOnly,
       }),
-      dir: reportDirFor(specPath),
-      suffix: reportSuffix(options),
+      file: reportFileFor(specPath, options),
     };
   }
   try {
@@ -220,9 +230,12 @@ export async function qaFilm(
   }
 }
 
-function reportDirFor(specPath: string | undefined): string | null {
+function reportFileFor(
+  specPath: string | undefined,
+  options: QaOptions,
+): string | null {
   try {
-    return join(loadSpec(specPath).dir, 'out');
+    return reportFile(loadSpec(specPath).abs, options);
   } catch {
     return null;
   }

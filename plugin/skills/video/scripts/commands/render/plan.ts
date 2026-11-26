@@ -7,6 +7,7 @@ import type {OpenFilm} from '../../browser/film.ts';
 import {runtimeHash, sha1} from '../../core/hash.ts';
 import {plateFingerprints} from '../../core/plate-stamp.ts';
 import {projectStamp} from '../../core/stamp.ts';
+import type {FilmSpec, SceneSpec} from '../../shared/contract.ts';
 
 /** Settings that decide how every segment is drawn and encoded. */
 export interface RenderSettings {
@@ -56,10 +57,28 @@ export function outputSize(settings: RenderSettings): {
   return {width: shrink(settings.width), height: shrink(settings.height)};
 }
 
+/** The `meta` fields that change pixels: everything but `sound`. */
+function pixelMeta(meta: FilmSpec['meta']): unknown {
+  if (!meta) {
+    return meta;
+  }
+  const {sound: _sound, ...rest} = meta;
+  return rest;
+}
+
+/** A scene without its `cues`: sound cues never change a pixel. */
+function pixelScene(scene: SceneSpec | undefined): unknown {
+  if (!scene) {
+    return null;
+  }
+  const {cues: _cues, ...rest} = scene;
+  return rest;
+}
+
 /**
  * Splits the film into segments. A segment starts at the first frame at or
  * after its scene starts, so no frame is drawn twice. The key covers
- * everything a segment's pixels depend on, so an unchanged scene is reused
+ * everything a segment's pixels depend on (not `meta.sound` or scene `cues`), so an unchanged scene is reused
  * from an earlier render. A scene's neighbours matter only through the
  * previous scene and the global overlays, and both are in the key.
  *
@@ -78,6 +97,18 @@ export function planSegments(
   const stamp = projectStamp(spec.dir, spec.film);
   const plates = plateFingerprints(spec.dir, spec.film);
   const {fps} = settings;
+  const common = {
+    rt,
+    stamp,
+    meta: pixelMeta(spec.film.meta),
+    brand: spec.film.brand,
+    w: settings.width,
+    h: settings.height,
+    fps,
+    crf: settings.crf,
+    png: settings.png,
+    draft: settings.draft,
+  };
   const starts = info.scenes.map((s, i) =>
     i === 0 ? 0 : Math.ceil(s.start * fps - 1e-9),
   );
@@ -85,21 +116,12 @@ export function planSegments(
     const from = starts[i] ?? 0;
     const to = i + 1 < starts.length ? (starts[i + 1] ?? frames) : frames;
     const key = sha1({
-      rt,
-      stamp,
+      ...common,
       index: i,
-      meta: spec.film.meta,
-      brand: spec.film.brand,
-      prev: i ? spec.film.scenes[i - 1] : null,
-      scene: spec.film.scenes[i],
+      prev: i ? pixelScene(spec.film.scenes[i - 1]) : null,
+      scene: pixelScene(spec.film.scenes[i]),
       plate: plates[i],
       prevPlate: i ? plates[i - 1] : null,
-      w: settings.width,
-      h: settings.height,
-      fps,
-      crf: settings.crf,
-      png: settings.png,
-      draft: settings.draft,
       phase: Number(((s.start * fps) % 1).toFixed(6)),
       n: to - from,
       global: info.globalOverlays

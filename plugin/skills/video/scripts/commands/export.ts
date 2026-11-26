@@ -8,6 +8,7 @@ import type {Args} from '../core/args.ts';
 import {numberFlag} from '../core/args.ts';
 import {onStop} from '../core/cleanup.ts';
 import {UserError} from '../core/errors.ts';
+import {outputsOf} from '../core/outputs.ts';
 import {run as exec} from '../core/process.ts';
 import {loadSpec} from '../core/spec.ts';
 import {checkPositive} from '../core/validate.ts';
@@ -159,8 +160,9 @@ export async function run(args: Args): Promise<number> {
   const spec = loadSpec(args.positional[0]);
   const name = presetName(args);
   const preset = PRESETS[name] as Preset;
-  const [master, facts] = await loadMaster(args, spec.dir);
-  const out = outputPath(args, master, spec.dir, name);
+  const names = outputsOf(spec.abs, spec.dir);
+  const [master, facts] = await loadMaster(args, names);
+  const out = outputPath(args, master, names, name);
   mkdirSync(dirname(out), {recursive: true});
   const ctx = contextFrom(args, master, facts, out);
   const {command, note} = await produce(name, args, ctx, out);
@@ -168,8 +170,7 @@ export async function run(args: Args): Promise<number> {
   if (!outFacts.video) {
     throw new UserError(`${out} has no video stream`);
   }
-  const measured =
-    outFacts.audio && ctx.audio && name !== 'gif' && name !== 'master';
+  const measured = outFacts.audio && name !== 'gif' && name !== 'master';
   const result: ExportResult = {
     name,
     preset,

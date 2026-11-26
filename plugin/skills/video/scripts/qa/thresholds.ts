@@ -122,3 +122,6 @@ export const LABEL_MAX_SPEED = 0.06;
  * gate warns when the label is faster than {@link LABEL_MAX_SPEED}.
  */
 export const LABEL_FAST_SHARE = 0.5;
+
+/** Seconds. Longest difference between audio and video length that passes. */
+export const AUDIO_SYNC_MAX_S = 0.1;

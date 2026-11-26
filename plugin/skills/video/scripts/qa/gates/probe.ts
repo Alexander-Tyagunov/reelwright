@@ -5,7 +5,6 @@
  * per second.
  */
 import {existsSync, readFileSync} from 'node:fs';
-import {basename, dirname, join} from 'node:path';
 import type {StreamFacts} from '../../video/probe.ts';
 import {parseFraction} from '../../video/probe.ts';
 import {r3} from '../labels.ts';
@@ -36,22 +35,19 @@ export interface ProbeInput {
   summary: RenderSummary | null;
   /** Fingerprint of the film now, or null when it was not computed. */
   currentHash: string | null;
-}
-
-/** Path of the render summary that belongs to a video. */
-export function summaryPathFor(video: string): string {
-  const name = basename(video).replace(/^film/, 'render');
-  return join(dirname(video), name.replace(/\.mp4$/i, '.json'));
+  /** File name of the summary, for the draft note. */
+  summaryName?: string;
 }
 
 /**
- * Reads the render summary next to a video.
+ * Reads a render summary file.
  *
+ * @param path Path of the summary, or null for a video not named after the
+ *   spec.
  * @returns The summary, or null when it is absent or unreadable.
  */
-export function readRenderSummary(video: string): RenderSummary | null {
-  const path = summaryPathFor(video);
-  if (!existsSync(path)) {
+export function readRenderSummary(path: string | null): RenderSummary | null {
+  if (!path || !existsSync(path)) {
     return null;
   }
   try {
@@ -119,7 +115,7 @@ function expectationFor(input: ProbeInput): {
     return {want: input.expected, note: ''};
   }
   const want = expectedFromSummary(input.summary);
-  const name = basename(summaryPathFor(input.video));
+  const name = input.summaryName ?? 'the render summary';
   const note = want
     ? ` (draft: expected values from ${name})`
     : ' (draft without a summary json: size, fps and frame count not compared)';

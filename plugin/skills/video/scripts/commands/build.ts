@@ -3,13 +3,14 @@
  * The runtime, scenes, fonts, images and spec are all inside it.
  */
 import {mkdirSync, statSync, writeFileSync} from 'node:fs';
-import {dirname, join, resolve} from 'node:path';
+import {dirname, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {pageErrors, waitUntilReady} from '../browser/film.ts';
 import {launch} from '../browser/launch.ts';
 import type {Args} from '../core/args.ts';
 import {stringFlag} from '../core/args.ts';
 import {UserError} from '../core/errors.ts';
+import {outputsOf} from '../core/outputs.ts';
 import {frameSize, loadSpec} from '../core/spec.ts';
 import type {FilmInfo} from '../shared/contract.ts';
 import {inlinedCss, inlineSpecAssets} from './build/assets.ts';
@@ -49,7 +50,7 @@ async function verify(out: string, size: {width: number; height: number}) {
 }
 
 /**
- * Writes `out/film.html` next to the spec (or `--out`) and checks it from a
+ * Writes `out/<spec name>.html` next to the spec (or `--out`) and checks it from a
  * file:// address in headless Chrome.
  *
  * @param args `build film.json [--out file.html] [--size WxH]`.
@@ -67,7 +68,7 @@ export async function run(args: Args): Promise<number> {
     );
   }
   const outArg = stringFlag(args, 'out');
-  const out = outArg ? resolve(outArg) : join(spec.dir, 'out', 'film.html');
+  const out = outArg ? resolve(outArg) : outputsOf(spec.abs, spec.dir).html();
   const inlined = inlineSpecAssets(spec.film, spec.dir);
   const project = projectModules(spec.dir, spec.film.customScenes ?? []);
   inlined.spec.customScenes = project.sceneKeys;

@@ -7,6 +7,7 @@ import {basename, extname, join, resolve} from 'node:path';
 import type {Args} from '../../core/args.ts';
 import {stringFlag} from '../../core/args.ts';
 import {UserError} from '../../core/errors.ts';
+import type {Outputs} from '../../core/outputs.ts';
 import type {MediaFacts, VideoFacts} from '../../video/probe.ts';
 import {probe} from '../../video/probe.ts';
 import {PRESET_NAMES, PRESETS} from './presets.ts';
@@ -18,14 +19,12 @@ export type VideoMedia = MediaFacts & {video: VideoFacts};
 export function outputPath(
   args: Args,
   master: string,
-  dir: string,
+  names: Outputs,
   name: string,
 ) {
   const ext = PRESETS[name]?.ext ?? 'mp4';
   const fallback = join(
-    dir,
-    'out',
-    'export',
+    names.exports(),
     `${basename(master, extname(master))}-${name}.${ext}`,
   );
   const outArg = stringFlag(args, 'out');
@@ -37,20 +36,19 @@ export function outputPath(
 }
 
 /**
- * Finds and probes the master video: `--video`, or `out/film[-WxH].mp4`.
+ * Finds and probes the master video: `--video`, or
+ * `out/<spec name>[-WxH].mp4`.
  *
  * @returns The master path and its facts.
  * @throws UserError when it is missing or has no video stream.
  */
 export async function loadMaster(
   args: Args,
-  dir: string,
+  names: Outputs,
 ): Promise<[string, VideoMedia]> {
   const video = stringFlag(args, 'video');
   const size = stringFlag(args, 'size');
-  const master = video
-    ? resolve(video)
-    : join(dir, 'out', `film${size ? `-${size}` : ''}.mp4`);
+  const master = video ? resolve(video) : names.video(size ? `-${size}` : '');
   if (!existsSync(master)) {
     const flag = size ? ` --size ${size}` : '';
     const again = `reel render ${args.positional[0]}${flag}`;

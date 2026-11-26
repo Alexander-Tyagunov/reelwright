@@ -4,7 +4,11 @@
  */
 import assert from 'node:assert/strict';
 import {describe, it} from 'node:test';
-import {gateAudio} from '../../plugin/skills/video/scripts/qa/gates/audio.ts';
+import {
+  auditAudio,
+  gateAudio,
+  gateAudioTrack,
+} from '../../plugin/skills/video/scripts/qa/gates/audio.ts';
 import type {ProbeInput} from '../../plugin/skills/video/scripts/qa/gates/probe.ts';
 import {gateProbe} from '../../plugin/skills/video/scripts/qa/gates/probe.ts';
 import type {StreamFacts} from '../../plugin/skills/video/scripts/video/probe.ts';
@@ -121,5 +125,54 @@ describe('audio gate', () => {
       }).status,
       'WARN',
     );
+  });
+});
+
+describe('audio track gate', () => {
+  const facts = {
+    soundOn: true,
+    hasAudio: true,
+    audioSeconds: 5,
+    videoSeconds: 5,
+  };
+
+  it('sound on and no audio track fails and says to render again', () => {
+    const gate = gateAudioTrack({
+      ...facts,
+      hasAudio: false,
+      audioSeconds: null,
+    });
+    assert.equal(gate?.status, 'FAIL');
+    assert.match(gate?.summary ?? '', /no audio track: run render again/);
+  });
+
+  it('audio 0.3 s longer than the video fails', () => {
+    const gate = gateAudioTrack({...facts, audioSeconds: 5.3});
+    assert.equal(gate?.status, 'FAIL');
+    assert.match(gate?.summary ?? '', /0\.3s longer than the video/);
+  });
+
+  it('audio 0.3 s shorter than the video fails', () => {
+    const gate = gateAudioTrack({...facts, audioSeconds: 4.7});
+    assert.match(gate?.summary ?? '', /0\.3s shorter than the video/);
+  });
+
+  it('audio 0.05 s off, the size of AAC padding, passes', () => {
+    assert.equal(gateAudioTrack({...facts, audioSeconds: 5.05}), null);
+  });
+
+  it('sound off and no audio track stays SKIP', async () => {
+    const gate = await auditAudio('unused.mp4', {
+      ...facts,
+      soundOn: false,
+      hasAudio: false,
+      audioSeconds: null,
+    });
+    assert.equal(gate.status, 'SKIP');
+  });
+
+  it('a film with its own audio that sound is off for is still checked for length', () => {
+    const gate = gateAudioTrack({...facts, soundOn: false, audioSeconds: 8});
+    assert.equal(gate?.status, 'FAIL');
   });
 });

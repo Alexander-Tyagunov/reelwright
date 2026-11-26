@@ -25,6 +25,24 @@
   `FilmInfo.warnings` carries load warnings; `registerPreload` lets a scene type load files before it is built.
 - **Labels glide.** `smooth` (default 0.6 s) low-passes the path of a label box and `follow` (`both`, `x`, `none`) limits it, so labels on hopping points stay readable while the leader line and dot stay on the exact point.
 - **Known limit.** `reel build` refuses a film with a plate scene: a plate is a folder of many files.
+- **Generated sound.** `meta.sound` (`true`, or `{ palette, bed, cues, volume, seed, key, tempo, intensity }`) adds a
+  quiet bed and cues timed to the picture, computed by a pure-TypeScript synthesiser in `scripts/audio/` (no samples,
+  no packages, byte-identical for the same spec). Six palettes: `calm`, `bright`, `tense`, `minimal`, `epic`,
+  `storybook`. Cues come from the film (a whoosh at each scene change, a tick where a text block settles, a chime at the
+  last scene) and from a scene's own `cues` list (`tick`, `pop`, `whoosh`, `rise`, `chime`, `hit`, `boom`, `sting`),
+  including on a `plate` scene, which used to ignore the field. The finished track is -14 LUFS; its true peak is at or
+  below -1.5 dBTP in the WAV and at or below -1 dBTP in the MP4, after AAC.
+- **Command: `reel sound`.** Writes `out/sound.wav` and the cue list `out/sound.json`; prints length, cue count,
+  loudness and true peak.
+- **Sound in render and export.** `reel render` muxes the track into the finished file with the video copied and AAC
+  audio; `--no-sound` renders silent. Changing only `meta.sound` or a scene's `cues` re-mixes without redrawing a
+  scene. `reel export` keeps the film's own sound, an explicit `--audio` file wins, a GIF has none.
+- **Audio gate.** It now fails when `meta.sound` is on and the file has no audio track, and when audio and video differ
+  by more than 0.1 s. Sound off stays skipped.
+- **Output names follow the spec file.** `reel render film-desk.json` writes `out/film-desk.mp4`,
+  `out/film-desk.qa-report.json` and so on, with its own scene cache, so two specs in one folder no longer overwrite
+  each other. `film.json` keeps every name it had. `qa`, `export`, `stills`, `sound` and `build` follow the same rule.
+  The scene cache key changed, so the first render after the upgrade draws every scene once.
 
 ## 0.1.0
 

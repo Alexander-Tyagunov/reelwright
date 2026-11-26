@@ -3,7 +3,7 @@
  * only the gates that need the file itself (properties, motion, loudness).
  */
 import {existsSync} from 'node:fs';
-import {basename, dirname, resolve} from 'node:path';
+import {basename, dirname, join, resolve} from 'node:path';
 import type {StreamFacts} from '../video/probe.ts';
 import {probeStreams} from '../video/probe.ts';
 import {auditAudio} from './gates/audio.ts';
@@ -19,10 +19,8 @@ import {buildReport} from './report.ts';
 /** A finished run and where its report file goes. */
 export interface QaOutcome {
   report: QaReport;
-  /** Folder for the report file, or null to write none. */
-  dir: string | null;
-  /** Text after `qa-report` in the file name. */
-  suffix: string;
+  /** Path of the report file, or null to write none. */
+  file: string | null;
 }
 
 function probeFailure(summary: string): GateResult {
@@ -82,8 +80,9 @@ export async function qaVideoFile(options: QaOptions): Promise<QaOutcome> {
       pageOnly: false,
     }),
     // No report file for a video that does not exist.
-    dir: existsSync(path) ? dirname(path) : null,
-    suffix,
+    file: existsSync(path)
+      ? join(dirname(path), `qa-report${suffix}.json`)
+      : null,
   });
   if (!existsSync(path)) {
     return finish([probeFailure(`video not found: ${path}`)]);
@@ -101,7 +100,13 @@ export async function qaVideoFile(options: QaOptions): Promise<QaOutcome> {
       gateMotion(input, await decodeMotion(path), streamFps(v)),
     ),
   );
-  const hasAudio = streams.streams.some(s => s.type === 'audio');
-  gates.push(await guarded('audio', () => auditAudio(path, hasAudio)));
+  const audio = streams.streams.find(s => s.type === 'audio');
+  const track = {
+    soundOn: false,
+    hasAudio: audio !== undefined,
+    audioSeconds: audio?.duration ?? null,
+    videoSeconds: v.duration,
+  };
+  gates.push(await guarded('audio', () => auditAudio(path, track)));
   return finish(gates, film);
 }

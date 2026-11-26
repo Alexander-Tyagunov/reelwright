@@ -32,6 +32,7 @@ One JSON file describes a film. Paths inside it are relative to the folder that 
 | `progress` | false | Thin progress bar along the bottom. |
 | `watermark` | | Text or an image path shown in the top right corner. |
 | `seed` | 0 | Changes the seeded randomness scenes may use. |
+| `sound` | false | Generated background sound. `true` or an object turns it on; see "sound" below. |
 
 ## brand
 
@@ -130,11 +131,58 @@ The scene:
 - `from` and `to` of a label or text are seconds, or `{ "event": "split", "plus": 0.3 }` for 0.3 s after an event.
 - `texts` are free overlays at fixed places: `x` and `y` in u from the top left, or `"center"`; `class` is a type class
   (`rw-kicker`, `rw-h2`, `rw-body`, ...; default `rw-body`); `align` says which edge of the text `x` names.
-- `cues` is reserved for sound cues and is ignored.
+- `cues` are sound cues in scene seconds, as on any scene (see "sound" below). They play only when `meta.sound` is on and change no pixel.
 - Check a plate before using it: `reel plate plates/shot03/tracks.json` lists the tracks (share of frames visible) and events
   and verifies every frame file and the size of the first frame. `reel build` cannot bundle a plate into one HTML file; use
   `render`. Editing `tracks.json` or any frame file re-renders that plate scene (and the scene after it, which shows the end
   of the plate during the transition) and no other.
+
+## sound
+
+Generated sound design, not composed music: a quiet bed under the film and short cues timed to the picture,
+all computed in the engine (no samples, no network) and identical for the same spec. `meta.sound` is:
+
+- `false` or absent: a silent film, as before.
+- `true`: palette `calm`, with bed and cues.
+- an object, every field optional:
+
+| Field | Default | Meaning |
+|---|---|---|
+| `palette` | `"calm"` | `calm`, `bright`, `tense`, `minimal`, `epic` or `storybook`. An unknown name is refused and the palettes are listed. |
+| `bed` | true | Play the pad and pulse under the film. |
+| `cues` | true | Play cues timed to the picture. At least one of `bed` and `cues` must be on. |
+| `volume` | 1 | 0 to 1, scales the finished track below -14 LUFS. |
+| `seed` | 0 | Whole number. Same spec and seed give the same sound byte for byte. |
+| `key` | the palette's | Root note: `C`, `F#`, `Bb`. |
+| `tempo` | the palette's | Beats per minute, 30 to 200. Sets how often chords change and how fast a pulse plays. |
+| `intensity` | 0.75 | 0 to 1, or points `[{ "at": 0, "value": 0.2 }, { "at": 30, "value": 1 }]` in film seconds, linear between points. Scales the density and level of the bed (and, a little, the cues). |
+
+Palettes: `calm` warm major pad and soft bells; `bright` open major chords with a light plucked pulse; `tense` dark minor
+drone with a slow low heartbeat; `minimal` one quiet drone and pure sine cues; `epic` minor key, low drone, driving
+ostinato, heavy impacts; `storybook` gentle major music box over a soft pad. Choose the one that fits the tone of the
+film. A palette sets scale, chord progression, tempo, timbre and the sound of every cue.
+
+The bed fades in over 0.15 s, keeps under the text, and ends on a resolved chord that dies away at the film's last
+frame. Cues, with pitches taken from the palette's scale:
+
+- derived from the film: a soft whoosh centred on each scene change; a quiet pitched tick where a text block settles (at
+  most one per 0.18 s, quieter for longer text, none for counting numbers); a resolving chime at the start of the last scene.
+- explicit, on any scene (a `plate` scene too): `"cues": [ { "at": 1.5, "kind": "hit", "gain": 0.8 } ]`. `at` is in
+  scene seconds (0 to the scene's `duration`); `kind` is `tick`, `pop`, `whoosh`, `rise`, `chime`, `hit`, `boom` or
+  `sting`; `gain` is 0 to 1 (default 1); `duration` (seconds, default 2) is only for `rise`, which builds up and ends at
+  `at + duration`. Explicit cues are always played.
+
+`reel sound film.json` writes `out/sound.wav` (48 kHz, 16-bit, stereo) and `out/sound.json` (the cue list with times
+and pitches) and prints the length, cue count, integrated loudness and true peak. `--palette name` tries another
+palette without editing the spec, and works even when `meta.sound` is off. `reel render` adds the sound to the
+MP4 (AAC, the video is copied, not re-encoded); `--no-sound` renders silent. The track is set to -14 LUFS with a true
+peak at or below -1.5 dBTP in `sound.wav` (and, after the AAC encode, at or below -1 dBTP in the MP4).
+Changing only `meta.sound` or a scene's `cues` does not redraw any scene: render again and only the sound is rebuilt
+and attached. `reel export` keeps the film's own sound; `--audio file` replaces it; a GIF has
+none. The `audio` gate fails when `meta.sound` is on and the video has no audio track, or when audio and video differ in
+length by more than 0.1 s.
+
+To add sound to a film that is already rendered, set `"sound": true` (or an object) in `meta` and run `reel render` again.
 
 ## captions
 
@@ -159,5 +207,27 @@ my-film/
   assets/           logo, screenshots, fonts, audio
   plates/           image sequences with tracks.json, one folder per shot
   scenes/           optional project scene types (.js or .ts)
-  out/              stills/, contact.jpg, strip/, strip.jpg, film.mp4, render.json, film.html, qa-report.json, export/, .segments/
+  out/              stills/, contact.jpg, strip/, strip.jpg, film.mp4, render.json, film.html, qa-report.json, sound.wav, sound.json, export/, .segments/
 ```
+
+## Output names
+
+Every output carries the name of the spec that made it, so two specs in one folder never touch each other's files.
+`film.json` keeps the short names. Any other spec puts its base name first:
+
+| Output | `film.json` | `film-desk.json` |
+|---|---|---|
+| video | `out/film.mp4` | `out/film-desk.mp4` |
+| render summary | `out/render.json` | `out/film-desk.render.json` |
+| QA report | `out/qa-report.json` | `out/film-desk.qa-report.json` |
+| sound | `out/sound.wav`, `out/sound.json` | `out/film-desk.sound.wav`, `out/film-desk.sound.json` |
+| stills, contact sheet | `out/stills/`, `out/contact.jpg` | `out/film-desk.stills/`, `out/film-desk.contact.jpg` |
+| strip | `out/strip/`, `out/strip.jpg` | `out/film-desk.strip/`, `out/film-desk.strip.jpg` |
+| exports | `out/export/` | `out/film-desk.export/` |
+| bundle | `out/film.html` | `out/film-desk.html` |
+| scene cache | `out/.segments/` | `out/.film-desk.segments/` |
+
+A size or draft suffix goes after the base name as before (`out/film-desk-1080x1350.mp4`,
+`out/film-desk.qa-report-1080x1350.json`). `qa`, `export`, `stills`, `sound` and `build` find their files by the same
+rule, and each spec has its own scene cache.
+

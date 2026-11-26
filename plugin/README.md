@@ -106,7 +106,8 @@ node "$REEL" export film.json --preset x --poster auto
 | `scenes` | Lists the thirteen scene types and their fields; `--json` and `--md` for other formats |
 | `preview` | Serves the film with a scrubbing player |
 | `stills` | Draws full-size stills and a contact sheet; `--every` draws a motion strip |
-| `render` | Renders the MP4, scene by scene; `--draft` is a fast preview at half size |
+| `render` | Renders the MP4, scene by scene; `--draft` is a fast preview at half size; adds generated sound when `meta.sound` is on, `--no-sound` skips it |
+| `sound` | Generates the film's background sound (`meta.sound`) as `out/sound.wav` and a cue list; prints length, cues and loudness |
 | `qa` | Runs the quality gate; `--page-only` skips the video gates, `--size WxH` checks another format |
 | `export` | Writes delivery files: `master`, `x`, `linkedin`, `youtube`, `slack`, `web`, `gif`, `webm` |
 | `plate` | Checks a plate folder (an image sequence with `tracks.json`): tracks, events, every frame file, the frame size |
@@ -125,7 +126,7 @@ While a command runs it starts three local processes: a headless browser to draw
 encode and measure, and a file server bound to 127.0.0.1 that serves the film page and your project folder to
 that browser. The server answers only requests addressed to 127.0.0.1 or localhost, and does not serve hidden
 files or links that lead out of the project. All three stop when the command ends or is interrupted. Output is
-written to the `out/` folder of your project.
+written to the `out/` folder of your project, named after the spec (`film.json` gives `out/film.mp4`, `film-desk.json` gives `out/film-desk.mp4`).
 
 Inter and JetBrains Mono are bundled under the SIL Open Font License, so Latin and Cyrillic text looks the same
 on every machine. Other scripts are drawn with a font from the machine.
@@ -133,7 +134,7 @@ on every machine. Other scripts are drawn with a font from the machine.
 ## Limits
 
 - Code-drawn video suits type, data, diagrams, code and screenshots. It is not for footage or photoreal scenes, except as a rendered `plate` with code-drawn labels.
-- Sound is added at export from a file you supply. There is no built-in music or voice.
+- Sound is generated sound design (a quiet bed and cues timed to the picture, six palettes), not composed music, and there is no voice. For a score of your own, add it at export with `--audio`.
 - A bespoke scene is written per project. The thirteen built-in scene types cover the common cases.
 
 ## Licence
