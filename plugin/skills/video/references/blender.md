@@ -38,6 +38,8 @@ try:
 except Exception:
     result = {"error": traceback.format_exc()[-1800:]}                        # an uncaught error comes back without the traceback you need
 ```
+- `execute_blender_code` starts with no names in scope: `import bpy` (and `sys`, `os`) in every call, or the first line of
+  the `try` block fails with `NameError` and the shot module is left half reloaded.
 - `<mac>` is `/Users/<user>/ClaudeProjects` (ask Blender: `os.path.expanduser("~")`).
 - A whole edit-look round is 5 calls: patch + copy (Bash), commit, build + render (Blender), stage, Read.
 - Put every number you expect to tune (light powers, exposure, camera, material amounts) in the shot's `P` dict and
@@ -71,7 +73,7 @@ rays through: `paper.paper_material(transmit=...)`.
 - `craft` (pure math, seeded): `hand_cut` (knife-cut outlines), `stroke_strip` (pencil, thread), `torn_rect` (tape),
   `pose_jitter`, `flicker`, `hand_slide`, `held` (on twos), `shifts`, `rng`. `paper.paper_material(...)` (fibre,
   mottle, per-object variation, translucency, shadow transmission), `paper.plain_material`. `photo.develop(...)`
-  (vignette, fringe, grain, flicker on the rendered file). See `handmade.md` for when to use them.
+  (vignette, fringe, grain, flicker on the rendered file; fringe resamples and softens, grain is 1-2 px clumps). See `handmade.md` for when to use them.
 - `project.clean_scene()` remove everything, purge orphans. `project.setup_scene(scene, fps, width, height,
   frame_start, frame_end, look=, exposure=, dither=)` units, range, AgX. `project.collection(name)`. `project.save(path)`.
 - `mesh.revolve / loft / prism / box / torus` return parts `(verts, faces)`; `mesh.transform`, `mesh.merge`;
@@ -116,6 +118,8 @@ Cycles, desk example (160 objects, 2 area lights, 8 point lights, translucent pa
 | cycles_preview | 960x540 | 24, noise 0.1 | 3.2-3.9 live (first frame of a session 17 in the background) |
 | cycles_final | 1920x1080 | 96, noise 0.03 | 23.4 background (would be 42 min for 108 frames) |
 | cycles_final, `samples=64, noise=0.04` | 1920x1080 | 64 | 18.6 background (108 frames in 2010 s, 33.5 min; first frame 19.5 s) |
+| cycles_final, f/16, `samples=64, noise=0.03` (v2) | 1920x1080 | 64 | 18.0 background (108 frames, about 32.5 min); a live-sized check of 3 frames took 21 s each |
+| cycles_final, f/16, `samples=96, noise=0.02` | 1920x1080 | 96 | about 28 (too slow for 108 frames in 45 min) |
 A shot on twos has half the frames: at 12 poses a second, 9 s is 108 renders, which is what makes Cycles affordable.
 
 ## 7. Plate contract (fixed)
@@ -185,6 +189,12 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
     Calibrate powers on the first preview before judging anything else.
 13. (Desk shot) `Path.heading` used a fixed 8 cm chord and averaged the whole curve of a 1 m road; now `Path(eps=)`.
 14. (Desk shot) `reload_all()` did not load modules added during the session; reload the package first (section 2).
+15. (Desk shot) Shot at f/5.6 with a 40 mm lens on a set 3-13 cm tall, focus following one puppet: the arch and
+    lamps were soft, and grain 0.024 plus a 0.0009 fringe sat on top; the owner called it "distorted". At table-top
+    scale depth of field is millimetres. Use f/11-f/16 and place focus from `sample_points` depths (see handmade.md
+    section 5), and keep the finishing pass light; judge a still at 100%, not scaled down.
+16. (Desk shot) Judged sharpness by eye on half-size previews and measured edge energy with grain on: grain raises
+    edge energy, so a noisy soft frame can out-score a clean sharp one. Compare after `MedianFilter(5)` as well.
 
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per

@@ -49,8 +49,9 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
 - Things that get knocked: `craft.shifts(seed, n, at, amp)`, or key a consequence by hand (the heavy one lands, a
   paper tree falls over, the hill card rocks, the pencil rolls 2 mm).
 - The photograph: Cycles (`cycles_preview`, `cycles_final`), real aperture at true scale, then
-  `photo.develop(...)` through `render_still(develop=...)` / `render_background(develop=...)`: vignette 0.22,
-  fringe 0.0009, grain 0.024, flicker 0.012, seeded by the frame number so grain changes per exposure.
+  `photo.develop(...)` through `render_still(develop=...)` / `render_background(develop=...)`: vignette 0.12,
+  fringe 0, grain 0.010, flicker 0.012, seeded by the frame number so grain changes per exposure. Read section 5
+  before choosing f-stop and focus.
 - Labels: a handwriting or typewriter face on a dark card-coloured tag; track empties on the root, not on the
   jittered body.
 
@@ -79,3 +80,34 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
   per-vertex jitter of 0.25 mm on the card frame).
 - Still open: paper fibre is too fine to see at 1080p; glue marks, fingerprints and bent corners are missing; the
   glowing shells are evenly lit where real paper shows hot spots and seams.
+
+## 5. Hand-made is not degraded
+The marks of making are in the object (cut edges, tape, thread, flicker), not in a blurred, noisy picture. The first
+desk render had a 40 mm lens at f/5.6 on a set a few centimetres tall, with the focus following one puppet: the arch,
+the main subject at the start, was out of focus and the lamps were blobs; with grain 0.024 in 1-2 px clumps and a
+0.0009 colour fringe on top, the owner said it "looks distorted". Rules, with the numbers that fixed it:
+- Whatever the viewer should look at is sharp in every exposure. The far hills, the sky and desk objects at the frame
+  edges may be soft. Pose-by-pose focus pulls are optional; small ones only.
+- Placing focus on a small set: stop down to f/11-f/16 (f/16 here), take the camera-to-subject depths along the lens
+  axis (`tracks.sample_points(...)["depth"]`, not straight-line distance) of everything that matters at each pose,
+  and focus at the harmonic mean of the nearest and farthest, `2 * near * far / (near + far)`. Near and far limits
+  of the field then sit at equal blur. Check it: with c = 1.5 pixels of a 36 mm sensor across 1920 (0.028 mm),
+  H = f^2 / (N c) + f = 40^2 / (16 * 0.028) + 40 = 3.6 m and the limits are s * H / (H +- s). Example here: arch at
+  0.494 m and traveller at 0.713 m, focus 0.584 m, limits 0.50 and 0.70 m (the arch is just inside); later the three
+  lanterns at 0.41-0.50 m, focus 0.45 m. If near and far do not fit, stop down further or move the camera back
+  before accepting softness on a subject.
+- Finishing: grain 0.010 (0.024 was heavy), vignette 0.12, exposure flicker 0.012 kept, colour fringe 0 (it
+  resamples a channel, so it can only blur). Grain must be no coarser than one pixel; `photo.develop` makes 1-2 px
+  clumps, so keep the amount small until it has a per-pixel option.
+- Noise: 64 samples with noise threshold 0.03 (18 s a frame, 108 frames in about 33 min) kept dark areas clean
+  enough; 96 samples at 0.02 took 28 s a frame (about 50 min).
+- Light: the opening was dark with the arch near silhouette (arch pillars 23-34 of 255 against a frame mean of 45).
+  Lifting the existing clip lamp from 2.6 to 3.4 W brought them to 28-42 (mean 52) with nothing near white later
+  (no pixel above 254 in poses 50 and 100). Check the darkest pose, not the hero pose.
+- Edge-energy check before every full render (variance of PIL `FIND_EDGES` on the greyscale frame, whole frame and
+  a crop round the subject), old against new on poses 1, middle and late. Grain adds edge energy, so also measure
+  after `MedianFilter(5)`, which removes it and keeps real edges. Here (whole / subject crop after the median):
+  pose 1 54 / 64 to 122 / 200, pose 50 109 / 347 to 169 / 406, pose 100 114 / 222 to 206 / 295. If the subject
+  crop does not clearly rise, the focus is wrong; fix it before spending 30 minutes on the full render. Then look at
+  one old | new crop at 100%.
+
