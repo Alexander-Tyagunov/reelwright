@@ -4,6 +4,7 @@
  * is reported once, however many sampled frames show it.
  */
 import type {OpenFilm} from '../../browser/film.ts';
+import {drawAt} from '../../browser/film.ts';
 import type {LayoutReport} from '../../shared/contract.ts';
 import {r2, sceneLabel} from '../labels.ts';
 import type {Finding} from '../layout-checks.ts';
@@ -92,7 +93,7 @@ export async function gateLayout(film: OpenFilm): Promise<GateResult> {
   };
   for (const scene of info.scenes) {
     for (const t of sampleTimes(scene, info.texts, info.duration)) {
-      await page.eval(`window.renderAt(${t})`);
+      await drawAt(page, t);
       const report = (await page.eval(
         'window.__layoutReport()',
       )) as LayoutReport;

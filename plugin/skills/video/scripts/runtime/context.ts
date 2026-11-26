@@ -4,7 +4,12 @@
  * evaluates for every frame.
  */
 
-import type {Aspect, FilmSpec, SceneSpec} from '../shared/contract.ts';
+import type {
+  Aspect,
+  FilmSpec,
+  SceneSpec,
+  TextMotion,
+} from '../shared/contract.ts';
 import {h, lineCount} from './dom.ts';
 import {ease} from './easing.ts';
 import {formatNumber} from './format.ts';
@@ -30,6 +35,8 @@ export interface SceneState {
   /** Elements made with `ctx.text`. */
   texts: HTMLElement[];
   settles: SettleMark[];
+  /** Motion profiles recorded with `ctx.motion`. */
+  motions: Map<HTMLElement, TextMotion>;
 }
 
 /** Frame geometry shared by all scenes of a film. */
@@ -99,6 +106,7 @@ type Methods = Pick<
   | 'stagger'
   | 'onFrame'
   | 'settle'
+  | 'motion'
   | 'fit'
 >;
 
@@ -170,6 +178,10 @@ function createMethods(state: SceneState, self: () => SceneContext): Methods {
       state.settles.push({el, at: seconds});
       return self();
     },
+    motion(el, profile) {
+      state.motions.set(el, profile);
+      return self();
+    },
   };
 }
 
@@ -189,6 +201,7 @@ export function createContext(init: ContextInit): {
     frameFns: [],
     texts: [],
     settles: [],
+    motions: new Map(),
   };
   const ctx: SceneContext = {
     el: layer,

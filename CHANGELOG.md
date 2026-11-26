@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.2.0 (unreleased)
+
+- **Scene type: `plate` (13 built-in types now).** Plays an image sequence rendered elsewhere, for example in
+  Blender, as the picture, and draws labels over it that follow points exported per frame: placed by side and
+  offset, with a leader line, kept inside the safe area, hidden while the point is not visible, timed in seconds or
+  from a named event of the plate. Free `texts` can sit at fixed places. The plate frame comes from the scene time and
+  the plate's own rate, so a plate and a film may run at different rates. The data contract is `tracks.json`
+  version 1; see `film-spec.md`.
+- **Command: `reel plate <tracks.json>`.** Prints rate, frame count, size, length, the tracks with the share of
+  frames each is visible, and the events; verifies every frame file and the size of the first frame; exits 1 with
+  the missing file named.
+- **Decode before capture.** The page publishes `window.__settle()`, and every capture path (stills, render, and the
+  gates that draw frames) awaits it after `renderAt`, so a frame image that is not decoded yet is never captured as
+  blank. A film without plates pays nothing. The live preview preloads ahead and holds the previous frame while one
+  loads.
+- **Gates for plates.** Contrast of text over a plate is measured against the plate pixels under the text. The holds
+  gate counts a tracked label as readable while it moves slower than 6% of the short side per second and warns when
+  it is faster for most of its time. The load gate validates `tracks.json`, label tracks and the first and last frame
+  files, and warns when the plate is shorter than its scene.
+- **Render cache.** A plate scene's key follows `tracks.json` and the size and modification time of each frame file,
+  so editing a plate re-renders its scene and not the others.
+- **Engine API.** `ctx.motion(el, profile)` records the speed of text that follows a picture;
+  `FilmInfo.warnings` carries load warnings; `registerPreload` lets a scene type load files before it is built.
+- **Known limit.** `reel build` refuses a film with a plate scene: a plate is a folder of many files.
+
 ## 0.1.0
 
 First release of the plugin.

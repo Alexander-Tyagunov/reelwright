@@ -5,6 +5,8 @@
  */
 
 import type {LayoutItem, LayoutReport} from '../shared/contract.ts';
+import type {BackdropBox} from './backdrop.ts';
+import {backdropOf} from './backdrop.ts';
 import {round3} from './math.ts';
 
 /** What the report needs to know about the stage. */
@@ -28,9 +30,14 @@ function isSolid(color: string): boolean {
   return !!m && (m.length < 4 || parseFloat(m[3] ?? '1') > 0.5);
 }
 
-function solidBg(el: Element, source: ReportSource): string {
+/** Colour behind a text: a sampled picture, or the nearest solid CSS colour. */
+function solidBg(el: Element, source: ReportSource, box: BackdropBox): string {
   const stop = source.stage.parentElement;
   for (let n: Element | null = el; n && n !== stop; n = n.parentElement) {
+    const sampled = backdropOf(n)?.(box);
+    if (sampled) {
+      return sampled;
+    }
     const color = getComputedStyle(n).backgroundColor;
     if (isSolid(color)) {
       return color;
@@ -75,19 +82,22 @@ function describe(
   };
   const id = idOf(el);
   const fontSize = parseFloat(cs.fontSize);
+  const box = {
+    x: round3((r.left - sr.left) / k),
+    y: round3((r.top - sr.top) / k),
+    w: round3(r.width / k),
+    h: round3(r.height / k),
+  };
   return {
     id,
     parent: parent ? idOf(parent) : null,
     scene: layer ? Number(layer.dataset.scene) : -1,
     text: (el.textContent ?? '').trim().slice(0, 60),
     opacity: round3(op),
-    x: round3((r.left - sr.left) / k),
-    y: round3((r.top - sr.top) / k),
-    w: round3(r.width / k),
-    h: round3(r.height / k),
+    ...box,
     fontSize: round3(fontSize),
     color: cs.color,
-    bg: solidBg(el, source),
+    bg: solidBg(el, source, box),
     // Tight leading overshoots by a few pixels; that is not clipping.
     clipped:
       el.scrollWidth > el.clientWidth + 2 ||

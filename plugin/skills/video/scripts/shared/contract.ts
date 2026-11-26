@@ -117,6 +117,22 @@ export interface SceneInfo {
   check: number;
 }
 
+/**
+ * How fast a text moves while it can be read. A scene records it for text
+ * that follows something, so the holds gate judges reading time by speed.
+ */
+export interface TextMotion {
+  /** Scene-local second of the first sample: the text is fully shown. */
+  at: number;
+  /** Seconds between samples. */
+  step: number;
+  /**
+   * Speed at each sample as a fraction of the frame's short side per second.
+   * `null` while the text is hidden.
+   */
+  speed: Array<number | null>;
+}
+
 /** Reading-hold figures for one registered text block. */
 export interface TextInfo {
   scene: number;
@@ -130,6 +146,8 @@ export interface TextInfo {
   hold: number;
   /** Seconds a reader needs. 0 for numbers that are not read as text. */
   need: number;
+  /** Present for text that moves; `hold` then counts the shown seconds. */
+  motion?: TextMotion;
 }
 
 /** Published as `window.__film` when the page is ready. */
@@ -150,6 +168,8 @@ export interface FilmInfo {
   globalOverlays: boolean;
   /** Font families that could not be loaded. */
   missingFonts: string[];
+  /** Load-time warnings: not errors, but worth a change. One sentence each. */
+  warnings: string[];
   readingRate: number;
   maxHold: number;
   scenes: SceneInfo[];
@@ -198,6 +218,14 @@ export interface FilmPageGlobals {
   renderAt(t: number): void;
   /** `true` when frames can be drawn, `'error'` when loading failed. */
   __ready?: true | 'error';
+  /**
+   * Resolves once every picture the last drawn frame needs is decoded, such
+   * as a plate frame. Await it after `renderAt` and before a capture.
+   * Resolves at once when nothing is loading, so a film without pictures to
+   * load pays nothing. Rejects with a message that names the missing or
+   * unreadable file.
+   */
+  __settle?(): Promise<void>;
   __film?: FilmInfo;
   __errors?: string[];
   __layoutReport?(): LayoutReport;

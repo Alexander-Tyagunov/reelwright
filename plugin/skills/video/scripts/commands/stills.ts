@@ -148,6 +148,9 @@ function printReport(
     `contact sheet: ${sheet} (${grid.cols}x${grid.rows}, ` +
       'reading order = the list above)',
   );
+  for (const w of info.warnings) {
+    console.log(`warning: ${w}`);
+  }
   if (info.missingFonts.length) {
     const names = info.missingFonts.join(', ');
     console.log(`warning: fonts not available, a fallback is drawn: ${names}`);

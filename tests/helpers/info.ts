@@ -64,6 +64,7 @@ export function filmOf(
     overlap: 0.45,
     globalOverlays: false,
     missingFonts: [],
+    warnings: [],
     readingRate: 0.3,
     maxHold: 4,
     scenes,

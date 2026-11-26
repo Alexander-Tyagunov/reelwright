@@ -18,15 +18,18 @@ import {clamp, round3} from './math.ts';
 import type {Overlays} from './overlays.ts';
 import {createOverlays} from './overlays.ts';
 import {startPlayer} from './player.ts';
+import {runPreloads} from './preload.ts';
 import {sceneTypes} from './registry.ts';
 import type {BuiltScene} from './scene-build.ts';
 import {buildScenes} from './scene-build.ts';
+import {settleAll} from './settle.ts';
 import {applyCssVariables, resolveBrand} from './theme.ts';
 import type {Timeline} from './timeline.ts';
 import {computeTimeline, isOnScreen} from './timeline.ts';
 import {applyTracks} from './tracks.ts';
 import {layerLook} from './transitions.ts';
 import type {ResolvedBrand, ResolvedMeta} from './types.ts';
+import {allWarnings} from './warnings.ts';
 
 /** Options of `mount`. */
 export interface MountOptions {
@@ -188,6 +191,7 @@ interface PageParts {
 function publish(p: PageParts): void {
   const {stage, viewport, meta, info, renderAt, getTime} = p;
   window.renderAt = renderAt;
+  window.__settle = settleAll;
   window.__film = info;
   window.__layoutReport = createLayoutReport({
     stage,
@@ -233,6 +237,7 @@ export async function mount(
   const missingFonts = await loadFonts(brand, film.brand?.fontFiles);
   const timeline = computeTimeline(meta, film.scenes ?? [], sceneTypes());
   const slots = timeline.slots;
+  await runPreloads(film);
   const scenes = buildScenes({film, meta, brand, geometry, stage, slots});
   const captions = film.captions ?? [];
   const overlays = createOverlays(meta, captions);
@@ -246,6 +251,7 @@ export async function mount(
     aspect,
     missingFonts,
     captionCount,
+    warnings: allWarnings(),
   });
   const clock = createRenderer(scenes, meta, timeline, u, overlays);
   publish({stage, viewport, meta, brand, geometry, info, render, ...clock});

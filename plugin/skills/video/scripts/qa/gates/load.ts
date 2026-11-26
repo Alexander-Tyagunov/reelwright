@@ -7,20 +7,25 @@ import type {GateResult} from '../report.ts';
 
 /**
  * Builds the load gate from the published film facts. A missing font only
- * warns, because a fallback font is drawn.
+ * warns, because a fallback font is drawn. So does each load warning, such
+ * as a plate that is shorter than its scene.
  */
 export function gateLoad(info: FilmInfo): GateResult {
   const fonts = info.missingFonts;
   const size = `${info.width}x${info.height} ${info.fps} fps`;
+  const details = [
+    ...(fonts.length
+      ? [`WARN fonts not available, a fallback is drawn: ${fonts.join(', ')}`]
+      : []),
+    ...info.warnings.map(w => `WARN ${w}`),
+  ];
   return {
     id: 'load',
-    status: fonts.length ? 'WARN' : 'PASS',
+    status: details.length ? 'WARN' : 'PASS',
     summary:
       `${size}, ${info.duration} s, ${info.scenes.length} scenes, ` +
       'no page errors',
-    details: fonts.length
-      ? [`WARN fonts not available, a fallback is drawn: ${fonts.join(', ')}`]
-      : [],
+    details,
   };
 }
 

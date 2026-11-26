@@ -69,6 +69,8 @@ failure, at most 2 review rounds. Reasons and prices: `${CLAUDE_SKILL_DIR}/refer
 ## Choosing how to build a scene
 
 1. A built-in scene fits (`reel scenes`): write spec only. This is the normal case.
+   A 3D shot rendered elsewhere (Blender) with labels that follow objects is the built-in `plate` scene
+   (`${CLAUDE_SKILL_DIR}/references/film-spec.md`, section "plates").
 2. A new 2D layout is needed: add a custom scene (`add-scene` skill, `${CLAUDE_SKILL_DIR}/references/scene-api.md`).
 3. One hero moment needs to be bespoke: brief `reel-auteur` using `${CLAUDE_SKILL_DIR}/references/brief-template.md`.
 4. The whole project needs another engine (a React component library, math animation, real 3D):

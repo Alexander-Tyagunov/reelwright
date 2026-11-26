@@ -110,3 +110,15 @@ export const DEFAULT_MAX_HOLD_S = 4;
 
 /** Seconds of film that one sparkline character stands for. */
 export const SPARK_BIN_S = 0.5;
+
+/**
+ * Fraction of the short side per second. A label that follows a moving
+ * picture counts as readable only while it moves slower than this.
+ */
+export const LABEL_MAX_SPEED = 0.06;
+
+/**
+ * Fraction (0 to 1) of a moving label's shown time above which the holds
+ * gate warns when the label is faster than {@link LABEL_MAX_SPEED}.
+ */
+export const LABEL_FAST_SHARE = 0.5;

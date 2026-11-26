@@ -103,12 +103,13 @@ node "$REEL" export film.json --preset x --poster auto
 |---|---|
 | `doctor` | Checks Node, ffmpeg, the browser and the bundled fonts |
 | `init` | Creates a project from a template: `release`, `metrics`, `explainer`, `blank` |
-| `scenes` | Lists the twelve scene types and their fields; `--json` and `--md` for other formats |
+| `scenes` | Lists the thirteen scene types and their fields; `--json` and `--md` for other formats |
 | `preview` | Serves the film with a scrubbing player |
 | `stills` | Draws full-size stills and a contact sheet; `--every` draws a motion strip |
 | `render` | Renders the MP4, scene by scene; `--draft` is a fast preview at half size |
 | `qa` | Runs the quality gate; `--page-only` skips the video gates, `--size WxH` checks another format |
 | `export` | Writes delivery files: `master`, `x`, `linkedin`, `youtube`, `slack`, `web`, `gif`, `webm` |
+| `plate` | Checks a plate folder (an image sequence with `tracks.json`): tracks, events, every frame file, the frame size |
 | `build` | Bundles the film into one HTML file that plays in a browser |
 
 ## Requirements
@@ -131,9 +132,9 @@ on every machine. Other scripts are drawn with a font from the machine.
 
 ## Limits
 
-- Code-drawn video suits type, data, diagrams, code and screenshots. It is not for footage or photoreal scenes.
+- Code-drawn video suits type, data, diagrams, code and screenshots. It is not for footage or photoreal scenes, except as a rendered `plate` with code-drawn labels.
 - Sound is added at export from a file you supply. There is no built-in music or voice.
-- A bespoke scene is written per project. The twelve built-in scene types cover the common cases.
+- A bespoke scene is written per project. The thirteen built-in scene types cover the common cases.
 
 ## Licence
 

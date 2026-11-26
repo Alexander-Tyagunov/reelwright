@@ -5,6 +5,7 @@
 import {join} from 'node:path';
 import type {OpenFilm} from '../../browser/film.ts';
 import {runtimeHash, sha1} from '../../core/hash.ts';
+import {plateFingerprints} from '../../core/plate-stamp.ts';
 import {projectStamp} from '../../core/stamp.ts';
 
 /** Settings that decide how every segment is drawn and encoded. */
@@ -75,6 +76,7 @@ export function planSegments(
   const {info, spec} = film;
   const rt = runtimeHash();
   const stamp = projectStamp(spec.dir, spec.film);
+  const plates = plateFingerprints(spec.dir, spec.film);
   const {fps} = settings;
   const starts = info.scenes.map((s, i) =>
     i === 0 ? 0 : Math.ceil(s.start * fps - 1e-9),
@@ -90,6 +92,8 @@ export function planSegments(
       brand: spec.film.brand,
       prev: i ? spec.film.scenes[i - 1] : null,
       scene: spec.film.scenes[i],
+      plate: plates[i],
+      prevPlate: i ? plates[i - 1] : null,
       w: settings.width,
       h: settings.height,
       fps,

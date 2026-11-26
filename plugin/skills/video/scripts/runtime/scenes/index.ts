@@ -13,5 +13,6 @@ import './image.ts';
 import './line-chart.ts';
 import './metric.ts';
 import './outro.ts';
+import './plate.ts';
 import './quote.ts';
 import './title.ts';

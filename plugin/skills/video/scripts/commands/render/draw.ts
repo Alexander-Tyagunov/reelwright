@@ -2,6 +2,7 @@
  * @fileoverview Draws and encodes segments, one per page, in parallel.
  */
 import type {FilmPage} from '../../browser/film.ts';
+import {drawAt} from '../../browser/film.ts';
 import type {Encoder} from '../../video/encoder.ts';
 import {openEncoder} from '../../video/encoder.ts';
 import type {RenderSettings, Segment} from './plan.ts';
@@ -34,7 +35,7 @@ async function drawSegment(
   const format = png ? {format: 'png' as const} : {quality: 92};
   // Draw frames 0..N-1 of the segment, never frame N.
   for (let k = seg.from; k < seg.to; k++) {
-    await page.eval(`window.renderAt(${k / fps})`);
+    await drawAt(page, k / fps);
     await encoder.write(await page.shot(format));
   }
   await encoder.finish();

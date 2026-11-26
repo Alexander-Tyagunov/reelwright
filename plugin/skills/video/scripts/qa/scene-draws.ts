@@ -4,6 +4,7 @@
  * blamed on the scene and not on whichever gate drew the frame first.
  */
 import type {CdpSession} from '../browser/cdp.ts';
+import {drawAt} from '../browser/film.ts';
 import type {FilmInfo, SceneInfo} from '../shared/contract.ts';
 import {r3} from './labels.ts';
 
@@ -32,7 +33,7 @@ export async function findDrawFailures(
   for (const scene of info.scenes) {
     for (const t of drawTimes(scene, info)) {
       try {
-        await page.eval(`window.renderAt(${t})`);
+        await drawAt(page, t);
       } catch (e) {
         out.push(e instanceof Error ? e.message : String(e));
         break;

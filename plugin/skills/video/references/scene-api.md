@@ -130,7 +130,9 @@ The renderer draws frames in any order, in parallel, and reuses cached scenes. S
 - No `Math.random()`; use `ctx.rand()` (seeded per scene) or `Reel.seeded(seed)`.
 - No CSS `transition` or `animation` (the stylesheet sets both to `none !important`), no `<video>` or GIF playback.
 - No state carried from one frame to the next. A per-frame function computes everything from `t`.
-- No network requests. Images and fonts come from the project folder.
+- No network requests. Images and fonts come from the project folder. A built-in scene that must read a file before it can be built
+  registers a preloader (`registerPreload`), and one that loads pictures while frames are drawn registers a settler
+  (`registerSettler`); the `plate` scene shows both (`docs/ARCHITECTURE.md`).
 - Do not animate the `scale` of an `<img>` or `<canvas>`. Chrome caches scaled bitmaps of them, so the same frame can
   come out a pixel different depending on what was drawn before. Fade and move images; to zoom one, paint it as a
   CSS `background-image` on a `<div>` (see `scripts/runtime/scenes/image.ts`).
@@ -168,9 +170,10 @@ The renderer draws frames in any order, in parallel, and reuses cached scenes. S
 | `ctx.pop(el, at, {scale, zeta, omega})` | Scale-in on a spring. Defaults: start scale 0.82, `zeta` 0.8 (one small bounce), `omega` 16. |
 | `ctx.stagger(els, at, each, opts)` | `enter` for a list, `each` seconds apart (default 0.08). Returns the second at which the last one finishes. |
 | `ctx.settle(el, seconds)` | Records the scene-local second at which `el` is fully revealed, for reveals that a frame function drives (typing, a custom counter). The holds gate uses the latest of this and the end of every track on `el`, its ancestors and its descendants. |
+| `ctx.motion(el, {at, step, speed})` | Records how fast a text moves while it is shown, for text that follows a moving picture: `at` is the scene-local second it is fully shown, `step` the seconds between samples, `speed` the speed per sample as a fraction of the short side per second (`null` while hidden). The holds gate then counts the text as readable while it moves slower than 6% of the short side per second. |
 | `ctx.onFrame(fn)` | Registers `fn(t)`. Returning a function from the factory does the same. |
 
-`track`, `enter`, `pop`, `onFrame`, `settle` and `fit` return `ctx`, so calls chain.
+`track`, `enter`, `pop`, `onFrame`, `settle`, `motion` and `fit` return `ctx`, so calls chain.
 
 ## The global `Reel`
 

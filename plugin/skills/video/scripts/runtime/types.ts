@@ -9,6 +9,7 @@ import type {
   FilmPageGlobals,
   FilmSpec,
   SceneSpec,
+  TextMotion,
   TransitionKind,
 } from '../shared/contract.ts';
 import type {Attrs, h} from './dom.ts';
@@ -240,6 +241,12 @@ export interface SceneContext {
    * it for reveals that a frame function drives, such as typing.
    */
   settle(el: HTMLElement, seconds: number): SceneContext;
+  /**
+   * Records how fast a text moves while it is shown, for text that follows
+   * a moving picture. The holds gate then counts it as readable only while it
+   * moves slower than its limit.
+   */
+  motion(el: HTMLElement, profile: TextMotion): SceneContext;
   /**
    * Shrinks the font size until the element fits its box and line limit.
    * Call it after the element is in the DOM.

@@ -39,6 +39,32 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
   with `flags=accurate_rnd+full_chroma_int`, and the stream is tagged BT.709. Colours then land within 2 levels.
 - **Check:** encode patches of known colours, decode one frame, compare.
 
+### A plate frame is blank in the capture
+
+- **Symptom:** a `plate` scene shows the background and the labels but no picture in a still or a rendered frame.
+  It happens with large frames (a 3840x2160 plate did it in every try) and is rare with small ones, so a small test
+  plate hides it.
+- **Cause:** `renderAt(t)` is synchronous, but a frame image that has not been fetched and decoded yet paints nothing.
+  The screenshot is a race against the load.
+- **Fix:** the page publishes `window.__settle()`. A scene that loads pictures registers a settler (`runtime/settle.ts`);
+  the plate scene's frame store reports the wanted frame as pending until it is decoded, and rejects with the file name
+  when it is missing. Node awaits it through `drawAt` in `browser/film.ts` after every `renderAt`: `frameAt`, the render
+  segments, and the determinism, layout and load-draw checks. A film without plates resolves it in the same turn.
+- **Also:** the store paints a blob address that it owns, so the CSS background never makes a second request that
+  could finish after the capture. It keeps 24 decoded frames and loads 6 ahead, so a plate of thousands of frames does
+  not exhaust memory. The live preview does not wait: it keeps the previous frame until the next one is decoded.
+- **Do not** call `window.renderAt` from new Node code; call `drawAt`. A path that skips the wait captures blanks only
+  on a slow disk or a big plate, which is when it is hardest to notice.
+- **Check:** `tests/e2e/plate.test.ts` renders a plate and compares frames with the plate files.
+
+### Editing one plate re-rendered the whole film
+
+- **Cause:** `projectStamp` hashes every file the spec names, and the render cache key of every scene contains it.
+- **Fix:** plate scenes are left out of `projectStamp`. Each plate has its own fingerprint (`core/plate-stamp.ts`:
+  `tracks.json` plus the size and modification time of every frame file, never the frame bytes). It goes into the key
+  of the plate's scene and of the scene after it, which shows the end of the plate during the transition. Keep plates in
+  a `plates/` folder: a plate inside `assets/` is hashed by the folder rule and invalidates every scene again.
+
 ### The frame count is one off
 
 - **Symptom:** the probe gate reports 289 frames expected, 290 found.
@@ -106,6 +132,20 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
 - **Cause:** text holds still while it is read; that is intended.
 - **Fix:** the still-time limit for a scene is the larger of `meta.maxHold` and the scene's longest required
   reading hold plus 1.5 s. The frozen-ratio warning starts at 85%.
+
+### A label that follows the picture was judged against "still"
+
+- **Cause:** the holds gate measured seconds without motion, and a tracked label is never still.
+- **Fix:** the scene records the label's speed at each plate frame with `ctx.motion`. The label counts as readable
+  while it is fully shown and moves slower than `LABEL_MAX_SPEED`, and the gate warns when it is faster for most of its
+  time. The speed is the label's own, after clamping to the safe area, so a label held at the edge reads as still.
+
+### Text over a plate passed the contrast check against the wrong colour
+
+- **Cause:** contrast used the computed CSS background, which is the brand colour under the picture.
+- **Fix:** a scene can register a backdrop sampler (`runtime/backdrop.ts`). The plate scene samples the mean colour of
+  the decoded frame under the text box; a label's own panel still wins, because it is nearer the text. The mean can
+  hide a small bright area behind dark text; a `tag` label avoids the question.
 
 ### QA passed a film that showed "NaN"
 

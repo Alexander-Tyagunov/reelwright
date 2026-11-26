@@ -4,7 +4,7 @@
  * that drew the two frames before, then compares them pixel by pixel.
  */
 import type {OpenFilm} from '../../browser/film.ts';
-import {frameAt} from '../../browser/film.ts';
+import {drawAt, frameAt} from '../../browser/film.ts';
 import type {FilmInfo} from '../../shared/contract.ts';
 import {r3, sceneAt, sceneLabel} from '../labels.ts';
 import {diffPngs} from '../pixel-diff.ts';
@@ -64,8 +64,8 @@ async function drawSequential(film: OpenFilm, times: number[]) {
   const {page, info} = film;
   const frames: Buffer[] = [];
   for (const t of times) {
-    await page.eval(`window.renderAt(${Math.max(0, t - 2 / info.fps)})`);
-    await page.eval(`window.renderAt(${Math.max(0, t - 1 / info.fps)})`);
+    await drawAt(page, Math.max(0, t - 2 / info.fps));
+    await drawAt(page, Math.max(0, t - 1 / info.fps));
     frames.push(await frameAt(page, t, {format: 'png'}));
   }
   return frames;

@@ -54,11 +54,18 @@ async function verify(out: string, size: {width: number; height: number}) {
  *
  * @param args `build film.json [--out file.html] [--size WxH]`.
  * @returns 0.
- * @throws UserError when a custom scene file is missing, or the built file
- *   does not load cleanly.
+ * @throws UserError when a custom scene file is missing, the film has a
+ *   plate scene, or the built file does not load cleanly.
  */
 export async function run(args: Args): Promise<number> {
   const spec = loadSpec(args.positional[0]);
+  if (spec.film.scenes.some(s => s.type === 'plate')) {
+    throw new UserError(
+      'a film with a plate scene cannot be bundled into one HTML file, ' +
+        'because a plate is a folder of many frame files. Use `render` ' +
+        'to make an MP4 instead.',
+    );
+  }
   const outArg = stringFlag(args, 'out');
   const out = outArg ? resolve(outArg) : join(spec.dir, 'out', 'film.html');
   const inlined = inlineSpecAssets(spec.film, spec.dir);

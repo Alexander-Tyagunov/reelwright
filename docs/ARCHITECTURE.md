@@ -32,7 +32,7 @@ changes the code.
         server/         static server and on-the-fly type stripping
         video/          ffmpeg encoder, probe, contact sheet, loudness
         qa/             one file per gate, thresholds, report
-        shared/         types used by both Node code and the browser runtime
+        shared/         types and pure helpers used by both Node code and the browser runtime (`plate.ts`: the plate data contract)
         runtime/        browser code: ES modules, DOM, no Node APIs
           scenes/       one file per scene type
           fonts/        bundled fonts (SIL OFL)
@@ -77,12 +77,29 @@ install packages on every user's machine, and a `CLAUDE.md` at a plugin root is 
 `shared/contract.ts` defines the shapes that cross the Node/browser boundary:
 
 - `FilmSpec` — the `film.json` document.
-- `FilmInfo` — `window.__film`, published by the runtime once the page is ready.
+- `FilmInfo` — `window.__film`, published by the runtime once the page is ready. It carries `warnings`, load-time
+  facts that are not errors (a plate shorter than its scene).
 - `LayoutReport` — returned by `window.__layoutReport()`.
-- The page globals: `window.renderAt(t)`, `window.__ready`, `window.__errors`.
+- The page globals: `window.renderAt(t)`, `window.__settle()`, `window.__ready`, `window.__errors`.
+  `renderAt` is synchronous. `__settle` resolves once every picture the drawn frame needs is decoded, and Node
+  code awaits it after every `renderAt` through `drawAt` in `browser/film.ts` before it captures.
+- `shared/plate.ts` — the `tracks.json` format of a plate: parsing, the time-to-frame map and frame file names.
+  The runtime, the `plate` command, the render cache key and the tests all read it, so there is one definition.
 
 Scene modules register through `registerScene(type, factory)` from `runtime/registry.ts`. A project's custom
 scene files use the same function through the global `Reel` object.
+
+A factory cannot wait, so a scene type that needs a file before it can be built registers a preloader with
+`registerPreload(type, fn)` (`runtime/preload.ts`). `mount` awaits every preloader, in scene order, before any
+factory runs; an error is reported as `scene N (type): ...` and fails the load gate. A scene that loads pictures at
+draw time registers a settler with `registerSettler` (`runtime/settle.ts`), which `__settle` awaits. A scene that
+paints a picture the stylesheet cannot see registers a backdrop sampler (`runtime/backdrop.ts`), which the layout
+report uses to find the colour behind a text. Text that moves with a picture declares its speed with `ctx.motion`.
+
+The `plate` scene is the one user of all four. Its files are `runtime/scenes/plate.ts` and
+`runtime/scenes/lib/plate-*.ts`: `-spec` (fields, pure), `-place` (geometry, pure), `-load` (preload), `-frames`
+(decoded frame cache), `-labels`, `-texts` and `-sample` (contrast sampling). The cache key of a plate scene is in
+`core/plate-stamp.ts`.
 
 ## Server routes
 

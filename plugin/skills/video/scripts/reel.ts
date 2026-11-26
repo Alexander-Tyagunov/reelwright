@@ -37,6 +37,9 @@ const COMMANDS: Readonly<Record<string, string>> = {
   export:
     'make platform files (mp4, gif, webm, poster) with optional audio: ' +
     'export film.json --preset master|x|linkedin|youtube|slack|web|gif|webm',
+  plate:
+    'check a plate folder: plate plates/shot03/tracks.json ' +
+    '(tracks, events, frame files, frame size)',
   build: 'bundle the film into one self-contained HTML file: build film.json',
 };
 

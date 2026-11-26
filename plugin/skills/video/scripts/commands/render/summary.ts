@@ -55,6 +55,9 @@ export function writeSummary(input: SummaryInput): void {
       `${summary.duration}s; ${summary.rendered} scenes rendered, ` +
       `${summary.reused} reused, ${seconds}s wall time`,
   );
+  for (const w of film.info.warnings) {
+    console.log(`warning: ${w}`);
+  }
   const missing = film.info.missingFonts;
   if (missing.length) {
     console.log(

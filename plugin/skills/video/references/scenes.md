@@ -121,6 +121,26 @@ Closing card, centred; the last frame is a settled poster.
 cta = text of a button-shaped chip, url = shown in mono under it, logo = image path relative to the film.json folder.
 ```
 
+## `plate`
+
+A pre-rendered image sequence as the picture, with labels that follow tracked points and free texts on top.
+
+```
+{ type:"plate", duration, plate, start?, fit?, labels?, texts?, cues? }
+plate: path of tracks.json relative to the film.json folder, for example "plates/shot03/tracks.json". The frames are named by its frame_pattern.
+start?: seconds into the plate at which the scene begins (default 0). The frame shown at scene time t is floor((t + start) * plate fps), held at the last frame when the plate ends (a load warning says so).
+fit?: "cover" (default, fills the frame and crops) | "contain" (shows the whole picture with bars).
+labels?: [{ track, text, sub?, from?, to?, side?, offset?, leader?, variant? }]  up to 40
+track: a point name from tracks.json. text: the label. sub: a smaller second line.
+from, to: scene seconds, or { event, plus? } for a named frame of the plate (plus in seconds). Defaults: 0 and the scene end. The label is gone by `to`.
+side: "top" | "bottom" | "left" | "right" | "auto" (default: the side with the most room around the point's average place while the label shows).
+offset: gap between the point and the label box in u (default 5). leader: line and dot from label to point (default true).
+variant: "tag" (default, small panel behind the text) | "plain" (text with a soft shadow only).
+A label is hidden while its point is not visible, and is kept inside the safe area (the leader stretches).
+texts?: [{ text, class?, x, y, from?, to?, align? }]  free overlays. class is a type class (default "rw-body"). x and y are u from the top left, or "center". align: "left" (default) | "center" | "right" sets which edge x names.
+cues?: reserved for sound cues; ignored.
+```
+
 ## `quote`
 
 One large quotation, words staggering in, attribution last.

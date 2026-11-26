@@ -6,6 +6,7 @@ import {existsSync, readdirSync, readFileSync, statSync} from 'node:fs';
 import {join, relative, resolve, sep} from 'node:path';
 import type {FilmSpec} from '../shared/contract.ts';
 import {runtimeHash, sha1} from './hash.ts';
+import {plateFingerprints} from './plate-stamp.ts';
 
 /** Files up to this size, in bytes, are hashed by content. */
 const SMALL_FILE_BYTES = 256 * 1024;
@@ -67,10 +68,21 @@ function visitStrings(value: unknown, visit: (text: string) => void): void {
   }
 }
 
+/** The film without the plate paths, which have their own fingerprint. */
+function withoutPlates(film: FilmSpec): FilmSpec {
+  const scenes = film.scenes.map(s => {
+    const {plate: _plate, ...rest} = s;
+    return s.type === 'plate' ? (rest as typeof s) : s;
+  });
+  return {...film, scenes};
+}
+
 /**
  * Fingerprint of the project files a film can use: the `assets`, `vendor`,
  * `scenes` and `fonts` folders, the custom scene files, and every string in
- * the spec that names a file inside the project folder.
+ * the spec that names a file inside the project folder. Plates are left out:
+ * each plate scene has its own fingerprint, so changing one plate does not
+ * invalidate the other scenes.
  *
  * @param dir Absolute project folder.
  * @returns 40 hex characters.
@@ -93,7 +105,7 @@ export function projectStamp(dir: string, film: FilmSpec): string {
       add(path);
     }
   }
-  visitStrings(film, text => {
+  visitStrings(withoutPlates(film), text => {
     const path = isInsideFile(dir, text);
     if (path) {
       add(path);
@@ -111,5 +123,10 @@ export function projectStamp(dir: string, film: FilmSpec): string {
  * @param dir Absolute project folder.
  */
 export function specHash(specAbs: string, dir: string, film: FilmSpec): string {
-  return sha1(readFileSync(specAbs), runtimeHash(), projectStamp(dir, film));
+  return sha1(
+    readFileSync(specAbs),
+    runtimeHash(),
+    projectStamp(dir, film),
+    plateFingerprints(dir, film),
+  );
 }

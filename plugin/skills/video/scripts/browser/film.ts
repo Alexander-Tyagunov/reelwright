@@ -77,6 +77,7 @@ export async function pageErrors(page: CdpSession): Promise<string[]> {
 }
 
 const FRAME_FAILURE = /scene \d+ \([^)]*\) threw at t=[\d.]+s: [^\n]*/;
+const FRAME_FILE = /plate frame [^\n]*/;
 
 /**
  * Makes the page's `eval` report a scene that threw while a frame was drawn
@@ -88,7 +89,12 @@ function explainFrameFailures(page: CdpSession): void {
     try {
       return await rawEval(expression);
     } catch (e) {
-      const found = e instanceof Error && FRAME_FAILURE.exec(e.message);
+      const text = e instanceof Error ? e.message : '';
+      const file = FRAME_FILE.exec(text);
+      if (file) {
+        throw new UserError(file[0]);
+      }
+      const found = FRAME_FAILURE.exec(text);
       if (!found) {
         throw e;
       }
@@ -168,6 +174,20 @@ export async function openFilm(
 }
 
 /**
+ * Draws the film at one time and waits until every picture that frame needs
+ * is decoded, such as a plate frame. Every capture path draws through this,
+ * because a frame drawn before its pictures are ready captures blank.
+ *
+ * @param t Time in seconds from the start of the film.
+ * @throws UserError that names the file when a plate frame is missing.
+ */
+export async function drawAt(page: CdpSession, t: number): Promise<void> {
+  await page.eval(
+    `(async () => { window.renderAt(${t}); await window.__settle?.(); })()`,
+  );
+}
+
+/**
  * Draws the film at one time and returns a screenshot.
  *
  * @param t Time in seconds from the start of the film.
@@ -178,6 +198,6 @@ export async function frameAt(
   t: number,
   options?: ShotOptions,
 ): Promise<Buffer> {
-  await page.eval(`window.renderAt(${t})`);
+  await drawAt(page, t);
   return page.shot(options);
 }

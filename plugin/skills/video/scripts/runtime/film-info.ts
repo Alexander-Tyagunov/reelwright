@@ -22,6 +22,8 @@ export interface FilmInfoInput {
   missingFonts: string[];
   /** Number of caption lines in the spec. */
   captionCount: number;
+  /** Load-time warnings. */
+  warnings: string[];
 }
 
 /**
@@ -43,12 +45,14 @@ export function collectTexts(
     if (!el.isConnected || !text) {
       continue;
     }
-    const settle = elementSettle(el, tracks, settles);
+    const motion = built.state.motions.get(el);
+    const settle = motion?.at ?? elementSettle(el, tracks, settles);
     const words = text.split(/\s+/).length;
     const figures = readingHold({
       settle,
-      duration,
-      tout,
+      // Moving text is readable only while it is shown.
+      duration: motion ? settle + motion.step * motion.speed.length : duration,
+      tout: motion ? 0 : tout,
       words,
       readingRate,
       noHold: !!el.dataset.rwNoHold,
@@ -60,6 +64,7 @@ export function collectTexts(
       text: text.slice(0, 80),
       words,
       ...figures,
+      ...(motion && {motion}),
     });
   }
   built.settle = sceneSettle;
@@ -73,6 +78,7 @@ export function collectTexts(
  */
 export function buildFilmInfo(input: FilmInfoInput): FilmInfo {
   const {meta, timeline, scenes, aspect, missingFonts, captionCount} = input;
+  const {warnings} = input;
   const texts = scenes.flatMap(s => collectTexts(s, meta.readingRate));
   return {
     title: meta.title,
@@ -86,6 +92,7 @@ export function buildFilmInfo(input: FilmInfoInput): FilmInfo {
     overlap: timeline.overlap,
     globalOverlays: !!(meta.progress || captionCount),
     missingFonts,
+    warnings,
     readingRate: meta.readingRate,
     maxHold: meta.maxHold,
     scenes: scenes.map(s => ({
