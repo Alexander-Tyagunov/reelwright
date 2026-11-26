@@ -105,7 +105,7 @@ The scene:
 { "type": "plate", "duration": 9, "plate": "plates/shot03/tracks.json", "start": 0, "fit": "cover",
   "labels": [
     { "track": "opus", "text": "Opus", "sub": "most capable", "from": 3.2, "to": 8.5,
-      "side": "auto", "offset": 5, "leader": true, "variant": "tag" }
+      "side": "auto", "offset": 5, "smooth": 0.6, "follow": "both", "leader": true, "variant": "tag" }
   ],
   "texts": [ { "text": "March 2024", "class": "rw-kicker", "x": 6, "y": 8, "from": 0.4, "to": 8.6, "align": "left" } ],
   "cues": [] }
@@ -119,6 +119,14 @@ The scene:
   point is not `visible` the label is hidden. It fades and slides in over 0.35 s from `from` and is gone by `to`
   (default: the scene end). `variant` is `tag` (a small panel from `--surface` behind the text) or `plain` (a soft shadow
   only); colours and fonts come from the film's `brand`.
+- `smooth` (seconds, 0 to 5, default 0.6) lets the label glide: the box follows a low-passed copy of the track (a
+  zero-phase Gaussian whose standard deviation is `smooth` seconds, computed over the frames where the point is visible,
+  with no lag at the ends), while the dot and the end of the leader stay on the exact point. `0` follows the point
+  exactly. `follow` is `"both"` (default), `"x"` (the box keeps one height for its whole time on screen: just clear of
+  the point's highest moment while the label shows, plus `offset`, so a hop never reaches it; with `side` `bottom` it
+  clears the lowest moment, with `left` or `right` it is centred on the highest) or `"none"` (the box stays where the
+  point is at `from`; the leader stretches). The reading-time speed in the holds gate is the real speed of the box after
+  smoothing and clamping, so a bobbing point under the default `smooth` passes and the same label with `smooth: 0` fails.
 - `from` and `to` of a label or text are seconds, or `{ "event": "split", "plus": 0.3 }` for 0.3 s after an event.
 - `texts` are free overlays at fixed places: `x` and `y` in u from the top left, or `"center"`; `class` is a type class
   (`rw-kicker`, `rw-h2`, `rw-body`, ...; default `rw-body`); `align` says which edge of the text `x` names.

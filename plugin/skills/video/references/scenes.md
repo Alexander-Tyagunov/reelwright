@@ -130,11 +130,13 @@ A pre-rendered image sequence as the picture, with labels that follow tracked po
 plate: path of tracks.json relative to the film.json folder, for example "plates/shot03/tracks.json". The frames are named by its frame_pattern.
 start?: seconds into the plate at which the scene begins (default 0). The frame shown at scene time t is floor((t + start) * plate fps), held at the last frame when the plate ends (a load warning says so).
 fit?: "cover" (default, fills the frame and crops) | "contain" (shows the whole picture with bars).
-labels?: [{ track, text, sub?, from?, to?, side?, offset?, leader?, variant? }]  up to 40
+labels?: [{ track, text, sub?, from?, to?, side?, offset?, smooth?, follow?, leader?, variant? }]  up to 40
 track: a point name from tracks.json. text: the label. sub: a smaller second line.
 from, to: scene seconds, or { event, plus? } for a named frame of the plate (plus in seconds). Defaults: 0 and the scene end. The label is gone by `to`.
 side: "top" | "bottom" | "left" | "right" | "auto" (default: the side with the most room around the point's average place while the label shows).
 offset: gap between the point and the label box in u (default 5). leader: line and dot from label to point (default true).
+smooth: seconds of smoothing, 0 to 5 (default 0.6). The box glides along a low-passed copy of the track; the dot and the end of the leader stay on the exact point. 0 follows the point exactly.
+follow: "both" (default) | "x" (the box keeps one height, just clear of the point's highest moment while the label shows, plus offset) | "none" (the box stays where the point is at `from`; the leader stretches).
 variant: "tag" (default, small panel behind the text) | "plain" (text with a soft shadow only).
 A label is hidden while its point is not visible, and is kept inside the safe area (the leader stretches).
 texts?: [{ text, class?, x, y, from?, to?, align? }]  free overlays. class is a type class (default "rw-body"). x and y are u from the top left, or "center". align: "left" (default) | "center" | "right" sets which edge x names.

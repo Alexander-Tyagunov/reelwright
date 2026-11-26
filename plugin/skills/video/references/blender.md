@@ -130,3 +130,10 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
    frame's screen positions with `sample_points` before animating the middle.
 10. Judged exposure on the lit beats only; the unlit opening came out very dark under the Punchy look. Look at
     the darkest frame of the shot at final quality before rendering, not only the hero frame.
+
+## 11. Labels
+A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per
+second. Characters that hop make the point bob. Put each track empty above the highest point of the character's
+motion, so the label never meets the character, or give the label `follow: "x"` in the film. The default `smooth` of
+0.6 s already lets the box glide while the leader stays on the point. Before the final render run
+`reel qa film.json --page-only` and read the holds lines for the labels.

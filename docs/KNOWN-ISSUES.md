@@ -57,6 +57,18 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
   on a slow disk or a big plate, which is when it is hardest to notice.
 - **Check:** `tests/e2e/plate.test.ts` renders a plate and compares frames with the plate files.
 
+### Labels on hopping characters fail reading time
+
+- **Symptom:** `reel qa --page-only` fails holds with "moves faster than 6% of the short side per second for 100% of its
+  time on screen" and "readable (slow enough) for 0 s" for labels that follow characters that hop.
+- **Cause:** the label box was glued to the exported point, so it bobbed with every hop. The gate measures the box, and a
+  bobbing box is fast even when the character goes nowhere.
+- **Fix:** labels have `smooth` (seconds, default 0.6) and `follow` (`both`, `x`, `none`). The box follows a zero-phase
+  low-passed copy of the track, computed once at mount, while the dot and the leader end stay on the exact point.
+  `follow: "x"` keeps one height clear of the point's highest moment. The gate reports the speed of the box after
+  smoothing and clamping. In the 3D scene, put track empties above the highest point of the motion (`blender.md`).
+- **Check:** `tests/unit/plate-smooth.test.ts` and the bobbing-track scenario in `tests/e2e/plate.test.ts`.
+
 ### Editing one plate re-rendered the whole film
 
 - **Cause:** `projectStamp` hashes every file the spec names, and the render cache key of every scene contains it.

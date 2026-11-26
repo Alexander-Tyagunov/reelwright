@@ -13,6 +13,9 @@ import {sceneChecks} from './validate.ts';
 /** Where a label sits against its point. */
 export type LabelSide = 'top' | 'bottom' | 'left' | 'right' | 'auto';
 
+/** What of the point's motion a label box follows. */
+export type LabelFollow = 'both' | 'x' | 'none';
+
 /** A time: seconds, or an event of the plate plus an offset in seconds. */
 export type TimeRef = number | {event: string; plus?: number};
 
@@ -26,6 +29,10 @@ export interface LabelSpec {
   side: LabelSide;
   /** Distance between the point and the label box, in `u`. */
   offset: number;
+  /** Seconds of smoothing of the box's path; 0 follows the point exactly. */
+  smooth: number;
+  /** Which motion of the point the box follows. */
+  follow: LabelFollow;
   leader: boolean;
   variant: 'tag' | 'plain';
 }
@@ -123,6 +130,10 @@ function parseLabel(check: SceneChecks, raw: unknown, i: number): LabelSpec {
   if (offset < 0 || offset > 60) {
     throw new Error(`${p}.offset must be from 0 to 60 u; got ${offset}`);
   }
+  const smooth = check.optionalNumber(`${p}.smooth`, l.smooth) ?? 0.6;
+  if (smooth < 0 || smooth > 5) {
+    throw new Error(`${p}.smooth must be from 0 to 5 seconds; got ${smooth}`);
+  }
   return {
     track: check.text(`${p}.track`, l.track),
     text: check.text(`${p}.text`, l.text),
@@ -131,11 +142,14 @@ function parseLabel(check: SceneChecks, raw: unknown, i: number): LabelSpec {
     to: timeRef(check, `${p}.to`, l.to),
     side: oneOf(`${p}.side`, l.side, SIDES, 'auto'),
     offset,
+    smooth,
+    follow: oneOf(`${p}.follow`, l.follow, FOLLOWS, 'both'),
     leader: l.leader !== false,
     variant: oneOf(`${p}.variant`, l.variant, ['tag', 'plain'], 'tag'),
   };
 }
 
+const FOLLOWS = ['both', 'x', 'none'] as const;
 const SIDES = ['top', 'bottom', 'left', 'right', 'auto'] as const;
 
 function position(check: SceneChecks, path: string, v: unknown) {

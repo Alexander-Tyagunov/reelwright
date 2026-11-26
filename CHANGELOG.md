@@ -23,6 +23,7 @@
   so editing a plate re-renders its scene and not the others.
 - **Engine API.** `ctx.motion(el, profile)` records the speed of text that follows a picture;
   `FilmInfo.warnings` carries load warnings; `registerPreload` lets a scene type load files before it is built.
+- **Labels glide.** `smooth` (default 0.6 s) low-passes the path of a label box and `follow` (`both`, `x`, `none`) limits it, so labels on hopping points stay readable while the leader line and dot stay on the exact point.
 - **Known limit.** `reel build` refuses a film with a plate scene: a plate is a folder of many files.
 
 ## 0.1.0

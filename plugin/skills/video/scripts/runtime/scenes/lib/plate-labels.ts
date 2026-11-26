@@ -5,13 +5,14 @@
  * Sizes are in `u` and pixels as named; times are scene-local seconds.
  */
 
-import type {Plate, PlatePoint} from '../../../shared/plate.ts';
 import {plateFrameAt} from '../../../shared/plate.ts';
 import {round3} from '../../math.ts';
 import type {SceneContext} from '../../types.ts';
-import type {Point, Rect, Side} from './plate-place.ts';
-import {chooseSide, leaderEnd, placeLabel, toFrame} from './plate-place.ts';
+import type {Point, Side} from './plate-place.ts';
+import {leaderEnd} from './plate-place.ts';
 import type {BoundLabel} from './plate-spec.ts';
+import type {Placed, PlateGeometry} from './plate-track.ts';
+import {makePlacer} from './plate-track.ts';
 
 /** Seconds a label takes to fade in, and to fade out before its `to`. */
 export const FADE_S = 0.35;
@@ -21,24 +22,6 @@ const SLIDE_U = 2;
 const DOT_U = 0.55;
 /** Width in `u` of the leader line. */
 const LEADER_U = 0.16;
-
-/** What the labels need to know about the plate and the frame. */
-export interface PlateGeometry {
-  plate: Plate;
-  /** Seconds into the plate at which the scene starts. */
-  start: number;
-  /** Where the plate image is drawn, in frame pixels. */
-  drawn: Rect;
-  /** The safe area, in frame pixels. */
-  area: Rect;
-}
-
-/** Where one label is at one plate frame. */
-interface Placed {
-  point: Point;
-  box: Rect;
-  visible: boolean;
-}
 
 const SLIDE_AXIS: Record<Side, Point> = {
   right: {x: 1, y: 0},
@@ -73,61 +56,6 @@ function buildBox(ctx: SceneContext, l: BoundLabel) {
     : null;
   const box = h('div', {style}, name, sub);
   return {box, texts: sub ? [name, sub] : [name]};
-}
-
-function trackOf(plate: Plate, name: string): PlatePoint {
-  const point = plate.points[name];
-  if (!point) {
-    throw new Error(`the plate has no track "${name}"`);
-  }
-  return point;
-}
-
-function averagePoint(point: PlatePoint, f0: number, f1: number) {
-  let n = 0;
-  let sx = 0;
-  let sy = 0;
-  for (let f = f0; f <= f1; f++) {
-    if ((point.visible[f] ?? 0) > 0) {
-      n++;
-      sx += point.x[f] ?? 0;
-      sy += point.y[f] ?? 0;
-    }
-  }
-  return n
-    ? {x: sx / n, y: sy / n}
-    : {x: point.x[f0] ?? 0, y: point.y[f0] ?? 0};
-}
-
-/** Chooses the side once from the point's average place on screen. */
-function sideOf(geo: PlateGeometry, l: BoundLabel, size: Rect, gap: number) {
-  if (l.side !== 'auto') {
-    return l.side;
-  }
-  const {plate, start} = geo;
-  const f0 = plateFrameAt(plate, l.from + start);
-  const f1 = plateFrameAt(plate, l.to + start);
-  const mean = averagePoint(trackOf(plate, l.track), f0, f1);
-  const at = toFrame(geo.drawn, mean.x, mean.y);
-  return chooseSide(at, size, gap, geo.area);
-}
-
-/** Makes the function that places a label at a plate frame. */
-function makePlacer(
-  ctx: SceneContext,
-  geo: PlateGeometry,
-  l: BoundLabel,
-  size: Rect,
-): {at: (frame: number) => Placed; side: Side} {
-  const gap = l.offset * ctx.u;
-  const side = sideOf(geo, l, size, gap);
-  const track = trackOf(geo.plate, l.track);
-  const at = (f: number): Placed => {
-    const point = toFrame(geo.drawn, track.x[f] ?? 0, track.y[f] ?? 0);
-    const box = placeLabel(point, size, side, gap, geo.area);
-    return {point, box, visible: (track.visible[f] ?? 0) > 0};
-  };
-  return {at, side};
 }
 
 /** Label speed between two plate frames, in short sides per second. */
@@ -215,7 +143,7 @@ function buildRig(
   const {box, texts} = buildBox(ctx, l);
   ctx.el.append(box);
   const size = {x: 0, y: 0, w: box.offsetWidth, h: box.offsetHeight};
-  const placer = makePlacer(ctx, geo, l, size);
+  const placer = makePlacer(geo, l, size, l.offset * ctx.u);
   recordMotion(ctx, geo, l, placer.at, texts);
   const leader = l.leader ? buildLeader(ctx, overlay) : null;
   return {l, box, leader, ...placer};

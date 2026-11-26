@@ -218,6 +218,28 @@ describe('plate scene', {skip, timeout: 900_000}, () => {
     assert.match(detail(gate, /moves faster/), /"Box"/);
   });
 
+  it('a label on a bobbing track fails reading time with smooth 0 and passes with the default', async () => {
+    const bob = tracksJson(1) as {points: {box: {y: number[]}}};
+    bob.points.box.y = bob.points.box.y.map(
+      (y, n) => y - 0.08 * Math.abs(Math.sin(n * 0.7)),
+    );
+    const holds = async (name: string, extra: object) => {
+      const label = {track: 'box', text: 'Box', from: 0.8, to: 2.8, ...extra};
+      const scene = plateScene({
+        plate: 'plates/shot01/bob.json',
+        labels: [label],
+      });
+      const p = plateProject(name, [scene]);
+      const file = join(p.dir, 'plates', 'shot01', 'bob.json');
+      writeFileSync(file, JSON.stringify(bob));
+      return gateOf((await qa(p, ['--page-only'])).report, 'holds');
+    };
+    const exact = await holds('bob-exact', {smooth: 0});
+    assert.match(detail(exact, /moves faster/), /"Box"/);
+    const glide = await holds('bob-glide', {});
+    assert.equal(glide.status, 'PASS', glide.details.join('; '));
+  });
+
   it('editing tracks.json re-renders the plate scene and reuses the title scene', async () => {
     const title = {type: 'title', duration: 3, title: 'Before the shot'};
     const p = plateProject('cache', [title, plateScene()], {lead: 0.5});
