@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "films": [
+    {
+      "id": "release-history",
+      "title": "A release history",
+      "date": "2026-11-27",
+      "duration_s": 93,
+      "formats": ["16:9"],
+      "medium": "stop-motion paper craft on a desk, Blender Cycles",
+      "palette_family": "blue hour with warm paper lanterns, cool screen light, dawn at the end",
+      "type": "handwritten labels on dark card tags; a typeset title card",
+      "texture": "paper fibre, hand-cut edges, tape and thread, fine one-pixel grain",
+      "camera": "40 mm at f/16, locked off or hand-pushed slides, cuts on landmarks, 12 poses a second",
+      "series": null,
+      "link": "out/film.mp4",
+      "owner_verdict": null
+    }
+  ]
+}
