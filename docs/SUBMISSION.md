@@ -20,7 +20,7 @@ Checked against the submission guide and the pre-submission checklist on 23 Nove
 
 - Set `author.name` (and optionally `author.url`) in `plugin/.claude-plugin/plugin.json` and `owner.name` in
   `.claude-plugin/marketplace.json` to the name you publish under.
-- Add `repository` and `homepage` to `plugin.json` once the GitHub URL exists, and replace the placeholder `OWNER/reelwright`
+- Add `repository` and `homepage` to `plugin.json` once the GitHub URL exists, and replace the placeholder `Alexander-Tyagunov/reelwright`
   in the Install section of `plugin/README.md` and in the root `README.md`.
 - Run `npm run check`, `npm run test:e2e`, `claude plugin validate ./plugin` and `claude plugin validate .` (the marketplace).
 - The version is 0.2.0 in `plugin/.claude-plugin/plugin.json` and `package.json`; the changelog's 0.2.0 section stops saying

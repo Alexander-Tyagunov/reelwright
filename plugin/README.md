@@ -148,7 +148,7 @@ Agents load in Claude Code and Cowork. In chat, the skills do the same work in o
 ## Install
 
 ```bash
-claude plugin marketplace add OWNER/reelwright
+claude plugin marketplace add Alexander-Tyagunov/reelwright
 claude plugin install reelwright@reelwright
 ```
 
