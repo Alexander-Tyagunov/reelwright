@@ -1,6 +1,23 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.0 (27 November 2026)
+
+- **Fixes from a cold-start test.** A fresh session that could read only the installed plugin made a 6-second film in two
+  formats and wrote down 25 places where the text failed it; all 25 are fixed in the files they name (they were not re-tested
+  by a second cold run). In the engine and the library: `reel chapters` on a film too short for chapters (fewer than three of
+  10 s) prints nothing to stdout, says why on stderr and exits 0, and the publish skill says to leave chapters out; the `layout`
+  and `holds` gates show SKIP and "no text to measure" for a film with no text instead of a PASS on zero items; `reel` and
+  `reel doctor` say how to get Node 24 without changing the system Node (`npm install --prefix <dir> node@24`, then that
+  folder's `node_modules/node/bin` first in PATH for every command); `film.build_shot` refuses, with a message that says what to
+  do, when the open Blender file has unsaved changes and is not one of the film's own shot files (`force=True` overrides);
+  the library's version is the plugin's (it said 0.3.0) and a unit test keeps them equal. In the text: the library loader drops a
+  stale `reel_blender` from `sys.modules` and the install step puts the library on the Blender machine; no folder of one owner's
+  is named any more; a Short is a first-class case in the publish kit (a 9:16 thumbnail, the vertical export to upload, no
+  chapters or end screen); a second format needs a position per format for everything that enters or sits near a frame edge, and
+  its own three-pose check; an ident of one or two shots, the frame rate, a fixed medium, the studio profile started from
+  remembered remarks, a critic that is not independent, tokens that cannot be measured, plate zips left on the Blender machine,
+  a top view, in-focus tracks for a shot with no labels, and why a paper's albedo does not change the picture are all said where
+  a reader needs them.
 
 - **Fixes from an independent review.** `reel assemble --shots` with shots left out follows the chosen shots in the sound
   curve; a plan with no shots, a shot id outside `[A-Za-z0-9_-]`, an intro or outro that shares a shot's id, an
@@ -20,7 +37,7 @@
 - **Two new agents, two changed.** `reel-animator` (Opus) builds one sequence in Blender; `reel-critic` (Opus) reviews a
   film it did not make. `reel-director` writes pitches, treatment and shot plan from the profile and ledger;
   `reel-builder` assembles from the plan. Eight agents now.
-- **Blender library 0.3.0.** New modules `film` (plan-driven build, preview strip, check job, final render, tracks,
+- **Blender library.** New modules `film` (plan-driven build, preview strip, check job, final render, tracks,
   status, a second format), `lettering` (hand and printed text as image textures), `stills` (stills, circle check sheet,
   banner crops, watermark cut) and `checks` (edge energy, brightness, match of two frames).
 - **An example film project.** `blender/examples/paper_desk/`: one look module, one shot module and a three-shot plan with
@@ -42,7 +59,7 @@
   loudness. The gate only warns; it never fails a film.
 - **`reel chapters`.** Chapters from scene starts: the first at 0:00, each at least 10 s, a title is the
   `chapter` of the chapter's first scene that has one, else the label texts of its scenes (about 60 characters), else the
-  film title or "Part N". Only the timestamp lines go to stdout. A scene may carry `chapter` in the spec; it changes no pixel.
+  film title or "Part N". Only the timestamp lines go to stdout, and none when fewer than three chapters fit. A scene may carry `chapter` in the spec; it changes no pixel.
 - **Fix: leader lines of plate scenes no longer leak between scenes.** A leader line of a scene that was off screen
   showed through and failed the determinism gate on films with two or more plate scenes with leader labels.
 - **Scene type: `plate` (13 built-in types now).** Plays an image sequence rendered elsewhere, for example in

@@ -127,23 +127,54 @@ Facts a later reader can rely on; each has a test or a recorded measurement.
 | Chapters for a film with no `chapter` fields | `tests/unit/cuts-chapters.test.ts` uses the real labels of the first film: titles are model names joined and cut at a label, never a plate id |
 | Cuts | the same file, on the brightness and loudness numbers of the first film's cuts: the C3 to C4 cut is flagged for both; a video that cannot be read gives a warning, never a failure; an e2e scenario shows a white-to-dark cut warns and does not fail |
 | The shot plan | `tests/unit/shot-plan.test.ts`: the first film's plan passes, seeded faults fail with the field named, the 3D side's fields pass through untouched; the example project's plan passes `reel plan` with only missing-plate warnings |
-| Blender library 0.3.0 and the example project | the example's first shot reproduces the first film's intro shot: three poses compared against the approved plate gave no shift, brightness within 0.3 % and edge energy within 1.3 % (recorded in the commit that added it). The library was built from code that seven animators used on the first film |
+| Blender library and the example project | the example's first shot reproduces the first film's intro shot: three poses compared against the approved plate gave no shift, brightness within 0.3 % and edge energy within 1.3 % (recorded in the commit that added it). The library was built from code that seven animators used on the first film |
 | Marketplace and plugin | `claude plugin validate .` and `claude plugin validate ./plugin` pass |
 
-Suite results on 27 November 2026 (same container, Node 24): `npm run check` passes with 290 unit tests; the end-to-end suite
-ran 66 scenarios in 8 min 26 s with one failure on the first run, a scenario that matched the old wording of the "missing
-frame file" message of `reel plate`. The behaviour was right and the scenario was out of date, so the message now keeps the
-words the scenario looks for ("1 of 45 frame files are missing", the first file) and adds the missing ranges; the plate
-scenarios then passed 14 of 14. The other 65 scenarios passed on the first run.
+Suite results on 27 November 2026 (same container, Node 24), after the fixes from the cold-start test: `npm run check`
+passes with 316 unit tests; the end-to-end suite ran 67 scenarios in 8 min with no failure on one run. Earlier the same day
+the first end-to-end run had one failure, a scenario that matched the old wording of the "missing frame file" message of
+`reel plate`; the behaviour was right and the scenario was out of date, so the message keeps the words the scenario looks for
+and adds the missing ranges.
 
-Not proven yet: a fresh session reading only the plugin and making a film (see "Cold-start test"), the `film`, `studio` and
-`publish` skills in use, `reel-animator` and `reel-critic` in use, a vertical (9:16) film end to end, and any Blender call in
-this repository's own test run (Blender is not part of the test environment).
+Proven since by the cold-start test below: a fresh session reading only the plugin made a film in two formats, including a
+vertical one, with the `film`, `studio` and `publish` skills; `reel-animator` and `reel-critic` were not started in it (agents could
+not run), so they are still not proven in use, and no Blender call is made in this repository's own test run (Blender is not part
+of the test environment).
 
 ## Cold-start test
 
-*To be filled in by a later agent: a fresh session with only the plugin installed and Blender connected, asked for a film.
-Record the request, what it did without help, where it stopped or went wrong, the cost, and what was changed afterwards.*
+Run on 27 November 2026 against Reelwright 0.2.0 as released, before the fixes below.
+
+**What the fresh session was asked.** A new session with only the installed plugin to read (no repository, no notes), the
+two-machine layout (a cloud workspace, Blender on the owner's computer behind a bridge) and the owner away: make the channel's
+6-second ident, an A built by hand in stop motion from card, pins and a pencil on a cutting mat, in 16:9 and in 9:16, and
+prepare what is needed to put it on YouTube as a Short. It was to write down every place where the plugin's text failed it.
+
+**What it produced.** One film of 6.0 s in two formats, 1920 x 1080 and 1080 x 1920, each one shot of 72 poses at 12 a
+second, both with `reel qa` PASS; a treatment, a plan, a hand-over, a review, a ledger entry and a publishing kit for the Short
+(title options, description, tags, two thumbnails, upload settings with the AI-content answer reasoned out). About 68 tool calls,
+7 images opened, about 23 minutes of rendering. The film's own steps from plan to export ran without a single failed call.
+
+**What it found.** 25 friction entries, each with the file, what happened and the sentence that would have prevented it.
+Three were defects in the code (`reel chapters` exits 0 and prints a chapter line for a film that cannot have chapters; the
+library says 0.3.0 in a 0.2.0 plugin; `film.build_shot` empties whatever scene is open without a check). The rest were missing
+or contradictory text: the Node 24 command, paths of one owner's folders, a loader that keeps a stale library, a publishing kit
+with no Short in it, a second format that cannot inherit where things enter the frame, and a qa table in which two gates passed
+on zero items. All 25 are fixed in the plugin files the log names (25 of 25; entry 8 by saying which helpers of the example may
+be copied, not by moving them into the library).
+
+**What it did not verify.**
+- Sound and motion at speed: nobody played the film or listened to it.
+- About 50 of the 72 poses of each format; it opened 22 of them.
+- The owner's approval of the look: he was away, so the sample step was replaced by treating the film as the sample.
+- An independent critic: agents could not be started, so the test session reviewed its own film and the review says it was not
+  independent.
+- The vertical film inside the Shorts player, and an upload (none was made).
+
+**The fixes were not re-tested by a second cold run.** They are checked by unit and end-to-end tests where they touch code
+(chapters, the SKIP gates, the open-file check, the version) and by reading where they are text. The Blender side of them (the
+open-file check inside `build_shot`, the loader snippet, the install step) was not run in Blender: the rule is tested on its own
+with no Blender, and the snippet was not executed. A second fresh session is the test that is still owed.
 
 ## What was not tested
 
