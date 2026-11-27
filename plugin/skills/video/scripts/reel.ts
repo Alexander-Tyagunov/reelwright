@@ -13,6 +13,8 @@ import {PALETTE_NAMES} from './audio/palettes.ts';
 import type {Args} from './core/args.ts';
 import {isStopping} from './core/cleanup.ts';
 
+import {NODE_24_HELP} from './core/node-help.ts';
+
 const MIN_NODE_MAJOR = 24;
 
 /** Command names with a one-line help text each. */
@@ -109,7 +111,7 @@ async function main(): Promise<number> {
     console.error(
       `Reelwright needs Node ${MIN_NODE_MAJOR} or newer ` +
         `(found ${process.versions.node}). ` +
-        'Install it from nodejs.org, then run the command again.',
+        NODE_24_HELP,
     );
     return 2;
   }

@@ -73,10 +73,10 @@ describe('reading holds', () => {
     assert.equal(gateHolds(info).status, 'WARN');
   });
 
-  it('a counter marked as not read is left out of the holds gate', () => {
+  it('a film whose only number is marked as not read says there is no text to measure', () => {
     const info = filmOf([4], {texts: [textOf(0, {hold: 0.2, need: 0})]});
     const gate = gateHolds(info);
-    assert.equal(gate.status, 'PASS');
-    assert.match(gate.summary, /^0 texts/);
+    assert.equal(gate.status, 'SKIP');
+    assert.match(gate.summary, /^no text to measure/);
   });
 });

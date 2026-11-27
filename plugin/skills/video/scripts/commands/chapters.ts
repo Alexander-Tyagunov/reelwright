@@ -11,6 +11,9 @@ import {loadSpec} from '../core/spec.ts';
 import {checkPositive} from '../core/validate.ts';
 import type {SceneSpec} from '../shared/contract.ts';
 
+/** Chapters a video site needs before it shows any. */
+const MIN_CHAPTERS = 3;
+
 function textOf(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
@@ -36,7 +39,8 @@ function labelTexts(scene: SceneSpec): string[] {
  * scene has a `chapter`, only those scenes start chapters.
  *
  * @param args `chapters film.json [--min S] [--json]`.
- * @returns 0 once the chapters are printed.
+ * @returns 0. A film with fewer than 3 chapters prints nothing to stdout and
+ *   explains on stderr that it gets none.
  * @throws UserError for a missing spec, an invalid scene duration or a
  *   `--min` that is not a positive number.
  */
@@ -59,6 +63,15 @@ export async function run(args: Args): Promise<number> {
     min,
     textOf(spec.film.meta?.title),
   );
+  if (chapters.length < MIN_CHAPTERS) {
+    console.error(
+      `no chapters: only ${chapters.length} of ${min} s or more fit in this ` +
+        `${clock(timeline.duration)} film, and a video site needs at least ` +
+        `${MIN_CHAPTERS}. Nothing was printed; leave chapters out of the ` +
+        'description. To get them, lengthen the film or lower --min.',
+    );
+    return 0;
+  }
   if (args.flags.json === true) {
     console.log(JSON.stringify(chapters, null, 2));
   } else {
@@ -67,7 +80,6 @@ export async function run(args: Args): Promise<number> {
     }
   }
   report(
-    chapters.length,
     chapters.some(c => c.guessed),
     merged,
     min,
@@ -75,18 +87,7 @@ export async function run(args: Args): Promise<number> {
   return 0;
 }
 
-function report(
-  count: number,
-  guessed: boolean,
-  merged: string[],
-  min: number,
-) {
-  if (count < 3) {
-    console.error(
-      `only ${count} chapter(s) fit: a video site needs at least 3 of ` +
-        `${min} s. Lengthen the film or lower --min.`,
-    );
-  }
+function report(guessed: boolean, merged: string[], min: number) {
   if (guessed) {
     console.error(
       'some titles come from label text, the film title or a part number; ' +

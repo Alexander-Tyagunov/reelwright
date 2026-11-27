@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {describe, it} from 'node:test';
 
@@ -70,5 +71,50 @@ describe('the Blender library picture checks', {skip: SKIP}, () => {
         'C.edge_energy(np.zeros((64, 64), np.uint8), (0, 0, 0.1, 0.1))',
     );
     assert.match(r.stderr, /ValueError: edge_energy needs a region/);
+  });
+});
+
+describe('the Blender library and the open file', {skip: SKIP}, () => {
+  const register =
+    'from reel_blender import film_state as S\n' +
+    'S._FILM.update(name="ident", project="/films/ident")\n';
+
+  it('unsaved changes in another project file stop build_shot and say what to do', () => {
+    const r = python(`${register}S.check_open_file("/other/work.blend", True)`);
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /unsaved changes/);
+    assert.match(r.stderr, /force=True/);
+  });
+
+  it('an unsaved new file stops build_shot, and a saved file or force does not', () => {
+    const r = python(
+      register +
+        'S.check_open_file("/other/work.blend", False)\n' +
+        'S.check_open_file("/other/work.blend", True, force=True)\n' +
+        'try:\n    S.check_open_file("", True)\nexcept RuntimeError as e:\n    print("refused", "never saved" in str(e))',
+    );
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout.trim(), 'refused True');
+  });
+
+  it("the film's own shot file may carry unsaved changes", () => {
+    const r = python(
+      register +
+        'S.check_open_file("/films/ident/blends/ident-A1@9x16.blend", True)',
+    );
+    assert.equal(r.status, 0, r.stderr);
+  });
+});
+
+describe('the Blender library version', {skip: SKIP}, () => {
+  it('is the plugin version, so a copy on the Blender machine can be checked', () => {
+    const manifest = JSON.parse(
+      readFileSync(
+        join(LIB, '..', '..', '..', '.claude-plugin', 'plugin.json'),
+        'utf8',
+      ),
+    );
+    const r = python('import reel_blender\nprint(reel_blender.__version__)');
+    assert.equal(r.stdout.trim(), manifest.version);
   });
 });

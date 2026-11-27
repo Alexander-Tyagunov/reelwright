@@ -9,6 +9,7 @@ import {join} from 'node:path';
 import {findChrome} from '../browser/chrome.ts';
 import {launch} from '../browser/launch.ts';
 import type {Args} from '../core/args.ts';
+import {NODE_24_HELP} from '../core/node-help.ts';
 import {RUNTIME_DIR} from '../core/paths.ts';
 import {run as exec, which} from '../core/process.ts';
 
@@ -166,6 +167,9 @@ function report(checks: Check[]): number {
     console.log(`  macOS (brew):          ${c.fix.mac}`);
     console.log(`  Windows (winget):      ${c.fix.win}`);
     console.log(`  Debian/Ubuntu (apt):   ${c.fix.deb}`);
+    if (c.fix === FIX_NODE) {
+      console.log(`  No admin rights, or Node 22 stays:  ${NODE_24_HELP}`);
+    }
   }
   if (bad.length === 0) {
     console.log('\nVerdict: all good, Reelwright is ready to render.');

@@ -73,6 +73,14 @@ export function gateHolds(info: FilmInfo): GateResult {
         fix,
     );
   }
+  if (measured === 0) {
+    return {
+      id: 'holds',
+      status: 'SKIP',
+      summary: 'no text to measure',
+      details: [],
+    };
+  }
   const ratio = Number.isFinite(minRatio) ? r2(minRatio) : '-';
   return {
     id: 'holds',

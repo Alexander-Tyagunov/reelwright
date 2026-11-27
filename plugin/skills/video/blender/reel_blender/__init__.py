@@ -30,7 +30,7 @@ Units: metres, frames at the scene fps, radians.
 """
 import importlib
 
-__version__ = "0.3.0"
+__version__ = "0.2.0"
 
 from . import motion, plate, craft, renderqueue, plan  # noqa: F401  (usable without Blender)
 

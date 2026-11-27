@@ -105,6 +105,14 @@ export async function gateLayout(film: OpenFilm): Promise<GateResult> {
       }
     }
   }
+  if (totals.items.size === 0 && result.details.length === 0) {
+    return {
+      id: 'layout',
+      status: 'SKIP',
+      summary: 'no text to measure',
+      details: [],
+    };
+  }
   return {
     id: 'layout',
     status: result.status,

@@ -14,6 +14,7 @@ import {
 } from '../../plugin/skills/video/scripts/core/chapters.ts';
 import {UserError} from '../../plugin/skills/video/scripts/core/errors.ts';
 import {filmTimeline} from '../../plugin/skills/video/scripts/core/film-timeline.ts';
+import {REEL_ENTRY} from '../../plugin/skills/video/scripts/core/paths.ts';
 import {which} from '../../plugin/skills/video/scripts/core/process.ts';
 import {analyseCuts} from '../../plugin/skills/video/scripts/qa/cuts.ts';
 import {
@@ -231,5 +232,21 @@ describe('loudness of a file', {
     const file = join(dir, 'broken.mp4');
     writeFileSync(file, 'not a video');
     await assert.rejects(momentaryLoudness(file), UserError);
+  });
+});
+
+describe('reel chapters on a film too short for chapters', () => {
+  it('a 6 s film prints nothing to stdout, says why on stderr and exits 0', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'reel-chapters-'));
+    const spec = join(dir, 'film.json');
+    const scenes = [{type: 'plate', duration: 6}];
+    writeFileSync(spec, JSON.stringify({meta: {fps: 24}, scenes}));
+    const r = spawnSync(process.execPath, [REEL_ENTRY, 'chapters', spec], {
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0);
+    assert.equal(r.stdout, '');
+    assert.match(r.stderr, /no chapters/);
+    assert.match(r.stderr, /leave chapters out/);
   });
 });

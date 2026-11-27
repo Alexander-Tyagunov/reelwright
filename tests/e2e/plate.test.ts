@@ -146,6 +146,17 @@ describe('plate scene', {skip, timeout: 900_000}, () => {
     }
   });
 
+  it('a plate film with no labels and no texts shows layout and holds as "no text to measure"', async () => {
+    const p = plateProject('no-text', [plateScene({labels: [], texts: []})]);
+    const {report} = await qa(p, ['--page-only']);
+    for (const id of ['layout', 'holds'] as const) {
+      const gate = gateOf(report, id);
+      assert.equal(gate.status, 'SKIP', id);
+      assert.equal(gate.summary, 'no text to measure', id);
+    }
+    assert.equal(gateOf(report, 'determinism').status, 'PASS');
+  });
+
   it('two plate scenes with leader labels pass the determinism gate', async () => {
     const early = {labels: [{...LABEL, from: 0.1, to: 3, offset: 9}]};
     const p = plateProject('two-plates', [plateScene(), plateScene(early)]);
