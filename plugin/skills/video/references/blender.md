@@ -280,6 +280,16 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
     1.53 m at 40 mm: 0.12 mm, 6 pixels of 1920). The foreground goes soft, not away; compose the last frame so it still
     reads with both planes legible. Pull linearly in 1 / distance, in uneven steps (`ct_film.build_camera`, `focus_pull`).
 
+31. (Film, intro shot) An area light with `spread` under 180 degrees keeps its watts inside the beam, so the middle gets far
+    brighter: a 5 cm disk at spread 50 degrees lit cream card 0.38 m away to 185 of 255 with 0.075 W, where the film's open
+    12 cm lamps take 2 W from 0.65 m. Work out the watts for a narrow lamp anew (about a tenth at 60 degrees) and check the
+    paper for clipping (no channel over 245) before judging anything else.
+32. (Film, intro shot) A shot that must cut into another without a jump rebuilds the other shot's set, and several helpers
+    are seeded with the shot's own name (`scraps`, `rows_ripple`, `tiles_hop`), while a paper's per-object tint follows the
+    object's name: under a new id the offcuts lie elsewhere. Build the shared pieces with the other shot's id and names,
+    then prove the cut on a check frame against the other plate's first frame (mean brightness, phase correlation of crops
+    for the shift, edge energy after the median for focus) before the final render.
+
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per
 second. Characters that hop make the point bob. Put each track empty above the highest point of the character's

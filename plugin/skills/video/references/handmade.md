@@ -77,6 +77,11 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
   before choosing f-stop and focus.
 - Labels: a handwriting or typewriter face on a dark card-coloured tag; track empties on the root, not on the
   jittered body.
+- Words written by the maker (a title tag, a note): an image texture, not a text object. Set a handwriting face letter by
+  letter with Pillow (seeded size +-4 %, slant, turn, baseline, spacing, a baseline that rises and sags), soften the edge and let
+  noise eat into it, vary the density, keep the ground transparent, and mix it into the card's own paper material by its
+  alpha, so fibre and light stay the paper's. Size it from the frame: an x-height of 4 % of the frame height still reads at
+  720p (worked example: `claude-timeline`, `tools/make_tag_title.py`, `ct_seq_0.tag_material`).
 
 ## 3. The AI-tell check (answer on a preview, fix what fails, before the final render)
 1. Is any surface a flat or perfectly smooth default material?
