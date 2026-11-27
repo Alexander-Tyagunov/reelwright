@@ -2,6 +2,23 @@
 
 ## 0.2.0 (unreleased)
 
+- **Films made in Blender are the main path.** Three new skills: `film` (intake, six or more look pitches, one real sample
+  shot before the rest, a shot plan, animation by sequence, assembly, gates, an independent critic, one fix pass, a
+  hand-over that says what nobody saw or heard), `studio` (the owner's profile and look ledger, in his own words) and
+  `publish` (title, description with chapters, tags, thumbnail, upload settings, formats per platform, channel art; it
+  never uploads). Nine skills now.
+- **Two new agents, two changed.** `reel-animator` (Opus) builds one sequence in Blender; `reel-critic` (Opus) reviews a
+  film it did not make. `reel-director` writes pitches, treatment and shot plan from the profile and ledger;
+  `reel-builder` assembles from the plan. Eight agents now.
+- **Blender library 0.3.0.** New modules `film` (plan-driven build, preview strip, check job, final render, tracks,
+  status, a second format), `lettering` (hand and printed text as image textures), `stills` (stills, circle check sheet,
+  banner crops, watermark cut) and `checks` (edge energy, brightness, match of two frames).
+- **An example film project.** `blender/examples/paper_desk/`: one look module, one shot module and a three-shot plan with
+  two formats. It shows structure, not a house style, and its plan passes `reel plan`.
+- **The plan documents both sides.** `references/shot-plan.md` lists the fields the engine reads and the fields the
+  Blender library reads, and says that `reel assemble` uses the sound palette `calm` unless the plan sets
+  `sound.engine_palette`.
+- **`reel plate` on a partial plate** (a three-pose check) names how many frame files are present and the missing ranges.
 - **Shot plan and `reel plan`.** One file plans a film made of rendered plates: poses, plate location, tracks, labels
   with text, sub, line and timing, events, cues, formats, sound curve. `reel plan` checks the schema, totals, reading
   time per label, labels on screen at once, cue kinds and missing plates (a warning), and exits 1 on a failure. Fields the
@@ -13,8 +30,9 @@
   after them, in the whole frame or the lower third, and exits 1: a render that lost its foreground.
 - **`reel cuts` and the `cuts` gate.** For each cut, the mean brightness before and after and the rise in momentary
   loudness. The gate only warns; it never fails a film.
-- **`reel chapters`.** Chapters from scene starts: the first at 0:00, each at least 10 s, titles from a scene's
-  `chapter` field or its first label. A scene may carry `chapter` in the spec; it changes no pixel.
+- **`reel chapters`.** Chapters from scene starts: the first at 0:00, each at least 10 s, a title is the
+  `chapter` of the chapter's first scene that has one, else the label texts of its scenes (about 60 characters), else the
+  film title or "Part N". Only the timestamp lines go to stdout. A scene may carry `chapter` in the spec; it changes no pixel.
 - **Fix: leader lines of plate scenes no longer leak between scenes.** A leader line of a scene that was off screen
   showed through and failed the determinism gate on films with two or more plate scenes with leader labels.
 - **Scene type: `plate` (13 built-in types now).** Plays an image sequence rendered elsewhere, for example in

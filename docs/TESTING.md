@@ -1,6 +1,6 @@
 # Test report
 
-What was run against Reelwright 0.1.0 and what came out. Machine: a 2-CPU Linux container, Node 24.22.3,
+What was run against Reelwright 0.1.0 and what came out, and, in the section "Proven for 0.2.0 so far", what has been shown for 0.2.0. Machine: a 2-CPU Linux container, Node 24.22.3,
 ffmpeg 6.1.1, Chrome for Testing 153, software rendering (no GPU). Run on 23 to 24 November 2026.
 
 ## Summary
@@ -114,6 +114,36 @@ rules and ran the CLI with bad input. It reported 21 findings: 6 major, 11 minor
 
 One further defect was found while rendering the delivery samples, not by any reviewer: three metric tiles ran
 10 px past a square frame. Stacked tiles now shrink to fit, and the template scenarios include the square size.
+
+## Proven for 0.2.0 so far
+
+Facts a later reader can rely on; each has a test or a recorded measurement.
+
+| What | How it was shown |
+|---|---|
+| `reel assemble` reproduces the first film's spec where it was checked | `tests/unit/assemble.test.ts` assembles the first film's plan, reduced to three shots with its intro and outro, and asserts the values the first film's own spec has: scene order, the label timings and its line, the override of one label, merged and sorted cues, the outro's texts and length, and the sound curve. A whole-file comparison with the first film's `film.json` was not made |
+| The plate brightness check finds the real fault | `tests/unit/plate-brightness.test.ts` runs it on downscaled frames of the plate that rendered with a black foreground: it lists frames 13 to 19 and 33 to 37 and nothing else; a plate whose lamp is switched off on purpose and a clean plate give no run |
+| A plate with only some frames is reported, not a crash | the same file runs `reel plate` on a vertical plate holding three of 38 frames: "35 of 38 frame files are missing (3 present ...): frames 2-12, 14-37" |
+| Chapters for a film with no `chapter` fields | `tests/unit/cuts-chapters.test.ts` uses the real labels of the first film: titles are model names joined and cut at a label, never a plate id |
+| Cuts | the same file, on the brightness and loudness numbers of the first film's cuts: the C3 to C4 cut is flagged for both; a video that cannot be read gives a warning, never a failure; an e2e scenario shows a white-to-dark cut warns and does not fail |
+| The shot plan | `tests/unit/shot-plan.test.ts`: the first film's plan passes, seeded faults fail with the field named, the 3D side's fields pass through untouched; the example project's plan passes `reel plan` with only missing-plate warnings |
+| Blender library 0.3.0 and the example project | the example's first shot reproduces the first film's intro shot: three poses compared against the approved plate gave no shift, brightness within 0.3 % and edge energy within 1.3 % (recorded in the commit that added it). The library was built from code that seven animators used on the first film |
+| Marketplace and plugin | `claude plugin validate .` and `claude plugin validate ./plugin` pass |
+
+Suite results on 27 November 2026 (same container, Node 24): `npm run check` passes with 290 unit tests; the end-to-end suite
+ran 66 scenarios in 8 min 26 s with one failure on the first run, a scenario that matched the old wording of the "missing
+frame file" message of `reel plate`. The behaviour was right and the scenario was out of date, so the message now keeps the
+words the scenario looks for ("1 of 45 frame files are missing", the first file) and adds the missing ranges; the plate
+scenarios then passed 14 of 14. The other 65 scenarios passed on the first run.
+
+Not proven yet: a fresh session reading only the plugin and making a film (see "Cold-start test"), the `film`, `studio` and
+`publish` skills in use, `reel-animator` and `reel-critic` in use, a vertical (9:16) film end to end, and any Blender call in
+this repository's own test run (Blender is not part of the test environment).
+
+## Cold-start test
+
+*To be filled in by a later agent: a fresh session with only the plugin installed and Blender connected, asked for a film.
+Record the request, what it did without help, where it stopped or went wrong, the cost, and what was changed afterwards.*
 
 ## What was not tested
 

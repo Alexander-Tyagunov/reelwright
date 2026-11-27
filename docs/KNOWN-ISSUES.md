@@ -241,6 +241,32 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
   and says so before any render is tried.
 - **If it breaks:** `server/transpile.ts` is the only file that calls it.
 
+## Films made in Blender
+
+### The plate brightness check cannot see a bad run at the first or last frame
+
+- **Symptom:** `reel plate` passes a plate whose first or last frames are dark or light by mistake.
+- **Cause:** a run is judged against the frames on both sides of it, and a run at an end has only one side.
+- **Do:** look at the first and last frame of every plate yourself (the builder opens them as stills), and compare the
+  last frame of a shot with the first of the next with `reel cuts` after the render.
+
+### Agents cannot hear sound or watch playback
+
+- **Symptom:** a film that passes every gate has a bed that grates, a cue in the wrong place or motion that stutters.
+- **Cause:** agents see stills and numbers. The gates measure loudness and brightness but not taste, and nobody in the
+  pipeline plays the film.
+- **Do:** the hand-over says so and lists the moments to watch (flagged cuts, findings left, what the critic did not
+  check). The owner plays the film once with sound before it goes anywhere.
+
+### A render fault of unknown cause produced black-foreground frames once
+
+- **Symptom:** in one shot, two runs of frames (13 to 19 and 33 to 37) rendered with the foreground black while the
+  frames around them were correct.
+- **Cause:** not found. The same poses rendered correctly again, and no setting differed.
+- **Fix:** `reel plate` lists runs of frames whose brightness leaves the range of both neighbours, so the builder
+  re-renders those poses before assembly. The check finds the symptom; it does not prevent the fault.
+- **Check:** `tests/unit/plate-brightness.test.ts` runs the check on frames of that shot.
+
 ## Packaging
 
 ### The plugin does not install in the Claude app

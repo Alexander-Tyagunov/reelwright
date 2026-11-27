@@ -21,18 +21,21 @@ Node 24 or newer. TypeScript runs directly; there is no build step and no compil
 
 | Path | What |
 |---|---|
-| `plugin/skills/*/SKILL.md` | The six skills. `video` is the pipeline; the others are recipes on top of it. |
-| `plugin/agents/reel-*.md` | Six agents, each pinned to a model tier. |
+| `plugin/skills/*/SKILL.md` | The nine skills. `film` is the main path (a film made in Blender), with `studio` (the owner's profile and look ledger) and `publish` (the publishing kit). `video` is the scene-library pipeline and the engine; `release-video`, `metrics-video`, `explainer-video`, `check-film` and `add-scene` are recipes on top of it. |
+| `plugin/agents/reel-*.md` | Eight agents, each pinned to a model tier. `reel-director`, `reel-animator`, `reel-critic` and `reel-builder` serve films; `reel-ingest`, `reel-runner`, `reel-reviewer` and `reel-auteur` serve both paths. |
 | `plugin/skills/video/scripts/` | The engine. `reel.ts` is the CLI entry. |
 | `plugin/skills/video/scripts/runtime/` | Browser code. DOM only, no Node APIs. |
+| `plugin/skills/video/blender/` | The Blender library `reel_blender/` (Python, runs inside Blender and in the workspace) and the example film project `examples/paper_desk/`. |
 | `plugin/skills/video/scripts/shared/contract.ts` | Types that cross the Node/browser boundary. |
-| `plugin/skills/video/references/` | Docs the skills and agents read at run time. |
+| `plugin/skills/video/references/` | Docs the skills and agents read at run time. `shot-plan.md` documents the plan both the engine and the Blender library read. |
+| `plugin/skills/film/references/`, `plugin/skills/publish/references/` | The film pipeline, templates and critic rubric; platform rules and channel art. |
 | `tests/unit`, `tests/e2e` | Business rules; whole-pipeline scenarios. |
 | `docs/ARCHITECTURE.md` | Layout, hard rules, contracts. Read it before a structural change. |
 | `docs/KNOWN-ISSUES.md` | Problems already met and how each was solved. Check it before debugging. |
 
 ## Rules that are easy to break
 
+- **The Blender library is Python** because Blender runs Python: docstrings on every public function, no dead code, no look in the library (a film owns its look).
 - **No runtime dependencies in `plugin/`.** No `package-lock.json` there, no `node_modules`, no `bin/` folder.
 - **Erasable TypeScript only.** No `enum`, `namespace`, parameter properties or decorators. Imports carry the
   `.ts` extension. Types are imported with `import type`.

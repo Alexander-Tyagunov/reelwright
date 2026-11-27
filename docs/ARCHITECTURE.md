@@ -19,10 +19,11 @@ changes the code.
   plugin/               THE INSTALLABLE PLUGIN (only this folder reaches users)
     .claude-plugin/plugin.json, icon.png
     README.md, LICENSE
-    agents/reel-*.md
-    skills/<skill>/SKILL.md
+    agents/reel-*.md      eight agents
+    skills/<skill>/SKILL.md   nine skills; film, studio and publish have references/ of their own
     skills/video/       the engine lives inside this skill so every surface can reach it
       references/*.md
+      blender/          reel_blender/ (Python library 0.3.0) and examples/paper_desk/ (an example film project)
       templates/<name>/film.json
       scripts/          TypeScript, run directly by Node 24 (no build step)
         reel.ts         CLI entry
@@ -118,7 +119,16 @@ a second format uses `<folder>@9x16`.
 
 `core/film-timeline.ts` computes scene starts without a page (it calls `runtime/timeline.ts`, which is DOM-free). `reel
 cuts` and `reel chapters` use it. `qa/gates/cuts.ts` is a gate that only warns and turns a read failure into a warning.
-`core/chapters.ts` is pure.
+`core/chapters.ts` is pure; it chooses chapter starts and titles (a `chapter` field, else the scenes' label texts up to
+about 60 characters, else the film title or "Part N").
+
+## The Blender library
+
+`plugin/skills/video/blender/reel_blender/` renders plates; the engine never imports it. The two sides meet in two files: the
+shot plan (`references/shot-plan.md` lists the fields each side reads; `film.py` reads the plan only through the accessors at
+its top) and the plate (`tracks.json` and frames, `references/film-spec.md`). `film.py`, `lettering.py`, `stills.py` and
+`checks.py` came in 0.3.0; the first runs inside Blender, the others in the workspace with Pillow and numpy. The library holds
+no look and no project path. `examples/paper_desk/` shows one look module and one shot module on top of it.
 
 ## Generated sound
 
