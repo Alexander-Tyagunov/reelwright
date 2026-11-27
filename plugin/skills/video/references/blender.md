@@ -371,7 +371,9 @@ few calls. All of them end under 60 s; slow renders go to the queue (section 3).
    puts every plan track into `sh.points`. Parameters merge as `look.params`, `shot_params[shot]`, `overrides`. The build
 empties the open scene in memory, so it refuses with a message that says what to do when the open file has unsaved changes
 and is not one of this film's own shot files (`<project>/blends/<name>-*.blend`): save it or ask the owner to, or pass
-`force=True` when he has said the scene may be thrown away. `submit` then makes the shot's .blend the open file.
+`force=True` when he has said the scene may be thrown away. When the open file is saved under a name that is not this
+film's, the build first starts an empty file, so a later save in Blender cannot write the film's scene over it. `submit`
+then makes the shot's .blend the open file.
 3. `film.strip(poses, name)` is the live preview strip (six poses or fewer) at `renders/preview/<name>.jpg`; `film.layout(poses)`
    gives the track positions without rendering. If this machine has not rendered in Cycles today, make the first strip with
    `film.submit_check(shot, poses)` instead (kernels compile for about 3 minutes and a live call would time out); a one-pose

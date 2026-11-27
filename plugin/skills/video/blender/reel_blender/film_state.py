@@ -72,21 +72,31 @@ def suffix(fmt):
     return "" if key == next(iter(film_data()["formats"])) else "@" + key.replace(":", "x")
 
 
-def check_open_file(filepath, is_dirty, force=False):
-    """Refuse to empty a scene that holds unsaved work that is not this film's.
-
-    filepath and is_dirty are `bpy.data.filepath` and `bpy.data.is_dirty`. A file with no unsaved changes may be
-    emptied (it is still on disk); so may a file that is one of this film's own shot files (`<project>/blends/<name>-*`,
-    the files `submit` writes). Anything else raises RuntimeError that says what to do. `force=True` skips the check."""
-    if force or not is_dirty:
-        return
+def is_own_file(filepath):
+    """True when filepath is one of this film's own shot files (`<project>/blends/<name>-*`, the files `submit`
+    writes). An empty filepath (a file never saved) is not."""
+    if not filepath:
+        return False
     f = film_data()
     own = os.path.normcase(os.path.abspath(os.path.join(f["project"], "blends")))
-    here = os.path.normcase(os.path.abspath(os.path.dirname(filepath))) if filepath else None
-    if here == own and os.path.basename(filepath).startswith(f["name"] + "-"):
-        return
-    raise RuntimeError(
-        "the open Blender file (%s) has unsaved changes and is not one of this film's shot files, and build_shot "
-        "empties the open scene in memory. Save it, or ask the owner to, then call build_shot again; or call "
-        "build_shot(..., force=True) when the owner has said the open scene may be thrown away."
-        % (filepath or "never saved"))
+    here = os.path.normcase(os.path.abspath(os.path.dirname(filepath)))
+    return here == own and os.path.basename(filepath).startswith(f["name"] + "-")
+
+
+def check_open_file(filepath, is_dirty, force=False):
+    """Decide whether the open scene may be emptied, and whether the session must first leave the open file.
+
+    filepath and is_dirty are `bpy.data.filepath` and `bpy.data.is_dirty`. Unsaved changes in a file that is not one
+    of this film's own shot files raise RuntimeError that says what to do; `force=True` skips that refusal.
+
+    Returns True when the open file is saved under a name that is not this film's: the caller must then start from
+    an empty file, so that a later save in Blender cannot write the film's scene over the owner's file. Returns
+    False for a file never saved and for this film's own shot files."""
+    own = is_own_file(filepath)
+    if is_dirty and not own and not force:
+        raise RuntimeError(
+            "the open Blender file (%s) has unsaved changes and is not one of this film's shot files, and build_shot "
+            "empties the open scene in memory. Save it, or ask the owner to, then call build_shot again; or call "
+            "build_shot(..., force=True) when the owner has said the open scene may be thrown away."
+            % (filepath or "never saved"))
+    return bool(filepath) and not own

@@ -97,6 +97,17 @@ describe('the Blender library and the open file', {skip: SKIP}, () => {
     assert.equal(r.stdout.trim(), 'refused True');
   });
 
+  it("a saved file that is not the film's must be left before the build, so a later save cannot overwrite it", () => {
+    const r = python(
+      register +
+        'print(S.check_open_file("/other/work.blend", False), ' +
+        'S.check_open_file("", False), ' +
+        'S.check_open_file("/films/ident/blends/ident-A1.blend", False))',
+    );
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout.trim(), 'True False False');
+  });
+
   it("the film's own shot file may carry unsaved changes", () => {
     const r = python(
       register +

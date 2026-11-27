@@ -52,14 +52,17 @@ def build_shot(shot_id, overrides=None, fmt=None, force=False):
     entries of the shot's parameters (look.params, then shot_params[shot_id], then these).
 
     Refuses with RuntimeError when the open file has unsaved changes and is not one of this film's shot files, because
-    the build empties the open scene in memory; `force=True` builds anyway (only when the owner agreed).
+    the build empties the open scene in memory; `force=True` builds anyway (only when the owner agreed). When the open
+    file is saved under a name that is not this film's, the session first starts an empty file, so a later save in
+    Blender cannot overwrite it.
 
     Returns a report: seconds, objects, focus_m (nearest and farthest focus distance), tracks_missing (plan tracks the
     builder did not register) and layout (screen position of each track point at six poses, see `layout`)."""
     f, t0 = film_data(), time.time()
     if shot_id not in f["shots"]:
         raise KeyError("shot %r is neither in the plan nor an extra shot (have %s)" % (shot_id, sorted(f["shots"])))
-    check_open_file(bpy.data.filepath, bpy.data.is_dirty, force)
+    if check_open_file(bpy.data.filepath, bpy.data.is_dirty, force):
+        bpy.ops.wm.read_homefile(use_empty=True)
     p = dict(f["look"].params)
     p.update(f["shot_params"].get(shot_id, {}))
     p.update(overrides or {})

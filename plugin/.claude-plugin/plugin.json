@@ -2,7 +2,7 @@
   "name": "reelwright",
   "displayName": "Reelwright",
   "version": "0.2.0",
-  "description": "Make release videos, explainers and animated metrics from code. A film is one JSON file; a headless browser draws every frame; a quality gate measures motion, layout and reading time before anything ships. Also makes short films in Blender (film skill), keeps the owner's studio profile (studio skill) and prepares publishing kits (publish skill).",
+  "description": "Make short films in Blender from a premise, steered by your own recorded taste, and quick release, metrics and explainer videos from a JSON spec. One sample shot for your approval, then animation, assembly, measured quality gates and an independent review. Needs Blender and a Blender MCP server.",
   "author": {
     "name": "Alex Tyagunov"
   },
