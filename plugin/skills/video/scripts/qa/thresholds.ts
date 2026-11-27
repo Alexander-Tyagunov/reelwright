@@ -125,3 +125,41 @@ export const LABEL_FAST_SHARE = 0.5;
 
 /** Seconds. Longest difference between audio and video length that passes. */
 export const AUDIO_SYNC_MAX_S = 0.1;
+
+/**
+ * Fraction (0 to 1) of the nearer neighbour's brightness by which a run of
+ * plate frames must lie outside the range of its two neighbours to be
+ * reported by `reel plate`.
+ */
+export const PLATE_BRIGHTNESS_STEP = 0.2;
+
+/** Grey levels (0 to 255). Smaller brightness differences are never reported. */
+export const PLATE_BRIGHTNESS_FLOOR = 4;
+
+/** Frames. Longest run of odd frames `reel plate` reports. */
+export const PLATE_RUN_MAX = 12;
+
+/**
+ * Fraction (0 to 1) by which the brightness of the frames before and after a
+ * run may differ for the run to count as a dropout. A larger difference is a
+ * step to a new level, such as a lamp switched off.
+ */
+export const PLATE_ANCHOR_SPREAD = 0.35;
+
+/**
+ * Fraction (0 to 1) of the brighter frame by which the mean brightness of the
+ * frames on both sides of a cut may differ before `reel cuts` flags the cut.
+ */
+export const CUT_BRIGHTNESS_JUMP = 0.5;
+
+/** LU. A rise in momentary loudness across a cut above this is flagged. */
+export const CUT_LOUDNESS_JUMP_LU = 6;
+
+/** Seconds before a cut over which the loudness before it is averaged. */
+export const CUT_LOUDNESS_BEFORE_S = 1;
+
+/** Seconds just before a cut that are left out of that average. */
+export const CUT_LOUDNESS_GAP_S = 0.2;
+
+/** Seconds after a cut in which the highest loudness is taken. */
+export const CUT_LOUDNESS_AFTER_S = 1;

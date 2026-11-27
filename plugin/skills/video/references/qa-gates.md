@@ -21,10 +21,17 @@ the smallest change, re-render (unchanged scenes are reused) and run it again.
 | `probe` | The MP4's codec, pixel format, size, frame rate and frame count against the spec, and that the video is not older than the spec. | Any mismatch. Also when the render summary next to the video (`out/render*.json`) was made from a different spec, runtime or project file set than the current one ("the video is older than the spec or runtime"). | Render again at the size being checked, or pass the matching `--video`. |
 | `motion` | Frame-to-frame change across the whole video (160x90 grey, mean absolute difference). | A still stretch longer than the limit: `meta.maxHold` (4 s) or the scene's longest required reading hold + 1.5 s, whichever is larger. A scene with no motion in its first 1.5 s. A loop whose last frame does not flow into the first. Warns when over 85% of the film is still, and on a full-frame jump that is not at a scene boundary. | Shorten the scene or reveal its content in more steps. For a dead scene, check its spec fields against `reel scenes`. |
 | `audio` | That the sound is in the file and as long as the picture; integrated loudness and true peak of the finished file. | `meta.sound` is on and the video has no audio track; audio longer or shorter than the video by more than 0.1 s. Otherwise it only warns: outside -16 to -12 LUFS or above -1 dBTP. Skipped when sound is off and there is no audio track. | Render again without `--no-sound`. For a soundtrack of your own, re-export with `--audio`; the export normalises to -14 LUFS. |
+| `cuts` | At each cut between scenes: mean brightness of the last frame before and the first frame after, and the rise in momentary loudness (the highest in the second after, against the mean of the second before). With a fade the cut is the middle of it. | Never fails. Warns for a cut whose brightness changes by more than 50% of the brighter frame, or whose loudness rises by more than 6 LU, and names the cut. A video that cannot be read also only warns. Not run with `--page-only` | A warning is for a person to judge: a hard change of place is often the design. Fix a jump that is not: match the first frame of the next shot to the last of this one, or lower the cue or bed level at the cut. `reel cuts film.json` prints the same numbers for every cut |
 
 ## Plate scenes
 
 A `plate` scene is checked by the same gates, with these differences.
+
+- **Brightness of the frames.** `reel plate` (not `qa`) lists runs of up to 12 frames whose mean brightness, over the whole
+  frame or its lower third, lies outside the range of the frame before and the frame after the run by more than 20% (and 4
+  grey levels), when those two frames agree within 35%. It finds a render that lost its foreground and went black for a
+  few poses. A steady fade, or a step to a new level such as a lamp switched off, is not listed. Exit code 1 when it lists
+  a run; render those frames again.
 
 - **Drawing.** Every gate that draws a frame waits until the plate frame is decoded before it captures, so a slow disk cannot
   produce a blank picture. A frame file that is missing in the middle of the plate fails the command with its name.

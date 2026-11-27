@@ -30,11 +30,15 @@ changes the code.
         core/           args, errors, process, cleanup on stop, option checks, hashing, spec loading, paths, output names (`outputs.ts`)
         browser/        Chrome discovery, DevTools Protocol session, film page
         server/         static server and on-the-fly type stripping
-        video/          ffmpeg encoder, probe, contact sheet, loudness, soundtrack files (`soundtrack.ts`)
+        video/          ffmpeg encoder, probe, contact sheet, loudness, soundtrack files (`soundtrack.ts`), frame
+                        brightness (`brightness.ts`), momentary loudness (`momentary.ts`)
         audio/          generated sound, pure arithmetic on Float32Array, no Web Audio: oscillators, envelopes, filters,
                         noise, reverb, soft limiter, WAV writer, seeded random, scales and chords, bed, cue sounds,
                         palettes, cue planning, `meta.sound` checks. Imports nothing from the browser or from ffmpeg.
-        qa/             one file per gate, thresholds, report
+        plan/           shot plan: types, parse, load (plan and side files), checks (`reel plan`), scenes, sound curve,
+                        assemble (`reel assemble`). Reads the plan; writes a spec; no browser
+        qa/             one file per gate, thresholds, report; cuts (`cuts.ts` pure, `cuts-run.ts` reads a video),
+                        brightness runs of a plate (`brightness-runs.ts`, `plate-brightness.ts`)
         shared/         types and pure helpers used by both Node code and the browser runtime (`plate.ts`: the plate data contract)
         runtime/        browser code: ES modules, DOM, no Node APIs
           scenes/       one file per scene type
@@ -103,6 +107,18 @@ The `plate` scene is the one user of all four. Its files are `runtime/scenes/pla
 `runtime/scenes/lib/plate-*.ts`: `-spec` (fields, pure), `-place` (geometry, pure), `-load` (preload), `-frames`
 (decoded frame cache), `-labels`, `-texts` and `-sample` (contrast sampling). The cache key of a plate scene is in
 `core/plate-stamp.ts`.
+
+## Shot plans, cuts and chapters
+
+`plan/` turns a shot plan (`references/shot-plan.md`) into a film spec. `parse.ts` checks the fields the engine reads and
+keeps every other field, so the 3D side can share the file. `load.ts` reads the plan and the files beside it. `scenes.ts`,
+`scene-labels.ts`, `cue-list.ts` and `sound.ts` build the scenes and `meta.sound`; `assemble.ts` joins them. `checks.ts`,
+`check-labels.ts` and `check-plates.ts` are `reel plan`. Plate folders are relative to the folder of the written spec;
+a second format uses `<folder>@9x16`.
+
+`core/film-timeline.ts` computes scene starts without a page (it calls `runtime/timeline.ts`, which is DOM-free). `reel
+cuts` and `reel chapters` use it. `qa/gates/cuts.ts` is a gate that only warns and turns a read failure into a warning.
+`core/chapters.ts` is pure.
 
 ## Generated sound
 

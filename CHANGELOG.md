@@ -2,6 +2,19 @@
 
 ## 0.2.0 (unreleased)
 
+- **Shot plan and `reel plan`.** One file plans a film made of rendered plates: poses, plate location, tracks, labels
+  with text, sub, line and timing, events, cues, formats, sound curve. `reel plan` checks the schema, totals, reading
+  time per label, labels on screen at once, cue kinds and missing plates (a warning), and exits 1 on a failure. Fields the
+  engine does not read stay as written, for the 3D side. See `references/shot-plan.md`.
+- **`reel assemble`.** Writes the film spec from a plan, the plates and the files beside the plan
+  (`label-overrides.json`, `extra-cues.json`, `outro-texts.json`, `brand.json`): `--shots`, `--format 9:16` (plates in
+  `plates/<shot>@9x16`), `--intro`, `--outro`, `--no-sound`. A shot's `chapter` is copied to its scene.
+- **`reel plate` checks brightness.** Lists runs of frames that are much darker or lighter than the frames before and
+  after them, in the whole frame or the lower third, and exits 1: a render that lost its foreground.
+- **`reel cuts` and the `cuts` gate.** For each cut, the mean brightness before and after and the rise in momentary
+  loudness. The gate only warns; it never fails a film.
+- **`reel chapters`.** Chapters from scene starts: the first at 0:00, each at least 10 s, titles from a scene's
+  `chapter` field or its first label. A scene may carry `chapter` in the spec; it changes no pixel.
 - **Fix: leader lines of plate scenes no longer leak between scenes.** A leader line of a scene that was off screen
   showed through and failed the determinism gate on films with two or more plate scenes with leader labels.
 - **Scene type: `plate` (13 built-in types now).** Plays an image sequence rendered elsewhere, for example in

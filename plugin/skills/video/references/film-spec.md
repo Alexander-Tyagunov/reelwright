@@ -52,7 +52,8 @@ same on every machine. To use a brand font, put the file in the project and decl
 ## scenes
 
 An array, in order. Every scene has `type` and `duration` (seconds) and the fields of its type.
-`reel scenes` prints every type with its fields; `scenes.md` holds the same output. A scene may also carry an `id`, a name that reports use.
+`reel scenes` prints every type with its fields; `scenes.md` holds the same output. A scene may also carry an `id`, a name that reports use, and a `chapter`, the title of the video chapter that starts with it
+(`reel chapters film.json` prints the chapter list; a `chapter` changes no pixel, so editing it re-renders nothing).
 
 | Type | Use it for |
 |---|---|
@@ -133,7 +134,8 @@ The scene:
   (`rw-kicker`, `rw-h2`, `rw-body`, ...; default `rw-body`); `align` says which edge of the text `x` names.
 - `cues` are sound cues in scene seconds, as on any scene (see "sound" below). They play only when `meta.sound` is on and change no pixel.
 - Check a plate before using it: `reel plate plates/shot03/tracks.json` lists the tracks (share of frames visible) and events
-  and verifies every frame file and the size of the first frame. `reel build` cannot bundle a plate into one HTML file; use
+  and verifies every frame file and the size of the first frame, then lists runs of frames that are much darker or lighter than
+  the frames around them (a render that lost its foreground; exit 1). `reel build` cannot bundle a plate into one HTML file; use
   `render`. Editing `tracks.json` or any frame file re-renders that plate scene (and the scene after it, which shows the end
   of the plate during the transition) and no other.
 

@@ -1,15 +1,18 @@
 /**
  * @fileoverview `plate`: checks a plate folder before a film uses it. It
  * reads `tracks.json`, lists the tracks and events, confirms that every frame
- * file exists and that the first frame has the stated size.
+ * file exists, that the first frame has the stated size, and that no run of
+ * frames is much darker or lighter than the frames around it.
  */
 import {existsSync, readFileSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import type {Args} from '../core/args.ts';
 import {UserError} from '../core/errors.ts';
 import {table} from '../core/table.ts';
+import {describeRun, plateRuns} from '../qa/plate-brightness.ts';
 import type {Plate} from '../shared/plate.ts';
 import {parsePlate, plateFramePath, visibleShare} from '../shared/plate.ts';
+import {frameBrightness} from '../video/brightness.ts';
 import {probeStreams} from '../video/probe.ts';
 
 function readPlate(path: string): Plate {
@@ -70,12 +73,40 @@ async function firstFrameProblem(plate: Plate, file: string) {
   );
 }
 
+async function brightnessReport(plate: Plate, path: string): Promise<number> {
+  const pattern = resolve(dirname(path), plate.framePattern);
+  const runs = plateRuns(
+    await frameBrightness([
+      '-start_number',
+      String(plate.first),
+      '-i',
+      pattern,
+    ]),
+  );
+  if (!runs.length) {
+    console.log(
+      '  brightness: no run of frames stands out from its neighbours',
+    );
+    return 0;
+  }
+  console.log(`  brightness: ${runs.length} run(s) of odd frames`);
+  for (const run of runs) {
+    console.log(`    ${describeRun(run, plate.first)}`);
+  }
+  console.log(
+    '    Render these frames again, then run plate again. If the change ' +
+      'is on purpose, no fix is needed.',
+  );
+  return 1;
+}
+
 /**
  * Prints what a plate holds and checks it.
  *
  * @param args `plate tracks.json`.
- * @returns 0 when every frame file exists and the first frame has the stated
- *   size.
+ * @returns 0 when every frame file exists, the first frame has the stated
+ *   size and no run of frames has odd brightness; 1 when the brightness
+ *   check lists runs.
  * @throws UserError for a missing or invalid `tracks.json`, a missing frame
  *   file, or a first frame of the wrong size.
  */
@@ -104,5 +135,5 @@ export async function run(args: Args): Promise<number> {
     `  frame files: all ${plate.frames} present; the first is ` +
       `${plate.width}x${plate.height} as stated`,
   );
-  return 0;
+  return brightnessReport(plate, path);
 }

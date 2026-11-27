@@ -3,9 +3,11 @@
  * of `qa` with and without a video.
  */
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
 import {existsSync, readFileSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {after, describe, it} from 'node:test';
+import type {FilmSpec} from '../../plugin/skills/video/scripts/shared/contract.ts';
 import {missingTools, reel} from '../helpers/cli.ts';
 import {builtInFilm, goodFilm, withScene} from '../helpers/films.ts';
 import {
@@ -77,6 +79,33 @@ describe('video gates', {skip, timeout: 900_000}, () => {
       false,
       'no report file for a video that is not there',
     );
+  });
+
+  it('cuts: a cut from a white picture to a dark title card warns in the cuts gate and does not fail it', async () => {
+    const film = {
+      meta: {title: 'Cuts', ...SMALL, transition: 'cut', lead: 0},
+      brand: {theme: 'dark'},
+      scenes: [
+        {type: 'image', duration: 3, src: 'white.png', fit: 'cover'},
+        {type: 'title', duration: 3, title: 'A dark card after a white one'},
+      ],
+    };
+    const p = ws.project('cuts', film as FilmSpec);
+    const white = ['-f', 'lavfi', '-i', 'color=white:s=1280x720'];
+    spawnSync('ffmpeg', [
+      '-v',
+      'error',
+      '-y',
+      ...white,
+      '-frames:v',
+      '1',
+      join(p.dir, 'white.png'),
+    ]);
+    await render(p, ['--no-sound']);
+    const {report} = await qa(p);
+    const gate = gateOf(report, 'cuts');
+    assert.equal(gate.status, 'WARN');
+    assert.match(detail(gate, /^WARN/), /brightness changes by/);
   });
 
   it('frozen: a static scene of 6.5 s with a 4 s limit fails motion', async () => {

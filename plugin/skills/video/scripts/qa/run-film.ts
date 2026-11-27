@@ -14,6 +14,7 @@ import {specHash} from '../core/stamp.ts';
 import type {StreamFacts} from '../video/probe.ts';
 import {probeStreams} from '../video/probe.ts';
 import {auditAudio} from './gates/audio.ts';
+import {auditCuts} from './gates/cuts.ts';
 import {gateDeterminism} from './gates/determinism.ts';
 import {gateHolds} from './gates/holds.ts';
 import {gateLayout} from './gates/layout.ts';
@@ -99,6 +100,7 @@ async function videoGates(
   if (!streams) {
     const summary = 'video could not be probed';
     gates.push({id: 'audio', status: 'SKIP', summary, details: []});
+    gates.push({id: 'cuts', status: 'SKIP', summary, details: []});
     return;
   }
   const audio = streams.streams.find(s => s.type === 'audio');
@@ -109,6 +111,7 @@ async function videoGates(
     videoSeconds: stream?.duration ?? null,
   };
   gates.push(await guarded('audio', () => auditAudio(video, track)));
+  gates.push(await auditCuts(film.spec.film, video));
 }
 
 /** Says why no video was checked and what to do next. */
@@ -141,7 +144,7 @@ async function addVideoGates(
   }
   const draft = names.video(`${sizeSuffix(options)}-draft`);
   const why = missingVideoText(video, given !== null, existsSync(draft));
-  for (const id of ['probe', 'motion', 'audio'] as const) {
+  for (const id of ['probe', 'motion', 'audio', 'cuts'] as const) {
     gates.push({
       id,
       status: given ? 'FAIL' : 'SKIP',

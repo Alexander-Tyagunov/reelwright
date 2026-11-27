@@ -17,7 +17,8 @@ export type GateId =
   | 'pacing'
   | 'probe'
   | 'motion'
-  | 'audio';
+  | 'audio'
+  | 'cuts';
 
 /** Outcome of one gate. `SKIP` means the gate had nothing to measure. */
 export type GateStatus = 'PASS' | 'WARN' | 'FAIL' | 'SKIP';

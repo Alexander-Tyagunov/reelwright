@@ -50,6 +50,12 @@ const COMMANDS: Readonly<Record<string, string>> = {
   assemble:
     'write the film spec from a shot plan: assemble plan/shots.json --out ' +
     'film.json [--shots A1,A2] [--format 9:16] [--intro DIR] [--outro DIR]',
+  cuts:
+    'after a render, report brightness and loudness at each cut: cuts ' +
+    'film.json [--video out/film.mp4]',
+  chapters:
+    'print video chapters from the scene starts: chapters film.json ' +
+    '[--min S]',
   build: 'bundle the film into one self-contained HTML file: build film.json',
 };
 
