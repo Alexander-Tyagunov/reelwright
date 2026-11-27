@@ -12,6 +12,10 @@ session costs, so every agent in this plugin pins its model instead of inheritin
 | Decide message, structure and exact copy | `reel-director` | Opus | high | The idea is the film. Few tokens, large effect. |
 | Independent review before publishing | `reel-reviewer` | Opus | medium | Visual judgment and a different model from the builder. |
 | A bespoke 3D, physics or illustration-level scene | `reel-auteur` | Fable | high | The one place the top tier is measurably better. |
+| Blender film: pitches, treatment, shot plan | `reel-director` | Opus | high | The look and the story are chosen here; about 350k tokens for a 90-second film, the largest effect on the result. |
+| Blender film: build and animate one sequence, the sample shot, re-renders | `reel-animator` | Opus | high | Spatial reasoning in Blender's Python API, judged on its own strips and check frames. 350k to 420k tokens per sequence of 3 to 4 shots. |
+| Blender film: assembly, overrides, render, gates, cut report | `reel-builder` | Sonnet | medium | Commands with documented inputs and measured outputs. 130k to 240k tokens a pass. |
+| Blender film: independent review | `reel-critic` | Opus | medium | Did not make the film; fact check, AI-tell check, classed findings. About 180k tokens. |
 | Everything deterministic: rendering, measuring, encoding | scripts | none | | Free, exact and repeatable. |
 
 ## Why these choices
@@ -25,6 +29,22 @@ session costs, so every agent in this plugin pins its model instead of inheritin
   frames, overlapping captions and empty screen time, which are exactly what `reel qa` measures.
 - So the idea comes from Opus (storyboard), the build goes to Sonnet, and gates catch the cheap model's typical
   mistakes. That gets most of the quality of the top tier for a fraction of its price.
+
+## Blender films
+
+The token figures above were measured on the first Blender film (93 seconds, 16 shots); a whole film came to
+about 3 million tokens, most of it in the animators and the assembly passes. Two choices keep that down:
+- The animator is Opus, not Fable. Its work is checked on strips and check frames at every step, so a strong
+  model's first guess matters less than the loop; move it up only for a shot that defeats Opus twice.
+- The next film in an existing world (a series) reuses the look module and rigs: `reel-builder` or one animator
+  per film instead of a new treatment, pitches and sample.
+
+`reel-animator` has no `tools` line. The Blender tool is an MCP tool whose prefix differs between setups (one
+machine, or a workspace with a bridged Blender machine), and an agent's tool list cannot name an MCP server by a
+pattern, so the agent inherits the session's tools and loads the Blender tool with ToolSearch.
+
+Rendering costs time, not tokens: 10 to 24 s a pose in Cycles at 1080p on a laptop GPU, 12 poses a second, so 2
+to 5 minutes per second of film. The film skill puts both figures in the treatment's budget.
 
 ## Session setup
 
@@ -57,4 +77,5 @@ multi-format, a custom scene is needed, or an independent review is worth it.
 ## Without Fable or Opus access
 
 Change the `model:` line in the agent files: `reel-auteur` to `opus`, `reel-director` and `reel-reviewer`
-to `sonnet`. The gates do not depend on the model, so quality control is unchanged.
+to `sonnet`. For a Blender film, `reel-animator` and `reel-critic` can move to `sonnet` as well; expect more fix
+rounds on the animator's strips. The gates do not depend on the model, so quality control is unchanged.

@@ -1,6 +1,6 @@
 ---
 name: video
-description: Make a short video from code with Reelwright - a launch or feature video, a social clip, an animated summary of a document, or any motion graphics piece that ends as an MP4. Use when the user asks to make, create, generate or render a video, animation, motion graphic, animated chart or video presentation and no more specific Reelwright skill fits (release-video, metrics-video, explainer-video).
+description: Make a short video from code with Reelwright - a launch or feature video, a social clip, an animated summary of a document, or any motion graphics piece that ends as an MP4. Use when the user asks to make, create, generate or render a video, animation, motion graphic, animated chart or video presentation and no more specific Reelwright skill fits (film for a film made in Blender, release-video, metrics-video, explainer-video).
 ---
 
 # Make a video
@@ -12,6 +12,15 @@ do: decide what the video says, in what order, for how long.
 CLI: `node ${CLAUDE_SKILL_DIR}/scripts/reel.ts <command>` (written `reel` below). Run `reel doctor` once per machine.
 It needs Node 24 or newer, ffmpeg and a Chromium-family browser. If that path is not expanded, the CLI is
 `scripts/reel.ts` inside this skill's folder; use its absolute path.
+
+## Films made in Blender
+
+A film with a premise, original characters and a made world, rendered in Blender and assembled here, follows the
+`film` skill (`${CLAUDE_SKILL_DIR}/../film/SKILL.md`): pitches, a sample shot shown first, a shot plan, animation
+by sequence, assembly with `reel plan` and `reel assemble`, a critic, and a hand-over. Use it when the person asks
+for a film, a story, a hand-made or stop-motion look, or says the result must not look like slides. It needs
+Blender with its MCP server connected. The pipeline below is the scene library: the fast path for recurring,
+templated videos (release notes every month, a metrics update), and the fallback when Blender is not there.
 
 ## The pipeline
 

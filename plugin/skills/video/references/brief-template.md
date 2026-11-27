@@ -1,8 +1,13 @@
 # Brief for a bespoke scene
 
-Use this when one scene has to be drawn from scratch by `reel-auteur`. A precise model given a vague brief
-returns a precise default, so every slot is a decision, written as a number where one exists. Leave a slot empty
-only when you truly do not care; the agent will decide it and record the decision.
+Use this when one scene has to be drawn from scratch by `reel-auteur`. A whole film made in Blender starts from a
+different brief, the film's `brief.md` (premise, source, audience, length, formats, sound, the owner's direction
+in his words, series, what came from the studio profile): see the film skill's `references/pipeline.md`, step 1.
+A single Blender shot built inside such a film is briefed by the shot plan, not by this template.
+
+A precise model given a vague brief returns a precise default, so every slot is a decision, written as a number
+where one exists. Leave a slot empty only when you truly do not care; the agent will decide it and record the
+decision.
 
 ```text
 SCENE      <type name>, <seconds> s, inside a film at <W>x<H>, <fps> fps
