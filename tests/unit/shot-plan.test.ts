@@ -97,3 +97,20 @@ describe('what the plan check fails', () => {
     assert.equal(plates?.status, 'WARN');
   });
 });
+
+describe('the example film project shipped with the Blender library', () => {
+  it('its plan passes reel plan with no failure (missing plates only warn)', () => {
+    const example = join(
+      import.meta.dirname,
+      '..',
+      '..',
+      'plugin/skills/video/blender/examples/paper_desk',
+    );
+    const {plan: shipped} = loadPlan(join(example, 'plan', 'shots.json'));
+    const checks = checkPlan(shipped, example);
+    assert.deepEqual(
+      checks.filter(c => c.status === 'FAIL'),
+      [],
+    );
+  });
+});

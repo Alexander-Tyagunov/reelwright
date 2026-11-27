@@ -15,23 +15,25 @@ function textOf(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
-/** The first label by time, the `title` field or the id of a scene. */
-function fallbackTitle(scene: SceneSpec): string | undefined {
+/** Texts of a scene's labels, by the time each appears. */
+function labelTexts(scene: SceneSpec): string[] {
   const labels = Array.isArray(scene.labels) ? scene.labels : [];
-  const first = labels
+  return labels
     .filter(
       (l): l is Record<string, unknown> => typeof l === 'object' && l !== null,
     )
-    .sort((a, b) => Number(a.from ?? 0) - Number(b.from ?? 0))[0];
-  return textOf(first?.text) ?? textOf(scene.title) ?? textOf(scene.id);
+    .sort((a, b) => Number(a.from ?? 0) - Number(b.from ?? 0))
+    .map(l => textOf(l.text))
+    .filter((x): x is string => x !== undefined);
 }
 
 /**
  * Prints `m:ss Title` lines, the first at 0:00. Chapters start at scene
  * starts and last at least `--min` seconds (default 10), so a scene that is
- * too short joins the chapter before it. Titles come from the scene's
- * `chapter` field; a scene without one gives its first label, `title` or
- * `id`. When any scene has a `chapter`, only those scenes start chapters.
+ * too short joins the chapter before it. A title is the `chapter` of the
+ * chapter's first scene that has one; else the label texts of its scenes,
+ * about 60 characters at most; else the film title or "Part N". When any
+ * scene has a `chapter`, only those scenes start chapters.
  *
  * @param args `chapters film.json [--min S] [--json]`.
  * @returns 0 once the chapters are printed.
@@ -48,10 +50,15 @@ export async function run(args: Args): Promise<number> {
     return {
       start: slot.start,
       chapter: textOf(scene.chapter),
-      fallback: fallbackTitle(scene),
+      labels: labelTexts(scene),
     };
   });
-  const {chapters, merged} = makeChapters(scenes, timeline.duration, min);
+  const {chapters, merged} = makeChapters(
+    scenes,
+    timeline.duration,
+    min,
+    textOf(spec.film.meta?.title),
+  );
   if (args.flags.json === true) {
     console.log(JSON.stringify(chapters, null, 2));
   } else {
@@ -82,7 +89,8 @@ function report(
   }
   if (guessed) {
     console.error(
-      'some titles come from label text or scene ids; add a "chapter" ' +
+      'some titles come from label text, the film title or a part number; ' +
+        'add a "chapter" ' +
         'title to the scenes (or to the shots of the plan) to name them.',
     );
   }

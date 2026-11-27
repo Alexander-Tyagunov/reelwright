@@ -4,8 +4,11 @@
  * its intro, where a lamp is switched off on purpose.
  */
 import assert from 'node:assert/strict';
+import {copyFileSync, mkdirSync, mkdtempSync, rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {describe, it} from 'node:test';
+import {run} from '../../plugin/skills/video/scripts/commands/plate.ts';
 import {findBrightnessRuns} from '../../plugin/skills/video/scripts/qa/brightness-runs.ts';
 import {plateRuns} from '../../plugin/skills/video/scripts/qa/plate-brightness.ts';
 import {frameBrightness} from '../../plugin/skills/video/scripts/video/brightness.ts';
@@ -55,5 +58,32 @@ describe('plate brightness rule', () => {
       runs.map(r => [r.first, r.last]),
       [[2, 2]],
     );
+  });
+});
+
+describe('reel plate on a vertical plate that holds only a three-pose check', () => {
+  it('reports the missing frame files as ranges and does not crash', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'reel-partial-'));
+    const plate = join(dir, 'plates', 'clean@9x16');
+    mkdirSync(join(plate, 'frames'), {recursive: true});
+    copyFileSync(
+      join(PLATES, 'clean', 'tracks.json'),
+      join(plate, 'tracks.json'),
+    );
+    for (const n of ['0001', '0013', '0038']) {
+      const name = join('frames', `${n}.jpg`);
+      copyFileSync(join(PLATES, 'clean', name), join(plate, name));
+    }
+    const out = console.log;
+    console.log = () => {};
+    try {
+      await assert.rejects(
+        run({positional: [join(plate, 'tracks.json')], flags: {}}),
+        /only 3 of 38 frame files are present.*2-12, 14-37/s,
+      );
+    } finally {
+      console.log = out;
+      rmSync(dir, {recursive: true, force: true});
+    }
   });
 });

@@ -6,7 +6,7 @@ The three shots share one set (`set_up`) and differ in what happens on it:
 
     S1  intro, 24 poses: a work lamp flickers on over a lettered tag on its stand, holds, goes off, the tag is taken away
     S2  the flat sheet rolls itself up into a lantern shape in five replacement shapes (14 poses)
-    S3  the two lamps in the doorway are lit one after the other and swing (12 poses)
+    S3  the two lamps in the doorway are lit one after the other and swing (30 poses)
 
 Pose p is scene frame p; the choreography counts time in 30ths of a second: f = (p - 1) * 2.5.
 """

@@ -36,6 +36,23 @@ function frameFiles(plate: Plate, path: string): string[] {
   );
 }
 
+/** Writes frame numbers as ranges, "2-12, 14", and stops after six ranges. */
+function rangesOf(numbers: readonly number[]): string {
+  const ranges: string[] = [];
+  let from = 0;
+  for (let i = 0; i < numbers.length; i++) {
+    const n = numbers[i] ?? 0;
+    if (numbers[i + 1] === n + 1) {
+      continue;
+    }
+    const start = numbers[from] ?? n;
+    ranges.push(start === n ? `${n}` : `${start}-${n}`);
+    from = i + 1;
+  }
+  const shown = ranges.slice(0, 6).join(', ');
+  return ranges.length > 6 ? `${shown}, and ${ranges.length - 6} more` : shown;
+}
+
 function printSummary(plate: Plate, path: string): void {
   const seconds = (plate.frames / plate.fps).toFixed(2);
   console.log(`plate: ${path}`);
@@ -119,12 +136,14 @@ export async function run(args: Args): Promise<number> {
   const plate = readPlate(path);
   printSummary(plate, path);
   const files = frameFiles(plate, path);
-  const missing = files.filter(f => !existsSync(f));
+  const missing = files.flatMap((f, i) => (existsSync(f) ? [] : [i]));
   if (missing.length) {
+    const present = plate.frames - missing.length;
     throw new UserError(
-      `${missing.length} of ${plate.frames} frame files are missing; the ` +
-        `first is ${missing[0]}. Render those frames again or copy them ` +
-        'into the plate folder, then run plate again.',
+      `only ${present} of ${plate.frames} frame files are present (a ` +
+        'partial plate, such as a check render). Missing frame files: ' +
+        `${rangesOf(missing.map(i => i + plate.first))}. Render those ` +
+        'frames or copy them into the plate folder, then run plate again.',
     );
   }
   const problem = await firstFrameProblem(plate, files[0] ?? '');

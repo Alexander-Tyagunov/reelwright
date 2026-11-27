@@ -52,6 +52,99 @@ describe('chapters of the first film with no chapter titles', () => {
   });
 });
 
+const FIRST_FILM_LABELS: Array<[number, string[]]> = [
+  [2.0, []],
+  [5.8333, ['Claude', 'Claude Instant']],
+  [6.8333, ['Claude 2', 'Claude Instant 1.2']],
+  [4.0, ['Claude 2.1']],
+  [9.0, ['Claude 3 Opus', 'Claude 3 Sonnet', 'Claude 3 Haiku']],
+  [4.8333, ['Claude 3.5 Sonnet']],
+  [6.5, ['Upgraded Claude 3.5 Sonnet', 'Claude 3.5 Haiku']],
+  [6.0, ['Claude 3.7 Sonnet']],
+  [5.8333, ['Claude Opus 4', 'Claude Sonnet 4']],
+  [
+    6.8333,
+    [
+      'Claude Opus 4.1',
+      'Claude Sonnet 4.5',
+      'Claude Haiku 4.5',
+      'Claude Opus 4.5',
+    ],
+  ],
+  [5.3333, ['Claude Opus 4.6', 'Claude Sonnet 4.6']],
+  [6.3333, ['Claude Mythos Preview', 'Claude Opus 4.7', 'Claude Opus 4.8']],
+  [
+    7.0,
+    ['Claude Fable 5', 'Claude Mythos 5', 'Claude Sonnet 5', 'Claude Opus 5'],
+  ],
+  [
+    6.0,
+    [
+      'Claude Fable 5.1',
+      'Claude Mythos 5.1',
+      'Claude Opus 5.5',
+      'Claude Sonnet 5.5',
+      'Claude Haiku 5.5',
+    ],
+  ],
+  [7.5, ['Claude Fable 5.2', 'Claude Mythos 5.2']],
+  [3.25, []],
+];
+
+describe('chapter titles of a film with no chapter fields', () => {
+  const timeline = filmTimeline({
+    meta: {transition: 'cut' as const, fps: 24, lead: 0},
+    scenes: FIRST_FILM_LABELS.map(([duration]) => ({type: 'plate', duration})),
+  });
+  const scenes = timeline.slots.map((slot, i) => ({
+    start: slot.start,
+    labels: FIRST_FILM_LABELS[i]?.[1],
+  }));
+  const {chapters} = makeChapters(
+    scenes,
+    timeline.duration,
+    10,
+    'The road round the backdrop',
+  );
+
+  it('are made of the label texts of the scenes in the chapter, not plate ids', () => {
+    assert.equal(
+      chapters[0]?.title,
+      'Claude, Claude Instant, Claude 2, Claude Instant 1.2',
+    );
+    assert.ok(chapters.every(c => !/^A0$|^Z0$/.test(c.title)));
+  });
+
+  it('stop at a label boundary within about 60 characters', () => {
+    for (const c of chapters) {
+      assert.ok(c.title.length <= 60 || !c.title.includes(', '), c.title);
+      assert.ok(!c.title.endsWith(','), c.title);
+    }
+  });
+
+  it('a scene with no labels gives the film title first and "Part N" later', () => {
+    const bare = [{start: 0}, {start: 12}, {start: 24}];
+    const {chapters: parts} = makeChapters(bare, 40, 10, 'Ten years');
+    assert.deepEqual(
+      parts.map(c => c.title),
+      ['Ten years', 'Part 2', 'Part 3'],
+    );
+  });
+
+  it('a chapter field wins over label text, even from a later scene of the chapter', () => {
+    const mixed = [
+      {start: 0, labels: ['Alpha']},
+      {start: 4, chapter: 'Named', labels: ['Beta']},
+      {start: 20, chapter: 'Later', labels: ['Gamma']},
+    ];
+    const {chapters: two} = makeChapters(mixed, 40, 10);
+    assert.deepEqual(
+      two.map(c => c.title),
+      ['Named', 'Later'],
+    );
+  });
+});
+
 describe('chapters with titles', () => {
   it('only titled scenes start chapters, and a titled scene under 10 s after one joins it', () => {
     const scenes = [

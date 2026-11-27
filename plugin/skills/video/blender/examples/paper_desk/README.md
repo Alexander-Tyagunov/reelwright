@@ -12,7 +12,7 @@ It is reduced from the first Blender film, and its first shot is that film's int
 | `assets/tag.png` | The lettering of the tag, made by `lettering.hand_lettering` (see below) |
 
 The shots: `S1` a work lamp flickers on over a lettered tag (24 poses), `S2` a flat sheet rolls itself up (14),
-`S3` two lamps in a doorway are lit one after the other (12). They share one set (`shots.set_up`).
+`S3` two lamps in a doorway are lit one after the other (30). They share one set (`shots.set_up`).
 
 ## Run it
 
