@@ -243,10 +243,14 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
 
 ## Films made in Blender
 
-### The plate brightness check cannot see a bad run at the first or last frame
+### The plate brightness check sees only a black run at the first or last frames
 
-- **Symptom:** `reel plate` passes a plate whose first or last frames are dark or light by mistake.
-- **Cause:** a run is judged against the frames on both sides of it, and a run at an end has only one side.
+- **Symptom:** `reel plate` passes a plate whose first or last frames are too light, or only a little too dark.
+- **Cause:** a run at an end has one neighbour, and a step to a new level there (a lamp switched off in the last frames
+  of the intro, a light that comes on late) looks the same as a dropout. The 14 good plates of the first film and the
+  intro `A0` must stay clean, so an end run is reported only when it is at most 12 frames, near black (at most 8 grey
+  levels), flat, below half of its settled neighbour (the frame beyond it agrees within 15%). A dark run of that kind
+  that is on purpose is reported too; the message says no fix is needed then.
 - **Do:** look at the first and last frame of every plate yourself (the builder opens them as stills), and compare the
   last frame of a shot with the first of the next with `reel cuts` after the render.
 

@@ -125,8 +125,8 @@ about 60 characters, else the film title or "Part N").
 ## The Blender library
 
 `plugin/skills/video/blender/reel_blender/` renders plates; the engine never imports it. The two sides meet in two files: the
-shot plan (`references/shot-plan.md` lists the fields each side reads; `film.py` reads the plan only through the accessors at
-its top) and the plate (`tracks.json` and frames, `references/film-spec.md`). `film.py`, `lettering.py`, `stills.py` and
+shot plan (`references/shot-plan.md` lists the fields each side reads; the library reads the plan only through `plan.py`, the twin of
+`plan/parse.ts`: same shot-id rule, same plate-folder rule) and the plate (`tracks.json` and frames, `references/film-spec.md`). `film.py` (the public calls, over `film_state.py`, `film_camera.py`, `film_shot.py` and `film_queue.py`), `lettering.py`, `stills.py` and
 `checks.py` came in 0.3.0; the first runs inside Blender, the others in the workspace with Pillow and numpy. The library holds
 no look and no project path. `examples/paper_desk/` shows one look module and one shot module on top of it.
 

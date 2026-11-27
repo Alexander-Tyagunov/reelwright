@@ -2,6 +2,16 @@
 
 ## 0.2.0 (unreleased)
 
+- **Fixes from an independent review.** `reel assemble --shots` with shots left out follows the chosen shots in the sound
+  curve; a plan with no shots, a shot id outside `[A-Za-z0-9_-]`, an intro or outro that shares a shot's id, an
+  unreadable intro `tracks.json` and a bad `extra-cues.json` entry are errors that name the file and the field.
+  `reel plan` warns about a `film_fps` that is not a multiple of `fps_poses` and a plate at another frame rate; `reel
+  plan` and `reel assemble` find plates the same way (`--root`). `reel plate` reads a folder with `%` in its name and
+  reports a black run at the first or last frames (a dim run or a lamp switched off is not reported). `reel cuts` reads
+  only the frames around each cut and tells a file with no audio from an ffmpeg failure. The Blender library honours a
+  shot's `plate` folder, reads every text file as UTF-8, `checks.match` no longer divides by zero, and `film.py` is split
+  into `plan`, `film_state`, `film_camera`, `film_shot` and `film_queue` with the same public calls.
+
 - **Films made in Blender are the main path.** Three new skills: `film` (intake, six or more look pitches, one real sample
   shot before the rest, a shot plan, animation by sequence, assembly, gates, an independent critic, one fix pass, a
   hand-over that says what nobody saw or heard), `studio` (the owner's profile and look ledger, in his own words) and
