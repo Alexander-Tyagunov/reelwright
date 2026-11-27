@@ -4,3 +4,14 @@ out/
 .DS_Store
 __pycache__/
 *.pyc
+.cache/
+.ruff_cache/
+.mypy_cache/
+*.blend1
+
+# Rendered plate frames and Blender working folders of a film project; the test fixtures are the exception.
+plates/
+renders/
+blends/
+render_queue/
+!tests/fixtures/**/plates/

@@ -1,7 +1,7 @@
 {
   "name": "reelwright",
   "displayName": "Reelwright",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Make release videos, explainers and animated metrics from code. A film is one JSON file; a headless browser draws every frame; a quality gate measures motion, layout and reading time before anything ships.",
   "author": { "name": "Alex Tyagunov" },
   "license": "MIT",

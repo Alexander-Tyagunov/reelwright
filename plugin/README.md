@@ -12,9 +12,9 @@ scenes that turns a JSON file into a checked clip in minutes.
 
 It loads in Claude Code, in Cowork and in chat on claude.ai.
 
-<!-- IMAGE PLACE 1: docs/img/film-still.jpg, a full-size frame from the first film made with 0.2.0.
-     When the file exists, replace this comment with:
-     ![A frame from a film made in Blender, with its labels](docs/img/film-still.jpg) -->
+![Sixteen shots of one film: paper lanterns and a paper road on a cutting mat and a dark desk, each with dated labels](docs/img/film-still.jpg)
+
+*A contact sheet of the first film made this way: 16 shots rendered in Blender as stop-motion paper, with the labels the engine laid over them.*
 
 ## Two ways to make a video
 
@@ -72,9 +72,9 @@ tags, a thumbnail, every upload setting with a reasoned answer to the AI-content
 square version would need, and channel art (banner, profile picture, watermark) rendered in the film's own look.
 It prepares; you upload. Platform numbers in it are dated and checked again before use.
 
-<!-- IMAGE PLACE 2: docs/img/channel-art.jpg, the channel banner, profile picture and watermark made for that
-     film, side by side. When the file exists, replace this comment with:
-     ![Channel art rendered in the film's own look](docs/img/channel-art.jpg) -->
+![A channel banner: a title card reading "The art of artificial programming" on a green cutting mat with a pencil, tape, a ruler and compasses](docs/img/channel-art.jpg)
+
+*A channel banner rendered as a still in Blender, in the same hand-made style, as the publish skill makes them.*
 
 ## Make a scene video
 
@@ -148,7 +148,7 @@ Agents load in Claude Code and Cowork. In chat, the skills do the same work in o
 ## Install
 
 ```bash
-claude plugin marketplace add <owner>/<repo>
+claude plugin marketplace add OWNER/reelwright
 claude plugin install reelwright@reelwright
 ```
 

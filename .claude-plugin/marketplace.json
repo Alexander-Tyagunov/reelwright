@@ -1,12 +1,12 @@
 {
   "name": "reelwright",
+  "description": "Films made in Blender and code-drawn videos for Claude, with a measured quality gate.",
   "owner": { "name": "Alex Tyagunov" },
-  "metadata": { "description": "Code-drawn video for Claude: release videos, explainers and animated metrics." },
   "plugins": [
     {
       "name": "reelwright",
       "source": "./plugin",
-      "description": "Release videos, explainers and animated metrics from code, with a measured quality gate and model-tiered agents."
+      "description": "Make a finished short film in Blender from a premise, or a release video, explainer or metrics clip from a JSON spec; every film is measured and reviewed before it ships."
     }
   ]
 }
