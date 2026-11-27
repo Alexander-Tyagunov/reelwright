@@ -2,10 +2,10 @@
 
 Use this when a shot needs real 3D (characters, light, camera moves). Blender renders a *plate*
 (frames + `tracks.json`); the engine composites labels over it. Library: `plugin/skills/video/blender/reel_blender/`.
-Worked examples: film `claude-timeline`, shot `shot-claude3` (Eevee; scripts `ct_look.py`, `shot_claude3.py`) and
-`shot-claude3-desk` (Cycles, stop motion at 12 fps; `ct_desk_look.py`, `shot_claude3_desk.py`). A film of many shots
-on one set: `ct_film.py` (shared module built from the plan's `shots.json`: `build_shot(id, overrides)`,
-`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py` .. `ct_seq_d.py`).
+Worked examples: film `claude-timeline` (shots `shot-claude3` in Eevee and `shot-claude3-desk` in Cycles, stop motion at
+12 fps), and `plugin/skills/video/blender/examples/paper_desk/` (structure of a film on `film.py`: a look module, a shot
+module, a three-shot plan; it is not a house style). A film of many shots on one set registers its look and one builder per
+shot with `film.py` (section 12) and keeps one module per sequence.
 When a shot must read as made by a person and not as a clean render, read `handmade.md` as well.
 
 ## 1. Connection check (first call, always)
@@ -16,17 +16,31 @@ connect, stop and tell the user; nothing below works without it. The live Blende
 session built. `build()` wipes that scene in memory only; a .blend on disk changes only when you save, so give a
 new version its own file name (`project.save(new_path)`) and never save over an earlier shot's file.
 
-## 2. Two machines
-- Cloud: your shell and file tools. Library source of truth: `plugin/skills/video/blender/reel_blender/`.
-  Film scripts: `<work>/films/<film>/blender/`.
-- Mac: Blender, the shared folder `~/ClaudeProjects`. Library copy:
-  `~/ClaudeProjects/reelwright/plugin/skills/video/blender/reel_blender/`. Film project:
-  `~/ClaudeProjects/reelwright-work/<film>/` with `scripts/`, `renders/preview/`, `plates/<shot>/`.
-- Cloud to Mac: copy changed files under `/mnt/user-data/outputs/...`, then `device_commit_files` (`force: true`),
-  one entry per file: `stagedPath` in the cloud, `devicePath` `~/ClaudeProjects/...` on the Mac. Check syntax in the
-  cloud first with `python3 -c "import ast; ast.parse(open(f).read())"` (`py_compile` leaves `__pycache__` in the repo).
-- Mac to cloud: `device_stage_files` -> `/mnt/user-data/uploads/ClaudeProjects/<path under ClaudeProjects>`.
-- Write code in files and sync; send only short snippets through `execute_blender_code`:
+## 2. Where things run
+Name the tool that runs Python in Blender by what it does ("the Blender code tool"): its prefix differs between layouts.
+Two layouts work; find out which one you are in at the connection check (section 1) from where `bpy.data.filepath` lives.
+
+**One machine.** Claude Code, the engine and Blender run on the same computer and share files. Write the library, the
+film scripts and the plan where Blender can import them; no copying. The shell that renders the film (`reel`) reads the
+plates straight from `<project>/plates/`. Free disk space is the disk you work on (section 15).
+
+**Workspace plus a bridged Blender machine.** The session's workspace (shell, files, the engine) is in the cloud and
+Blender runs on the user's computer behind a bridge; the two share no disk.
+- Workspace: your shell and file tools. Source of truth for the library: `plugin/skills/video/blender/reel_blender/`;
+  for a film: `<work>/films/<film>/blender/` (scripts) and `plan/`.
+- Blender machine: Blender and a shared folder (here `~/ClaudeProjects`). Library copy
+  `~/ClaudeProjects/reelwright/plugin/skills/video/blender/reel_blender/`; film project
+  `~/ClaudeProjects/reelwright-work/<film>/` with `scripts/`, `plan/`, `renders/preview/`, `renders/check/`, `plates/<shot>/`,
+  `blends/`, `render_queue/`.
+- Staging (workspace to Blender machine): copy the changed files under `/mnt/user-data/outputs/<anything>/`, check their syntax
+  first with `python3 -c "import ast; ast.parse(open(f).read())"` (`py_compile` leaves `__pycache__` in the repository), then
+  `device_commit_files` with `force: true`, one entry per file: `stagedPath` in the workspace, `devicePath`
+  `~/ClaudeProjects/...` on the Blender machine (an absolute path inside a connected folder; `~` is accepted).
+- Commit step (Blender machine to workspace): `device_stage_files` copies chosen files to
+  `/mnt/user-data/uploads/ClaudeProjects/<path under ClaudeProjects>`, from where you read them (stills, check frames) or
+  zip and unpack plates (section 7). Stage only what you need to look at.
+- The shell on the Blender machine (`device_bash`) can list, move and measure but cannot delete until the user allows it.
+- Write code in files and sync; send only short snippets through the Blender code tool:
 ```python
 import sys, importlib, traceback
 for p in ("<mac>/reelwright/plugin/skills/video/blender", "<mac>/reelwright-work/<film>/scripts"):
@@ -42,7 +56,7 @@ except Exception:
 ```
 - `execute_blender_code` starts with no names in scope: `import bpy` (and `sys`, `os`) in every call, or the first line of
   the `try` block fails with `NameError` and the shot module is left half reloaded.
-- `<mac>` is `/Users/<user>/ClaudeProjects` (ask Blender: `os.path.expanduser("~")`).
+- `<mac>` is `/Users/<user>/ClaudeProjects` (ask Blender: `os.path.expanduser("~")`; on one machine it is wherever the library sits).
 - A whole edit-look round is 5 calls: patch + copy (Bash), commit, build + render (Blender), stage, Read.
 - Put every number you expect to tune (light powers, exposure, camera, material amounts) in the shot's `P` dict and
   try values with `S.build({...})`: that round is 3 calls (build + strip, stage, Read) and needs no file sync. Write
@@ -70,8 +84,7 @@ exclusive file, so two sessions cannot get the same place), each through the sam
 `renderqueue.cancel(queue_dir, id)` removes a waiting job. Give every job its own saved .blend (`ct-A1.blend`), and
 do not save that file again while its job waits: the worker opens it when the job starts. `resume=True` (default)
 skips frames already on disk, so an interrupted job is simply submitted again. The session that submitted may end;
-the runner leaves by itself five seconds after the last job. A film keeps the folder in its own module (`ct_film.QUEUE`,
-with `submit(shot)`, `submit_check(shot, poses)`, `status()`). Give a check job a file of its own
+the runner leaves by itself five seconds after the last job. A film keeps the folder in its project (`film.py` uses `<project>/render_queue`, section 12). Give a check job a file of its own
 (`save_as_mainfile(filepath=..., copy=True)` to `ct-C1-check.blend`): it may wait behind an hour of other jobs, and the
 shot's own file must stay free to be changed, saved and submitted meanwhile. Submit a shot's check the moment its
 first strip looks right, not when all shots are done: behind a busy queue the wait is the hour that matters.
@@ -86,7 +99,7 @@ goes to the background (`render_background(frames=..., sheet=...)`): with kernel
 Measure one or two final-quality frames in the background before the final render and set `samples` / `noise`
 from that (numbers in section 6). A light inside a closed shell reaches the table only if the shell lets shadow
 rays through: `paper.paper_material(transmit=...)`.
-Tracing paper with something behind it (`ct_film.vellum_material`): mix Diffuse and Translucent, then mix in a rough
+Tracing paper with something behind it (the first film's `vellum_material`): mix Diffuse and Translucent, then mix in a rough
 Refraction lobe (share 0.30, roughness 0.38, IOR 1.4; the blur grows with IOR - 1, so IOR near 1 shows nothing soft).
 The translucent share gives the glow of a light behind, the refraction share the blurred outline of what is close behind
 (a lit paper globe 3 cm away reads as a moon), and no shadow ray crosses, so the light behind never lights the near side
@@ -126,6 +139,8 @@ plateau near 215 of 255 is too bright even though nothing clips: halve the LED.
 - `tracks.sample_points(scene, cam, {name: object}, frames)` layout numbers without rendering;
   `tracks.export_tracks(scene, cam, points, out_path, events=[(name, scene_frame)])`.
 - `plate.pack_plate(dir)` zip for transfer; `plate.check_plate(dir)` frames vs tracks.
+- `film` (section 12), `lettering` (13), `stills` (14), `checks` (15) are the film-level modules added in 0.3.0. The last three need Pillow
+  and run in the workspace (import them by name: `from reel_blender import checks`); `film` needs Blender.
 Rules: pure functions, units in docstrings, no project paths, no look. The look lives in the film's own script.
 Animation is baked from math and fixed seeds (no handlers, no playback, no live physics), so `build()` gives
 the same scene every time. Rebuild from scratch on every change (both examples build in 0.3 s).
@@ -246,8 +261,7 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
 20. (Film, sequence B) A standing piece between the lens and the road hides the walker: the near leg of an arch stood in
     front of one landing. Project every leg to the walker's depth (x' = cam_x + (x - cam_x) * walker_depth / leg_depth) and
     compare with each landing's x before the first strip; choose the cheat so the leg falls between two landings.
-21. (Film, sequence B) The cutting mats are 3 mm thick: everything past a mat's edge stands 3 mm lower (`ct_film.ground`,
-    `foot_z`), and a tile row cannot lie across the step. Ask of every new surface where its top is.
+21. (Film, sequence B) The cutting mats are 3 mm thick: everything past a mat's edge stands 3 mm lower (the first film's `ground` and `foot_z`), and a tile row cannot lie across the step. Ask of every new surface where its top is.
 22. (Film, sequence B) From a camera 11 cm high, two lines on the desk that both run across the frame look the same even
     when one is straight and one curves: make them differ in screen direction (one toward the lens). A line needs 2.4 mm
     of width to show at all, and graphite on dark wood does not: use a pale pencil.
@@ -278,7 +292,7 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
     cosine to both), and judge it at the size it has in frame.
 30. (Film, sequence D) A focus pull at f/16 on a table-top is small: blur circle = f^2 / N x |1 / s1 - 1 / s2| (0.55 m to
     1.53 m at 40 mm: 0.12 mm, 6 pixels of 1920). The foreground goes soft, not away; compose the last frame so it still
-    reads with both planes legible. Pull linearly in 1 / distance, in uneven steps (`ct_film.build_camera`, `focus_pull`).
+    reads with both planes legible. Pull linearly in 1 / distance, in uneven steps (`film.build_camera`, plan field `focus_pull`).
 
 31. (Film, intro shot) An area light with `spread` under 180 degrees keeps its watts inside the beam, so the middle gets far
     brighter: a 5 cm disk at spread 50 degrees lit cream card 0.38 m away to 185 of 255 with 0.075 W, where the film's open
@@ -297,6 +311,16 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
     worker writes a raw PNG beside the JPEG). The queue said `error: exit 0` while `render_progress.json` stayed at "starting":
     read `render.log`, and check `shutil.disk_usage` before submitting. A still at 256 samples, noise 0.01 took 32-38 s.
 
+35. (Library 0.3.0) The Object Info "Random" that paper uses for per-object variation is hashed from the object name, so
+    renaming every object of a set shifts each paper's tint a little. Measured on the intro shot after neutral names: mean
+    brightness +0.3 %, edge energy within 1.3 %, no shift. Fix names before the first approved plate, not after.
+36. (Library 0.3.0) A vertical frame is not the 16:9 camera turned: with sensor fit Auto the lens angle spans the longer side,
+    so 1080 x 1920 sees 56 % of the width a 1920 x 1080 frame sees, and a 108 mm tag that filled the wide frame was cut at
+    its right end. Give the shot a camera for the format (`camera.formats`, section 16), and project the subject's
+    extremes with `tracks.sample_points` before rendering.
+37. (Library 0.3.0) A seed key built from the shot id (`craft.rng(17, "scraps", sh.id)`) changes the offcuts when the shot is
+    renamed or built under another id. Pass an explicit key when the same set must come out the same in two shots.
+
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per
 second. Characters that hop make the point bob. Put each track empty above the highest point of the character's
@@ -304,3 +328,68 @@ motion while its label shows, so the label never meets the character, or give th
 Parent the empty to the part that carries position only (the root), not to a body that squashes or jitters. The default `smooth` of
 0.6 s already lets the box glide while the leader stays on the point. Before the final render run
 `reel qa film.json --page-only` and read the holds lines for the labels.
+
+## 12. `film.py`: the calls an animator makes, in order
+`film.py` holds film mechanics with no look in them. A film registers once per Blender session; every shot is then the same
+few calls. All of them end under 60 s; slow renders go to the queue (section 3).
+1. `film.register(name, project, plan, look, builders, shot_params=None, extra_shots=None)`. `look` is a `film.Look(materials,
+   world, lights, params, develop, final, prefix)`: the film's materials, world and lights, shared shot parameters (lens, fstop,
+   exposure, view_look, ...), the `photo.develop` amounts, and the overrides of `cycles_final`. `builders` is `{shot id:
+   fn(sh)}`; `extra_shots` holds shots that are not in the plan (an intro), same shape as a plan entry. Register again after
+   reloading the film's modules. `project` is the folder of section 2; `film.py` writes `plates/`, `renders/`, `blends/`,
+   `render_queue/` under it.
+2. `film.build_shot(shot, overrides=None, fmt=None)` rebuilds the live scene from nothing and returns the report: seconds,
+   objects, `focus_m`, `tracks_missing`, and the screen `layout` of the track points at six poses. A builder receives a
+   `Shot` (`sh.scene`, `sh.env / chars / trk` collections, `sh.mats`, `sh.p`, `sh.FR` poses, `sh.times` seconds, `sh.points`,
+   `sh.switch(obj, first, last)`), builds what the camera sees, bakes constant keys from the pose number and fixed seeds, and
+   puts every plan track into `sh.points`. Parameters merge as `look.params`, `shot_params[shot]`, `overrides`.
+3. `film.strip(poses, name)` is the live preview strip (six poses or fewer) at `renders/preview/<name>.jpg`; `film.layout(poses)`
+   gives the track positions without rendering.
+4. `film.submit_check(shot, poses, fmt=None)` queues three poses at final settings, with develop, into
+   `renders/check/<shot>/f%04d.jpg` from a copy of the scene in its own file. Submit it the moment the first strip looks right.
+5. `film.submit(shot, fmt=None, frames=None)` saves `blends/<name>-<shot>.blend` and queues the final render into `plates/<shot>/`.
+6. `film.export_tracks(shot, fmt=None)` writes `plates/<shot>/tracks.json` from the live scene (events: frame = pose - 1).
+7. `film.status()` lists every job, when the queue empties and `free_mb`.
+`submit`, `submit_check` and `export_tracks` need the live scene to be that shot in that format and say so when it is not.
+Kept from seven animators: constant keys, seeded jitter, one saved .blend per queued job, focus at the harmonic mean of the
+nearest and farthest depth of the `in_focus` points (smoothed over three poses). The plan is read only through the accessors
+at the top of `film.py` (`plan_shots`, `plan_formats`, `plan_fps`, `shot_poses`, `shot_tracks`, `shot_events`, `shot_in_focus`,
+`shot_focus_pull`, `shot_camera`), so a renamed plan field costs one line.
+
+## 13. `lettering.py`: text as an image
+Pillow and numpy, run in the workspace. `hand_lettering(out_png, font, size_mm, lines, px_per_mm, ink, seed, proof)` sets a
+handwriting face letter by letter with seeded size, slant, turn and baseline, on a drifting line, and lets the paper's tooth
+eat the strokes; `printed_text(out_png, font, size_mm, lines, px_per_mm, ink, seed, gain_px, proof)` sets kerned type with ink
+gain, uneven ink and pinholes. Both write RGBA (ink in RGB, strokes in alpha) covering a whole face and return its size and
+measurements (ink box in mm, line ends or row widths). Mix the image into a paper material by its alpha (`examples/paper_desk/
+shots.py`, `tag_material`) so fibre and light stay the paper's. Look at the proof at 100 % and check digits and capitals of the
+face: a handwriting face drew "1M" as "IM".
+
+## 14. `stills.py`: pictures, not plates
+`render_still_at(scene, path, size, ...)` renders the live scene at a size and restores the scene's own size (Blender). The
+rest is Pillow, for the files of a channel or a thumbnail: `circle_sheet(src, out)` shows a profile picture as a circle at 88, 48
+and 24 px on dark and on white; `banner_crops(src, out_dir)` writes the centre crops a phone (1546 x 423) and a desktop
+(2560 x 423) show; `watermark_cut(src, out, size, shape)` cuts a watermark transparent outside one shape. A still at full
+size goes through the queue with a job of its own, like a plate frame.
+
+## 15. `checks.py`: measure before and after a full render
+Pillow and numpy, run in the workspace on files staged from the Blender machine. `edge_energy(img, box)` is sharpness
+after a 5 px median (grain would raise it); `brightness(img, box)` is the mean of a frame or a band (boxes are shares of the
+frame); `match(a, b)` gives shift in pixels, brightness ratio and edge ratio of the same pose from two renders;
+`compare_sets(pairs, brightness_tol=0.03, edge_tol=0.05, max_shift=1)` gives a verdict for a list of pairs. Use it for the
+three-pose check against an approved plate, and after a library change to prove the picture did not move.
+
+**Free disk space.** Check the free space of the Blender machine before queuing and report it in your handover. A queued still
+died once with "No space left on device", and 12 poses a second of film at 1080p is about 0.5 MB a frame plus the raw PNG
+while a frame renders. `film.disk_free_mb()` and `film.status()` give it; `submit` and `submit_check` refuse below 500 MB
+(`min_free_mb=`). On a machine nearly full, render only what the proof needs and stop when it is below the limit.
+
+## 16. A second format (vertical)
+The plan carries `formats` (`{"16:9": [1920, 1080], "9:16": [1080, 1920]}`); the first is the main format. Build, check and
+submit with `fmt="9:16"`: the scene takes that size and the plate goes to `plates/<shot>@9x16/` (the file is
+`blends/<name>-<shot>@9x16.blend`). A vertical cut is a separate framing, not a crop: give the shot a camera for it in the plan,
+`"camera": {"lens_mm": 40, "pos": [...], "aim": [...], "formats": {"9:16": {"pos": [...], "aim": [...]}}}`; the entries
+under `formats` replace the shot's own. With sensor fit Auto the lens angle spans the longer side, so a vertical frame sees
+about half the width: move the camera back or aim at the middle of the subject, and read `layout()` (all extremes of the subject
+between 0.05 and 0.95) before the check. Export tracks per format (`export_tracks(shot, fmt="9:16")`); the engine reads
+`plates/<shot>@9x16/` with `reel assemble --format 9:16`. Labels and safe areas are a separate decision per format.
