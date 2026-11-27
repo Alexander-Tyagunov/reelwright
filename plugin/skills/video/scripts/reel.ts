@@ -44,12 +44,18 @@ const COMMANDS: Readonly<Record<string, string>> = {
   plate:
     'check a plate folder: plate plates/shot03/tracks.json ' +
     '(tracks, events, frame files, frame size)',
+  plan:
+    'check a shot plan: plan plan/shots.json (schema, totals, reading ' +
+    'time, label budget, cue kinds, missing plates)',
+  assemble:
+    'write the film spec from a shot plan: assemble plan/shots.json --out ' +
+    'film.json [--shots A1,A2] [--format 9:16] [--intro DIR] [--outro DIR]',
   build: 'bundle the film into one self-contained HTML file: build film.json',
 };
 
 function printHelp(): void {
   const lines = Object.entries(COMMANDS).map(
-    ([name, help]) => `  ${name.padEnd(8)} ${help}`,
+    ([name, help]) => `  ${name.padEnd(9)} ${help}`,
   );
   const usage = 'Usage: node reel.ts <command> [film.json] [options]';
   console.log(`Reelwright\n\n${usage}\n\n${lines.join('\n')}`);

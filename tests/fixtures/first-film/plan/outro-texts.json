@@ -1,0 +1,28 @@
+{
+ "Z0": [
+  {
+   "text": "34 models. 44 months.",
+   "class": "rw-h2",
+   "x": 106,
+   "y": 8,
+   "from": 0.333,
+   "align": "left"
+  },
+  {
+   "text": "to be continued",
+   "class": "rw-body",
+   "x": 106,
+   "y": 19,
+   "from": 0.9,
+   "align": "left"
+  },
+  {
+   "text": "made with Claude and Blender",
+   "class": "rw-sub",
+   "x": 171.8,
+   "y": 88,
+   "from": 0.9,
+   "align": "right"
+  }
+ ]
+}

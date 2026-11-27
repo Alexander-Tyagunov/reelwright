@@ -159,6 +159,8 @@ export interface SceneSpec {
   id?: string;
   /** Explicit sound cues for scenes whose motion the tool cannot see. */
   cues?: SceneCue[];
+  /** Title of the video chapter that starts with this scene. */
+  chapter?: string;
   [field: string]: unknown;
 }
 

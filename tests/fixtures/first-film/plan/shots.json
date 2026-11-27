@@ -1,0 +1,592 @@
+{
+ "title": "Claude timeline: the road round the backdrop",
+ "fps_poses": 12,
+ "film_fps": 24,
+ "total_poses": 216,
+ "sound": {
+  "palette": "felt piano and bowed glass over a slow pulse that gains one voice per lantern line; paper, card and pencil foley; no drums, nothing synthetic",
+  "engine_palette": "storybook",
+  "intensity": [
+   {
+    "at_s": 0.0,
+    "value": 0.05
+   },
+   {
+    "at_s": 1.33,
+    "value": 0.25
+   },
+   {
+    "at_s": 5.83,
+    "value": 0.22
+   },
+   {
+    "at_s": 7.33,
+    "value": 0.35
+   },
+   {
+    "at_s": 12.67,
+    "value": 0.3
+   },
+   {
+    "at_s": 16.67,
+    "value": 0.35
+   }
+  ]
+ },
+ "sequences": [
+  {
+   "id": "A",
+   "title": "One light",
+   "shots": [
+    {
+     "id": "A1",
+     "poses": 70,
+     "span": [
+      "2023-03",
+      "2023-03"
+     ],
+     "releases": [
+      "claude-1",
+      "claude-instant-1"
+     ],
+     "tracks": [
+      "traveller",
+      "lamp_claude_1",
+      "lamp_claude_instant_1"
+     ],
+     "walker_tracks": [
+      "traveller"
+     ],
+     "camera": {
+      "lens_mm": 40,
+      "fstop": 16,
+      "pos": [
+       -1.4,
+       -0.33,
+       0.07
+      ],
+      "aim": [
+       -1.4,
+       0.02,
+       0.03
+      ],
+      "moves": []
+     },
+     "events": [
+      {
+       "name": "roll",
+       "pose": 7
+      },
+      {
+       "name": "stand",
+       "pose": 15
+      },
+      {
+       "name": "lit",
+       "pose": 17
+      },
+      {
+       "name": "door",
+       "pose": 29
+      },
+      {
+       "name": "lamp_claude",
+       "pose": 30
+      },
+      {
+       "name": "lamp_instant",
+       "pose": 34
+      },
+      {
+       "name": "stones",
+       "pose": 36
+      },
+      {
+       "name": "step2",
+       "pose": 46
+      },
+      {
+       "name": "step3",
+       "pose": 52
+      },
+      {
+       "name": "look_back",
+       "pose": 56
+      }
+     ],
+     "labels": [
+      {
+       "release": "claude-1",
+       "track": "lamp_claude_1",
+       "text": "Claude",
+       "sub": "March 2023",
+       "line": "First Claude, available to partners",
+       "from_pose": 31,
+       "to_pose": 70,
+       "side": "top",
+       "offset": 5
+      },
+      {
+       "release": "claude-instant-1",
+       "track": "lamp_claude_instant_1",
+       "text": "Claude Instant",
+       "sub": "March 2023",
+       "from_pose": 35,
+       "to_pose": 63,
+       "side": "right",
+       "offset": 6
+      }
+     ],
+     "cues": [
+      {
+       "pose": 7,
+       "kind": "tick",
+       "gain": 0.12
+      },
+      {
+       "pose": 9,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 11,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 13,
+       "kind": "tick",
+       "gain": 0.12
+      },
+      {
+       "pose": 15,
+       "kind": "pop",
+       "gain": 0.25
+      },
+      {
+       "pose": 17,
+       "kind": "chime",
+       "gain": 0.45
+      },
+      {
+       "pose": 29,
+       "kind": "tick",
+       "gain": 0.3
+      },
+      {
+       "pose": 30,
+       "kind": "chime",
+       "gain": 0.3
+      },
+      {
+       "pose": 34,
+       "kind": "chime",
+       "gain": 0.2
+      },
+      {
+       "pose": 46,
+       "kind": "tick",
+       "gain": 0.25
+      },
+      {
+       "pose": 52,
+       "kind": "tick",
+       "gain": 0.25
+      }
+     ],
+     "in_focus": [
+      "traveller",
+      "lamp_claude_1"
+     ],
+     "walkers": {
+      "traveller": {
+       "from_s": -0.04,
+       "to_s": 0.116,
+       "via": [
+        0.012,
+        0.064
+       ],
+       "note": "rolled from the sheet at S -0.04; stands under the doorway at S 0.012"
+      }
+     },
+     "start_s": 0.0,
+     "seconds": 5.833
+    },
+    {
+     "id": "A2",
+     "poses": 82,
+     "span": [
+      "2023-03",
+      "2023-08"
+     ],
+     "releases": [
+      "claude-2",
+      "claude-instant-1-2"
+     ],
+     "tracks": [
+      "traveller",
+      "lamp_claude_2",
+      "lamp_claude_instant_1_2"
+     ],
+     "walker_tracks": [
+      "traveller"
+     ],
+     "camera": {
+      "lens_mm": 40,
+      "fstop": 16,
+      "pos": [
+       -0.87,
+       -0.56,
+       0.1
+      ],
+      "aim": [
+       -0.87,
+       0.1,
+       0.045
+      ],
+      "moves": [
+       [
+        1,
+        15
+       ]
+      ],
+      "pos_start": [
+       -1.0,
+       -0.56,
+       0.1
+      ],
+      "aim_start": [
+       -1.0,
+       0.1,
+       0.045
+      ]
+     },
+     "events": [
+      {
+       "name": "slide_end",
+       "pose": 15
+      },
+      {
+       "name": "arrive",
+       "pose": 16
+      },
+      {
+       "name": "lamp_claude_2",
+       "pose": 19
+      },
+      {
+       "name": "ribbon",
+       "pose": 22
+      },
+      {
+       "name": "look",
+       "pose": 27
+      },
+      {
+       "name": "open",
+       "pose": 31
+      },
+      {
+       "name": "post",
+       "pose": 53
+      },
+      {
+       "name": "lamp_instant_1_2",
+       "pose": 54
+      },
+      {
+       "name": "walk_on",
+       "pose": 57
+      }
+     ],
+     "labels": [
+      {
+       "release": "claude-2",
+       "track": "lamp_claude_2",
+       "text": "Claude 2",
+       "sub": "July 2023",
+       "line": "100K-token prompts and public claude.ai beta",
+       "from_pose": 20,
+       "to_pose": 66,
+       "side": "top",
+       "offset": 5
+      },
+      {
+       "release": "claude-instant-1-2",
+       "track": "lamp_claude_instant_1_2",
+       "text": "Claude Instant 1.2",
+       "sub": "August 2023",
+       "from_pose": 54,
+       "to_pose": 82,
+       "side": "right",
+       "offset": 6
+      }
+     ],
+     "cues": [
+      {
+       "pose": 6,
+       "kind": "tick",
+       "gain": 0.25
+      },
+      {
+       "pose": 11,
+       "kind": "tick",
+       "gain": 0.25
+      },
+      {
+       "pose": 16,
+       "kind": "tick",
+       "gain": 0.3
+      },
+      {
+       "pose": 19,
+       "kind": "chime",
+       "gain": 0.35
+      },
+      {
+       "pose": 22,
+       "kind": "whoosh",
+       "gain": 0.2
+      },
+      {
+       "pose": 31,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 33,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 35,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 37,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 39,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 41,
+       "kind": "tick",
+       "gain": 0.1
+      },
+      {
+       "pose": 43,
+       "kind": "tick",
+       "gain": 0.25
+      },
+      {
+       "pose": 48,
+       "kind": "tick",
+       "gain": 0.25
+      },
+      {
+       "pose": 53,
+       "kind": "tick",
+       "gain": 0.3
+      },
+      {
+       "pose": 54,
+       "kind": "chime",
+       "gain": 0.25
+      },
+      {
+       "pose": 62,
+       "kind": "tick",
+       "gain": 0.2
+      },
+      {
+       "pose": 67,
+       "kind": "tick",
+       "gain": 0.2
+      }
+     ],
+     "in_focus": [
+      "traveller",
+      "lamp_claude_2",
+      "lamp_claude_instant_1_2"
+     ],
+     "walkers": {
+      "traveller": {
+       "from_s": 0.116,
+       "enters_s": 0.3915,
+       "to_s": 0.782,
+       "via": [
+        0.5475,
+        0.678
+       ]
+      }
+     },
+     "start_s": 5.833,
+     "seconds": 6.833
+    }
+   ]
+  },
+  {
+   "id": "C",
+   "title": "Backstage",
+   "shots": [
+    {
+     "id": "C3",
+     "poses": 64,
+     "span": [
+      "2025-11",
+      "2026-02"
+     ],
+     "releases": [
+      "claude-opus-4-6",
+      "claude-sonnet-4-6"
+     ],
+     "tracks": [
+      "opus",
+      "sonnet",
+      "lamp_claude_opus_4_6",
+      "lamp_claude_sonnet_4_6"
+     ],
+     "walker_tracks": [
+      "opus",
+      "sonnet"
+     ],
+     "camera": {
+      "lens_mm": 40,
+      "fstop": 16,
+      "pos": [
+       0.6,
+       1.42,
+       0.12
+      ],
+      "aim": [
+       0.6,
+       0.8,
+       0.045
+      ],
+      "moves": []
+     },
+     "events": [
+      {
+       "name": "o46",
+       "pose": 13
+      },
+      {
+       "name": "lamp_opus_4_6",
+       "pose": 14
+      },
+      {
+       "name": "million",
+       "pose": 18
+      },
+      {
+       "name": "look",
+       "pose": 26
+      },
+      {
+       "name": "s46",
+       "pose": 34
+      },
+      {
+       "name": "lamp_sonnet_4_6",
+       "pose": 35
+      },
+      {
+       "name": "sonnet_million",
+       "pose": 36
+      }
+     ],
+     "labels": [
+      {
+       "release": "claude-opus-4-6",
+       "track": "lamp_claude_opus_4_6",
+       "text": "Claude Opus 4.6",
+       "sub": "February 2026",
+       "line": "First Opus with million-token context (beta)",
+       "from_pose": 15,
+       "to_pose": 64,
+       "side": "top",
+       "offset": 5
+      },
+      {
+       "release": "claude-sonnet-4-6",
+       "track": "lamp_claude_sonnet_4_6",
+       "text": "Claude Sonnet 4.6",
+       "sub": "February 2026",
+       "from_pose": 36,
+       "to_pose": 64,
+       "side": "top",
+       "offset": 14
+      }
+     ],
+     "cues": [
+      {
+       "pose": 6,
+       "kind": "tick",
+       "gain": 0.22
+      },
+      {
+       "pose": 13,
+       "kind": "hit",
+       "gain": 0.28
+      },
+      {
+       "pose": 14,
+       "kind": "chime",
+       "gain": 0.35
+      },
+      {
+       "pose": 18,
+       "kind": "whoosh",
+       "gain": 0.3
+      },
+      {
+       "pose": 29,
+       "kind": "tick",
+       "gain": 0.2
+      },
+      {
+       "pose": 34,
+       "kind": "tick",
+       "gain": 0.25
+      },
+      {
+       "pose": 35,
+       "kind": "chime",
+       "gain": 0.3
+      },
+      {
+       "pose": 36,
+       "kind": "whoosh",
+       "gain": 0.22
+      }
+     ],
+     "in_focus": [
+      "opus",
+      "sonnet",
+      "lamp_claude_opus_4_6"
+     ],
+     "walkers": {
+      "opus": {
+       "from_s": 4.449,
+       "enters_s": 4.65,
+       "to_s": 4.7775
+      },
+      "sonnet": {
+       "from_s": 4.197,
+       "enters_s": 4.73,
+       "to_s": 4.8315,
+       "lateral": -0.03
+      }
+     },
+     "start_s": 55.667,
+     "seconds": 5.333
+    }
+   ]
+  }
+ ]
+}

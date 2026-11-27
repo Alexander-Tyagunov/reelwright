@@ -1,0 +1,22 @@
+{
+ "brand": {
+  "theme": "dark",
+  "surface": "#33261B",
+  "ink": "#F6EAD2",
+  "muted": "#D9C8A6",
+  "accent": "#E6B450",
+  "font": "Kalam",
+  "fontFiles": [
+   {
+    "family": "Kalam",
+    "src": "assets/fonts/kalam-latin-400-normal.woff2",
+    "weight": "400"
+   },
+   {
+    "family": "Kalam",
+    "src": "assets/fonts/kalam-latin-700-normal.woff2",
+    "weight": "700"
+   }
+  ]
+ }
+}

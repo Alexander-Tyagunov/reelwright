@@ -60,5 +60,18 @@
         "noUnusedImports": "error"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "plugin/skills/video/scripts/plan/**",
+        "tests/unit/shot-plan.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": { "useNamingConvention": "off" }
+        }
+      }
+    }
+  ]
 }

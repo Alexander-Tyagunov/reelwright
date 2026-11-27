@@ -66,19 +66,19 @@ function pixelMeta(meta: FilmSpec['meta']): unknown {
   return rest;
 }
 
-/** A scene without its `cues`: sound cues never change a pixel. */
+/** A scene without `cues` and `chapter`: neither changes a pixel. */
 function pixelScene(scene: SceneSpec | undefined): unknown {
   if (!scene) {
     return null;
   }
-  const {cues: _cues, ...rest} = scene;
+  const {cues: _cues, chapter: _chapter, ...rest} = scene;
   return rest;
 }
 
 /**
  * Splits the film into segments. A segment starts at the first frame at or
  * after its scene starts, so no frame is drawn twice. The key covers
- * everything a segment's pixels depend on (not `meta.sound` or scene `cues`), so an unchanged scene is reused
+ * everything a segment's pixels depend on (not `meta.sound`, scene `cues` or scene `chapter`), so an unchanged scene is reused
  * from an earlier render. A scene's neighbours matter only through the
  * previous scene and the global overlays, and both are in the key.
  *

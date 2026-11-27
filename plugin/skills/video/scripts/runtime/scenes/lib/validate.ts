@@ -7,7 +7,7 @@
 import type {SceneSpec} from '../../../shared/contract.ts';
 
 /** Fields every scene accepts, so they are never reported as unknown. */
-const COMMON_FIELDS = ['type', 'duration', 'id'];
+const COMMON_FIELDS = ['type', 'duration', 'id', 'chapter'];
 
 /** The checks of one scene. Each throws an `Error` for a bad field. */
 export interface SceneChecks {

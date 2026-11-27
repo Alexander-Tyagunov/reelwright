@@ -1,0 +1,48 @@
+{
+ "C3": [
+  {
+   "pose": 4,
+   "kind": "tick",
+   "gain": 0.25
+  },
+  {
+   "pose": 9,
+   "kind": "tick",
+   "gain": 0.25
+  },
+  {
+   "pose": 14,
+   "kind": "tick",
+   "gain": 0.25
+  },
+  {
+   "pose": 19,
+   "kind": "tick",
+   "gain": 0.25
+  },
+  {
+   "pose": 24,
+   "kind": "tick",
+   "gain": 0.25
+  }
+ ],
+ "A0": [
+  {
+   "pose": 3,
+   "kind": "pop",
+   "gain": 0.3
+  },
+  {
+   "pose": 21,
+   "kind": "tick",
+   "gain": 0.3
+  }
+ ],
+ "Z0": [
+  {
+   "pose": 5,
+   "kind": "chime",
+   "gain": 0.5
+  }
+ ]
+}
