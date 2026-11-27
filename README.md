@@ -6,7 +6,7 @@
 
 <p align="center">
   <em>Nine seconds of a 93-second film. Blender rendered every frame; Claude built the set,<br>
-  moved the lanterns and placed the labels. <a href="https://youtu.be/52HJJ6IdvjQ">Watch the whole film.</a></em>
+  moved the lanterns and placed the labels.</em>
 </p>
 
 Reelwright is a plugin for Claude that makes short films. You give it a subject. It checks the facts, proposes
@@ -158,5 +158,4 @@ directly, with no build step and no runtime dependencies. Conventions for people
 
 MIT. Bundled fonts are under the SIL Open Font License 1.1.
 
-Made by Alex Tyagunov. The film is on
-[The Art of Artificial Programming](https://www.youtube.com/@artificial_programming).
+Made by Alex Tyagunov.
