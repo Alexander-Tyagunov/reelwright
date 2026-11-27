@@ -5,7 +5,7 @@ Use this when a shot needs real 3D (characters, light, camera moves). Blender re
 Worked examples: film `claude-timeline`, shot `shot-claude3` (Eevee; scripts `ct_look.py`, `shot_claude3.py`) and
 `shot-claude3-desk` (Cycles, stop motion at 12 fps; `ct_desk_look.py`, `shot_claude3_desk.py`). A film of many shots
 on one set: `ct_film.py` (shared module built from the plan's `shots.json`: `build_shot(id, overrides)`,
-`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py`, `ct_seq_b.py`, `ct_seq_c.py`).
+`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py` .. `ct_seq_d.py`).
 When a shot must read as made by a person and not as a clean render, read `handmade.md` as well.
 
 ## 1. Connection check (first call, always)
@@ -73,7 +73,8 @@ skips frames already on disk, so an interrupted job is simply submitted again. T
 the runner leaves by itself five seconds after the last job. A film keeps the folder in its own module (`ct_film.QUEUE`,
 with `submit(shot)`, `submit_check(shot, poses)`, `status()`). Give a check job a file of its own
 (`save_as_mainfile(filepath=..., copy=True)` to `ct-C1-check.blend`): it may wait behind an hour of other jobs, and the
-shot's own file must stay free to be changed, saved and submitted meanwhile.
+shot's own file must stay free to be changed, saved and submitted meanwhile. Submit a shot's check the moment its
+first strip looks right, not when all shots are done: behind a busy queue the wait is the hour that matters.
 
 ## 4. Cycles
 Use Cycles (Metal GPU) when the shot depends on physical light: soft shadows, light through paper, bounce, real
@@ -150,6 +151,7 @@ Cycles, desk example (160 objects, 2 area lights, 8 point lights, translucent pa
 | cycles_final, `samples=64, noise=0.03`, shots A1-A3 (72-107 objects) | 1920x1080 | 64 | 7.3-9.4 (A1: dark room, no backdrop), 12.0 (A2), 18.6 (A3: both sky boards and the trees) |
 | the same, shots B1-B3 (88-168 objects) | 1920x1080 | 64 | 16.2 (B1: sky and trees), 16.8 (B2: a 0.5 m screen light on a glossy desk), 14.9 (B3) |
 | the same, shots C1-C4 (144-203 objects) | 1920x1080 | 64 | 17.6 (C1), 16.7 (C2), 18.4 (C3), 23.6 (C4: tracing paper with a lit globe behind it; three-frame check jobs)  |
+| the same, shots D1-D3 (239-244 objects, up to 14 small lights) | 1920x1080 | 64 | 19.9 (D1), 23.9 (D2: the tracing paper across the whole frame, five lanterns and seven lamps lit), 17.9 (D3); the final jobs of C ran at 14-18.5 |
 Later in the same day the Metal kernels were cached and a live `cycles_preview` strip was safe as the first render of a
 new session (first frame 3.2 s, then 1.8-3.6 s a frame); the background rule stands for a machine not used that day.
 While the queue renders on the same GPU a live preview frame takes 4.2-5.6 s (2.3 s idle): a strip of six is about 30 s,
@@ -265,6 +267,18 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
 27. (Film, sequence C) A ribbon lying flat on the road is 3 pixels high from a camera 12 cm up and 60 cm away, and a 25 mm
     ruler lying beside it 15. Anything that must be read from a low camera stands: the ribbon on its edge
     (`ribbon_strip(twist=)`), the ruler leant back on props behind the road.
+
+28. (Film, sequence D) Where posts crowd and lanterns pass in front of them, a lamp at lantern height is covered by
+    somebody on most poses (the widest lantern, 62 mm, hid its own lamp even 12 mm past the post with the arm reaching
+    back). Hang such lamps above the crowd: lamp bottom >= lantern top - (camera z - top) x depth gap / distance, so the
+    post is lantern top + lamp + thread + about 1 cm (68-90 mm here, `post(height=)`), each its own height.
+29. (Film, sequence D) A set piece from an earlier shot seen again from across the set stands as its own camera needed it:
+    the first doorway was 6 degrees from edge-on for the last shot's lens, and once turned, 1.5 m away with only its two
+    lamps lit, it read as a pair of eyes. Turn the face to this lens and toward the light that has to show it (check the
+    cosine to both), and judge it at the size it has in frame.
+30. (Film, sequence D) A focus pull at f/16 on a table-top is small: blur circle = f^2 / N x |1 / s1 - 1 / s2| (0.55 m to
+    1.53 m at 40 mm: 0.12 mm, 6 pixels of 1920). The foreground goes soft, not away; compose the last frame so it still
+    reads with both planes legible. Pull linearly in 1 / distance, in uneven steps (`ct_film.build_camera`, `focus_pull`).
 
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per

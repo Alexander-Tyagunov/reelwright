@@ -55,6 +55,14 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
 - Tracing paper with a light behind it: a sheet that is never flat (1 mm of wave, a knife-cut top edge), taped to kraft
   posts on the near side, small tabs (11 x 7 mm: at 17 x 10 they read as signboards). Material in blender.md section 4.
   The glow says how far the light is: far back it is wide and dim, near the paper small, bright and sharp.
+- A door in a paper screen: a flap cut on the top and one side, hinged on the other, opened over six poses to a little past
+  square and back. What comes out is swapped in behind the flap on the pose it starts to move; what stays behind stands
+  65 mm deeper, hidden by the first until it leaves, then comes forward to the shut paper. Keep everything that lies on the
+  ground (ribbons) out of the flap's quarter circle until it is shut.
+- Dawn: a window off frame along the direction of travel (1.2 x 0.8 m area light), turned up between exposures in equal
+  stops with uneven steps (`craft.hand_slide`) while its colour goes from cool to rose, and the dark room behind the set
+  lifted with it (world strength x 2.4, a little warmer). The window alone only made the desk warmer; the room going from
+  navy to grey-violet is what reads as morning. Stop where a lit paper lamp no longer reads brighter than lit kraft.
 - A length that must be read: stand the strip on its edge in a slow wave beside a ruler that leans back behind it, its
   ticks along the lower edge, no numerals. The unused part is a roll standing on its end at the free end.
 - Light flicker: `craft.flicker(seed, n, amp)` on each light's energy (2-3% lamp, 5% LEDs).
