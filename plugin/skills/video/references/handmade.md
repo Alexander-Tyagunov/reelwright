@@ -1,8 +1,8 @@
 # Handmade: making a render read as made by a person
 
 Use this when the owner says a 3D shot looks generic, clean or "AI". Read `blender.md` first (file flow, the
-60-second rule, the library). Worked example: film `claude-timeline`, shot `shot-claude3-desk`
-(scripts `ct_desk_look.py`, `shot_claude3_desk.py`): a paper-craft set on a cutting mat, shot frame by frame.
+60-second rule, the library). Worked example: `blender/examples/paper_desk/`
+(`look.py`, `shots.py`): a paper-craft set on a cutting mat, shot frame by frame.
 
 ## 1. Answer the maker question before designing anything
 Write five answers at the top of the look script. Every later choice is checked against them.
@@ -81,7 +81,7 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
   letter with Pillow (seeded size +-4 %, slant, turn, baseline, spacing, a baseline that rises and sags), soften the edge and let
   noise eat into it, vary the density, keep the ground transparent, and mix it into the card's own paper material by its
   alpha, so fibre and light stay the paper's. Size it from the frame: an x-height of 4 % of the frame height still reads at
-  720p (worked example: `claude-timeline`, `tools/make_tag_title.py`, `ct_seq_0.tag_material`).
+  720p (worked example: `blender/examples/paper_desk/shots.py`, `tag_material`, and `lettering.hand_lettering`).
 
 ## 3. The AI-tell check (answer on a preview, fix what fails, before the final render)
 1. Is any surface a flat or perfectly smooth default material?
@@ -148,7 +148,7 @@ the main subject at the start, was out of focus and the lamps were blobs; with g
   one old | new crop at 100%.
 
 
-## 6. Stills and flat lays (worked example: `channel-identity`, `identity.py`)
+## 6. Stills and flat lays (see also `publish/references/channel-art.md`)
 Seen from straight above, thickness does not show: height is read only from shadows. Keep the lamp low (37 degrees up) and let
 loose pieces ride up a millimetre or more (0.9 mm of lift on 0.6 mm card was not seen at 1600 px; 1.3 mm was). Flat metal mirrors
 whatever is overhead: give the room a soft source above the camera and chamfer flat bars, or they render as grey paper. A top-down

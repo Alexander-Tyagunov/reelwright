@@ -138,12 +138,14 @@ export async function run(args: Args): Promise<number> {
   const files = frameFiles(plate, path);
   const missing = files.flatMap((f, i) => (existsSync(f) ? [] : [i]));
   if (missing.length) {
-    const present = plate.frames - missing.length;
+    const first = files[missing[0] ?? 0];
     throw new UserError(
-      `only ${present} of ${plate.frames} frame files are present (a ` +
-        'partial plate, such as a check render). Missing frame files: ' +
-        `${rangesOf(missing.map(i => i + plate.first))}. Render those ` +
-        'frames or copy them into the plate folder, then run plate again.',
+      `${missing.length} of ${plate.frames} frame files are missing ` +
+        `(${plate.frames - missing.length} present, as in a partial plate ` +
+        `such as a check render): frames ` +
+        `${rangesOf(missing.map(i => i + plate.first))}; the first is ` +
+        `${first}. Render those frames or copy them into the plate folder, ` +
+        'then run plate again.',
     );
   }
   const problem = await firstFrameProblem(plate, files[0] ?? '');

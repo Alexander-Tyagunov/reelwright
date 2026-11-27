@@ -26,7 +26,7 @@ folder called `plan`). The side files below sit beside the plan.
 | plan | `formats` | Name to `[width, height]`, first format first, e.g. `{"16:9": [1920, 1080], "9:16": [1080, 1920]}` | `{"16:9": [1920, 1080]}` |
 | plan | `total_poses` | If present, must equal the sum of the shots' poses | none |
 | plan | `sound.intensity` | Bed level curve, points `{at_s, value}` (seconds, 0 to 1), at least 2, rising in time | required |
-| plan | `sound.engine_palette` | Engine palette name (`reel sound --help` lists them) | `calm` |
+| plan | `sound.engine_palette` | Engine palette name (`reel --help` lists them under `sound`) | `calm`: `reel assemble` writes `calm` into the spec when the plan names none |
 | plan | `sound.auto` | `meta.sound.auto` of the spec | `{"transition": 0.35, "ending": false}` |
 | plan | `sequences[].shots[]` | Shots in film order; `sequences[].id` is required | required |
 | shot | `id` | Unique; the scene id and the default plate folder name | required |
@@ -44,6 +44,32 @@ folder called `plan`). The side files below sit beside the plan.
 
 Pose `p` is shown from `(p - 1) / fps_poses` to `p / fps_poses` seconds of its shot. Words are never changed by the
 engine; placement can be, through the override file.
+
+## Fields the Blender library reads
+
+The library reads the plan only through the accessors at the top of `reel_blender/film.py`; the engine passes these fields
+through untouched. Pose numbers count from 1, as above. Distances are metres.
+
+| Where | Field | Meaning | Default |
+|---|---|---|---|
+| plan | `sequences[].shots[]` | Shots by id (`plan_shots`) | required |
+| plan | `formats` | Name to `[width, height]`; the first is the main format (`plan_formats`) | `{"16:9": [1920, 1080]}` |
+| plan | `fps_poses` | Poses per second; pose `p` is scene frame `p` (`plan_fps`) | 12 |
+| shot | `poses` | Number of poses (`shot_poses`) | required |
+| shot | `tracks` | Names of the points written to `tracks.json` (`shot_tracks`) | `[]` |
+| shot | `events` | `{name, pose}`; written as frame = pose - 1 (`shot_events`) | `[]` |
+| shot | `in_focus` | Tracks the focus follows: harmonic mean of the nearest and farthest depth, smoothed over three poses (`shot_in_focus`) | `[]` |
+| shot | `focus_pull` | `{"poses": [a, b], "to": "<track>"}`: a hand focus pull that ends on that track (`shot_focus_pull`) | none |
+| shot | `camera` | A dict, below (`shot_camera`) | required |
+| camera | `lens_mm`, `fstop` | Lens in millimetres, aperture | 40, 16 |
+| camera | `pos`, `aim` | Camera position and the point it looks at; with `moves`, where the move ends | required |
+| camera | `pos_start`, `aim_start` | Where a pushed move begins | `pos`, `aim` |
+| camera | `moves` | `[[first pose, last pose]]`: the hand move from the start to the end over those poses | `[]` (locked off) |
+| camera | `formats` | `{"9:16": {...}}`: entries that replace the camera's own for that format | `{}` |
+
+Used by no code but by the people reading the plan: `releases`, `seconds`, `walkers` and any other field. The look
+parameters of a film (light powers, exposure, `cam_pos` overrides) are not plan fields; they live in the film's
+look module and its per-shot parameters.
 
 ## What `reel plan` checks
 
@@ -84,7 +110,7 @@ in every format and has as many frames as the shot has poses.
 }
 ```
 
-`camera` is not read by the engine. The assembled scene is `{type: "plate", id: "A1", duration: 3, plate:
+`camera` is read by the Blender library, not by the engine. The assembled scene is `{type: "plate", id: "A1", duration: 3, plate:
 "plates/A1/tracks.json", chapter: "The first lamp", labels: [...], texts: [...], cues: [...]}`, with the label from 1 s
 to 3 s and its `line` as a text from 1 s.
 
@@ -105,7 +131,7 @@ stacked 6 `u` upward for each line shown at the same time unless the override gi
 The first format of `formats` uses `plates/<shot>/`. Every other format uses `plates/<shot>@9x16/` (the name with `:`
 written `x`). `reel assemble --format 9:16` writes that format's size and plate paths, and also reads an intro and
 outro from `<folder>@9x16`. Labels keep their placement; run `reel qa` on the second film, because a different
-frame needs different offsets. A shot may carry a camera per format; that field belongs to the 3D side.
+frame needs different offsets. A shot may carry a camera per format; that field belongs to the 3D side (next section).
 
 ## Intro, outro and the sound curve
 

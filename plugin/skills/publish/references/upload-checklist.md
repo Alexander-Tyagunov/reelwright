@@ -24,8 +24,9 @@ checked on YouTube on 27 November 2026; search the web for the current rule befo
 
 `reel chapters film.json > publish/chapters.txt` prints one line per chapter from the film spec's scene starts:
 the first at 0:00, each at least 10 s (shorter scenes merge into the one before), titles from the scenes'
-`chapter` fields or label text. YouTube needs the first at 0:00, at least three chapters, each at least 10 s
-(checked 27 November 2026). Read the titles and shorten any over about 40 characters. If the film has fewer than
+`chapter` fields, else the label texts of the scenes in the chapter (about 60 characters at most), else the film title
+and "Part N". The output is the timestamp lines only; notes go to stderr. YouTube needs the first at 0:00, at least three chapters, each at least 10 s
+(checked 27 November 2026). Read the titles and shorten any that is a long list of names. If the film has fewer than
 three chapters of 10 s, leave chapters out and say so.
 
 ## Tags (`tags.txt`)

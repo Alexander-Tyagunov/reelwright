@@ -159,7 +159,8 @@ reel qa film.json --page-only
 ```
 
 For a partial film while plates are still rendering, `--shots A1,A2,A3`. For a second format,
-`--format 9:16 --out film-9x16.json` (needs `plates/<shot>@9x16/`). Label position, timing and sound fixes go into
+`--format 9:16 --out film-9x16.json` (needs `plates/<shot>@9x16/`). The sound bed is generated with the engine palette `calm` unless the plan's `sound.engine_palette` names another
+(`video/shot-plan.md`); say which palette the film got. Label position, timing and sound fixes go into
 `plan/label-overrides.json` and `plan/extra-cues.json`; then assemble again. Words are never changed in an
 override; a wording change is a plan change and goes back through `reel plan`. Done when `--page-only` passes.
 

@@ -71,6 +71,8 @@ Subagents cost a cold start each, so use them where they pay for themselves. A s
 | The message or structure is not obvious; more than 8 scenes; tone matters | `reel-director` writes the storyboard | Opus |
 | Many scenes, several formats, or a new 2D scene type | `reel-builder` | Sonnet |
 | The film will be published outside the team | `reel-reviewer`, who did not build it | Opus |
+| Blender film: build and animate one sequence, the sample shot, re-renders | `reel-animator` | Opus |
+| Blender film: independent review of the rendered film | `reel-critic`, who did not make it | Opus |
 | 3D, a bespoke illustrated explanation, physics or character motion that no scene covers | `reel-auteur` | Fable |
 
 Give each subagent the project folder, the files to read, the one output you want, and the limits: one

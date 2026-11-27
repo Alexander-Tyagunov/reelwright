@@ -79,7 +79,7 @@ describe('reel plate on a vertical plate that holds only a three-pose check', ()
     try {
       await assert.rejects(
         run({positional: [join(plate, 'tracks.json')], flags: {}}),
-        /only 3 of 38 frame files are present.*2-12, 14-37/s,
+        /35 of 38 frame files are missing \(3 present.*frames 2-12, 14-37/s,
       );
     } finally {
       console.log = out;

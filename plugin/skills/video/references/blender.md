@@ -2,15 +2,15 @@
 
 Use this when a shot needs real 3D (characters, light, camera moves). Blender renders a *plate*
 (frames + `tracks.json`); the engine composites labels over it. Library: `plugin/skills/video/blender/reel_blender/`.
-Worked examples: film `claude-timeline` (shots `shot-claude3` in Eevee and `shot-claude3-desk` in Cycles, stop motion at
-12 fps), and `plugin/skills/video/blender/examples/paper_desk/` (structure of a film on `film.py`: a look module, a shot
+Worked example: `plugin/skills/video/blender/examples/paper_desk/`, a stop-motion paper film at 12 poses a second in Cycles (structure of a film on `film.py`: a look module, a shot
 module, a three-shot plan; it is not a house style). A film of many shots on one set registers its look and one builder per
 shot with `film.py` (section 12) and keeps one module per sequence.
 When a shot must read as made by a person and not as a clean render, read `handmade.md` as well.
 
 ## 1. Connection check (first call, always)
-Load in one ToolSearch call: `mcp__remote-devices__Blender__execute_blender_code`, `..._search_api_docs`,
-`..._get_python_api_docs`, `mcp__remote-devices__device_list_dir`, `device_stage_files`, `device_commit_files`.
+Load in one ToolSearch call the tool whose name ends in `execute_blender_code` (its prefix depends on the layout; section 2
+explains the layouts), the Blender documentation tools `..._search_api_docs` and `..._get_python_api_docs` if the server has
+them, and, in the two-machine layout, the bridge tools `device_list_dir`, `device_stage_files` and `device_commit_files`.
 Run `result = {"ver": bpy.app.version_string, "file": bpy.data.filepath}`. If the tool is missing or cannot
 connect, stop and tell the user; nothing below works without it. The live Blender still holds whatever the last
 session built. `build()` wipes that scene in memory only; a .blend on disk changes only when you save, so give a

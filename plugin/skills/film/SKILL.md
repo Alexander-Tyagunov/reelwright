@@ -121,7 +121,8 @@ submission (`film.disk_free_mb()`); a full disk once ended a job with a misleadi
 `reel plate plates/<shot>/tracks.json` on it.
 
 **Assemble and measure.** The builder runs `reel assemble`, then stills, `reel qa --page-only`, `reel render`,
-`reel qa` and `reel cuts`. Label and sound fixes go into the side files beside the plan, never into the
+`reel qa` and `reel cuts`. The sound bed uses the engine palette `calm` unless the plan sets `sound.engine_palette`;
+the director picks the palette that fits the tone and writes it into the plan. Label and sound fixes go into the side files beside the plan, never into the
 generated `film.json`.
 
 **Critic and fix.** `reel-critic` did not make the film. It checks facts, runs the AI-tell check and classes
