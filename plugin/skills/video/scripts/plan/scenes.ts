@@ -5,6 +5,8 @@
 import {existsSync, readFileSync} from 'node:fs';
 import {basename, join} from 'node:path';
 import {UserError} from '../core/errors.ts';
+import type {Plate} from '../shared/plate.ts';
+import {parsePlate} from '../shared/plate.ts';
 import type {SceneCueOut} from './cue-list.ts';
 import {cueList} from './cue-list.ts';
 import type {PlanFormat} from './formats.ts';
@@ -70,6 +72,15 @@ export function shotScene(shot: PlanShot, cx: SceneContext): BuiltScene {
   return {scene, warnings: parts.warnings, used: parts.used};
 }
 
+function readTracks(file: string): Plate {
+  try {
+    return parsePlate(JSON.parse(readFileSync(file, 'utf8')));
+  } catch (e) {
+    const why = e instanceof Error ? e.message : String(e);
+    throw new UserError(`${file} cannot be used: ${why}`);
+  }
+}
+
 /**
  * Builds the scene of a plate that is not in the plan, such as an intro or an
  * outro. It has no labels; its cues come from `extra-cues.json` and its texts
@@ -77,7 +88,8 @@ export function shotScene(shot: PlanShot, cx: SceneContext): BuiltScene {
  *
  * @param folder Plate folder, relative to the film folder.
  * @param root The film folder, where `<folder>/tracks.json` is read.
- * @throws UserError when `tracks.json` is missing or unreadable.
+ * @throws UserError when `tracks.json` is missing, is not JSON, or lacks a
+ *   field the plate reader needs; the message names the file and the field.
  */
 export function extraScene(
   folder: string,
@@ -93,10 +105,7 @@ export function extraScene(
         'the --intro or --outro flag that names it.',
     );
   }
-  const tracks = JSON.parse(readFileSync(file, 'utf8')) as {
-    frames: number;
-    fps: number;
-  };
+  const tracks = readTracks(file);
   const scene: PlateScene = {
     type: 'plate',
     id,

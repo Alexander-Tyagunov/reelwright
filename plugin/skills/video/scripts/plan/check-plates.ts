@@ -9,14 +9,23 @@ import {result} from './check-types.ts';
 import {chooseFormat, inFormat, plateFolder} from './formats.ts';
 import type {PlanShot, ShotPlan} from './types.ts';
 
-function framesOf(file: string): number | null {
+interface Counts {
+  frames: number | null;
+  fps: number | null;
+}
+
+function countsOf(file: string): Counts {
   try {
-    const frames = (
-      JSON.parse(readFileSync(file, 'utf8')) as {frames?: unknown}
-    ).frames;
-    return typeof frames === 'number' ? frames : null;
+    const doc = JSON.parse(readFileSync(file, 'utf8')) as Record<
+      string,
+      unknown
+    >;
+    return {
+      frames: typeof doc.frames === 'number' ? doc.frames : null,
+      fps: typeof doc.fps === 'number' ? doc.fps : null,
+    };
   } catch {
-    return null;
+    return {frames: null, fps: null};
   }
 }
 
@@ -32,16 +41,25 @@ export function plateChecks(
 ): Check[] {
   const missing: string[] = [];
   const wrong: string[] = [];
+  const slow: string[] = [];
   for (const name of Object.keys(plan.formats)) {
     const format = chooseFormat(plan, name);
     for (const s of shots) {
       const file = join(root, inFormat(plateFolder(s), format), 'tracks.json');
-      const frames = existsSync(file) ? framesOf(file) : null;
       if (!existsSync(file)) {
         missing.push(`${s.id} (${name}): ${file} not found`);
-      } else if (frames !== s.poses) {
+        continue;
+      }
+      const {frames, fps} = countsOf(file);
+      if (frames !== s.poses) {
         wrong.push(
           `${s.id} (${name}): ${frames ?? 'no'} frames, the plan has ${s.poses} poses`,
+        );
+      }
+      if (fps !== null && fps !== plan.fps_poses) {
+        slow.push(
+          `${s.id} (${name}): the plate runs at ${fps} frames a second, ` +
+            `the plan at ${plan.fps_poses} poses a second`,
         );
       }
     }
@@ -52,6 +70,12 @@ export function plateChecks(
       'every plate has as many frames as its shot has poses',
       wrong,
       '',
+      'WARN',
+    ),
+    result(
+      'every plate runs at the plan pose rate',
+      slow,
+      `${plan.fps_poses} poses a second`,
       'WARN',
     ),
   ];

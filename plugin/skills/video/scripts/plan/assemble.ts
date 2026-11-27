@@ -3,6 +3,7 @@
  * the optional side files. Pure apart from reading the plates'
  * `tracks.json` of an intro and an outro.
  */
+import {join, relative, sep} from 'node:path';
 import {UserError} from '../core/errors.ts';
 import type {
   AutoSpec,
@@ -16,12 +17,11 @@ import {allShots} from './parse.ts';
 import type {PlateScene} from './scenes.ts';
 import {extraScene, shotScene} from './scenes.ts';
 import {
+  chosenIntensity,
   defaultAuto,
   enginePalette,
-  rebaseIntensity,
   withExtras,
 } from './sound.ts';
-import {shotStarts} from './timing.ts';
 import type {PlanShot, ShotPlan, SideFiles} from './types.ts';
 
 /** What the `assemble` command asks for. */
@@ -36,8 +36,11 @@ export interface AssembleOptions {
   outro?: string;
   /** Leave `meta.sound` out. */
   noSound: boolean;
-  /** The film folder: where the spec will be written and plates are found. */
+  /** The film folder, where the plate folders are found. */
   root: string;
+  /** Folder the spec will be written to; plate paths are relative to it.
+   * Defaults to `root`. */
+  specDir?: string;
 }
 
 /** The spec and what to tell the user. */
@@ -84,18 +87,33 @@ function unusedWarnings(
   return out;
 }
 
+function checkExtraIds(extraIds: string[], shots: PlanShot[]): void {
+  const clash = extraIds.find(
+    (id, i) => shots.some(s => s.id === id) || extraIds.indexOf(id) !== i,
+  );
+  if (clash !== undefined) {
+    throw new UserError(
+      `the intro or outro "${clash}" has the id of a shot or of the other ` +
+        'extra plate, so two scenes would share an id. Rename its folder.',
+    );
+  }
+}
+
+function toSpecDir(scenes: PlateScene[], options: AssembleOptions): void {
+  const from = options.specDir ?? options.root;
+  for (const scene of scenes) {
+    const abs = join(options.root, scene.plate);
+    scene.plate = relative(from, abs).split(sep).join('/');
+  }
+}
+
 function soundMeta(
   plan: ShotPlan,
   chosen: PlanShot[],
   intro: PlateScene | null,
   outro: PlateScene | null,
 ): SoundSpec {
-  const starts = shotStarts(plan, allShots(plan));
-  const first = chosen[0] as PlanShot;
-  const last = chosen[chosen.length - 1] as PlanShot;
-  const t0 = starts.get(first.id) ?? 0;
-  const t1 = (starts.get(last.id) ?? 0) + last.poses / plan.fps_poses;
-  const curve = rebaseIntensity(plan.sound.intensity, t0, t1);
+  const curve = chosenIntensity(plan, chosen);
   return {
     palette: enginePalette(plan.sound),
     intensity: withExtras(curve, intro?.duration ?? 0, outro?.duration ?? 0),
@@ -109,8 +127,9 @@ function soundMeta(
  *
  * @param plan A checked plan.
  * @param side The files beside the plan.
- * @throws UserError for an unknown shot or format, an unknown palette, or an
- *   intro or outro plate whose `tracks.json` is missing.
+ * @throws UserError for an unknown shot or format, an unknown palette, an
+ *   intro or outro plate whose `tracks.json` is missing or unusable, or an
+ *   intro or outro id that a shot already has.
  */
 export function assemble(
   plan: ShotPlan,
@@ -135,6 +154,7 @@ export function assemble(
     ? extraScene(options.outro, options.root, cx)
     : null;
   const extraIds = [intro, outro].flatMap(s => (s ? [s.id] : []));
+  checkExtraIds(extraIds, allShots(plan));
   warnings.push(
     ...unusedWarnings(chosen, allShots(plan), side, used, extraIds),
   );
@@ -151,6 +171,7 @@ export function assemble(
     meta.sound = soundMeta(plan, chosen, intro, outro);
   }
   const all = [...(intro ? [intro] : []), ...scenes, ...(outro ? [outro] : [])];
+  toSpecDir(all, options);
   const spec: FilmSpec = {meta, scenes: all as FilmSpec['scenes']};
   if (side.brand) {
     spec.brand = side.brand as Brand;

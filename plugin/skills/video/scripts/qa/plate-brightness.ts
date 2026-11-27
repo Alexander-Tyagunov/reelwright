@@ -39,6 +39,13 @@ export function describeRun(run: PlateRun, first: number): string {
   const b = run.last + first;
   const range = a === b ? `frame ${a}` : `frames ${a}-${b}`;
   const [x, y] = run.around;
+  if (run.edge) {
+    const place = run.edge === 'start' ? 'start' : 'end';
+    return (
+      `${range} at the ${place} of the plate: ${run.where} mean ` +
+      `${run.mean.toFixed(1)} against ${x.toFixed(1)} next to the run`
+    );
+  }
   return (
     `${range}: ${run.where} mean ${run.mean.toFixed(1)} against ` +
     `${x.toFixed(1)} before and ${y.toFixed(1)} after`

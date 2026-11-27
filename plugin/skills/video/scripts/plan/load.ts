@@ -4,12 +4,11 @@
  * `brand.json`.
  */
 import {existsSync, readFileSync} from 'node:fs';
-import {dirname, join, resolve} from 'node:path';
-import {CUE_KINDS} from '../audio/scene-cues.ts';
+import {basename, dirname, join, resolve} from 'node:path';
 import {UserError} from '../core/errors.ts';
-import {parsePlan} from './parse.ts';
+import {checkCue, parsePlan} from './parse.ts';
 import type {Raw} from './problems.ts';
-import {isRaw} from './problems.ts';
+import {isRaw, problems} from './problems.ts';
 import type {ExtraCues, ShotPlan, SideFiles} from './types.ts';
 
 /** A plan read from disk. */
@@ -48,6 +47,20 @@ export function loadPlan(path: string | undefined): LoadedPlan {
   return {abs, dir: dirname(abs), plan: parsePlan(readJson(abs), abs)};
 }
 
+/**
+ * Finds the film folder, where `plates/` lies. An explicit folder wins; else
+ * the folder above a plan folder called `plan`, else the plan's own folder.
+ *
+ * @param planDir Absolute folder of the plan.
+ * @param given The `--root` flag, if any.
+ */
+export function filmRoot(planDir: string, given?: string): string {
+  if (given) {
+    return resolve(given);
+  }
+  return basename(planDir) === 'plan' ? dirname(planDir) : planDir;
+}
+
 function optional(dir: string, name: string): Raw {
   const path = join(dir, name);
   if (!existsSync(path)) {
@@ -61,17 +74,17 @@ function optional(dir: string, name: string): Raw {
 }
 
 function checkExtra(cues: Raw, file: string): ExtraCues {
+  const p = problems();
   for (const [id, list] of Object.entries(cues)) {
-    const bad = (Array.isArray(list) ? list : []).find(
-      c => !isRaw(c) || !CUE_KINDS.includes(c.kind as never),
-    );
-    if (!Array.isArray(list) || bad !== undefined) {
-      throw new UserError(
-        `${file}: the cues of ${id} must be a list of {pose, kind, gain} ` +
-          `with a kind from ${CUE_KINDS.join(', ')}. Correct the file.`,
-      );
+    if (!Array.isArray(list)) {
+      p.add(id, 'must be a list of {pose, kind, gain}');
+      continue;
+    }
+    for (const [i, cue] of list.entries()) {
+      checkCue(p, `${id}[${i}]`, cue);
     }
   }
+  p.throwIfAny(file, 'Correct the file, then run the command again.');
   return cues as ExtraCues;
 }
 
@@ -97,7 +110,10 @@ function brandOf(dir: string): Raw | null {
 export function loadSideFiles(dir: string): SideFiles {
   return {
     overrides: optional(dir, 'label-overrides.json') as SideFiles['overrides'],
-    extraCues: checkExtra(optional(dir, 'extra-cues.json'), 'extra-cues.json'),
+    extraCues: checkExtra(
+      optional(dir, 'extra-cues.json'),
+      join(dir, 'extra-cues.json'),
+    ),
     outroTexts: optional(dir, 'outro-texts.json') as SideFiles['outroTexts'],
     brand: brandOf(dir),
   };

@@ -1,11 +1,10 @@
 /**
  * @fileoverview `plan`: checks a shot plan before any plate is rendered.
  */
-import {basename, dirname, resolve} from 'node:path';
 import type {Args} from '../core/args.ts';
 import {stringFlag} from '../core/args.ts';
 import {checkPlan} from '../plan/checks.ts';
-import {loadPlan} from '../plan/load.ts';
+import {filmRoot, loadPlan} from '../plan/load.ts';
 
 /**
  * Prints one line per check and exits 1 when any check fails. Warnings, such
@@ -22,8 +21,7 @@ import {loadPlan} from '../plan/load.ts';
  */
 export async function run(args: Args): Promise<number> {
   const {abs, dir, plan} = loadPlan(args.positional[0]);
-  const parent = basename(dir) === 'plan' ? dirname(dir) : dir;
-  const root = resolve(stringFlag(args, 'root') ?? parent);
+  const root = filmRoot(dir, stringFlag(args, 'root'));
   const checks = checkPlan(plan, root);
   console.log(`plan: ${abs}`);
   checks.forEach((c, i) => {

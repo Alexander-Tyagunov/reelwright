@@ -3,18 +3,27 @@
  * lengths of the finished film, and brightness and loudness at its cuts.
  */
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {mkdtempSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {describe, it} from 'node:test';
 import {
   clock,
   makeChapters,
 } from '../../plugin/skills/video/scripts/core/chapters.ts';
+import {UserError} from '../../plugin/skills/video/scripts/core/errors.ts';
 import {filmTimeline} from '../../plugin/skills/video/scripts/core/film-timeline.ts';
+import {which} from '../../plugin/skills/video/scripts/core/process.ts';
 import {analyseCuts} from '../../plugin/skills/video/scripts/qa/cuts.ts';
 import {
   auditCuts,
   gateCuts,
 } from '../../plugin/skills/video/scripts/qa/gates/cuts.ts';
-import {parseMomentary} from '../../plugin/skills/video/scripts/video/momentary.ts';
+import {
+  momentaryLoudness,
+  parseMomentary,
+} from '../../plugin/skills/video/scripts/video/momentary.ts';
 
 const DURATIONS = [
   2, 5.8333, 6.8333, 4, 9, 4.8333, 6.5, 6, 5.8333, 6.8333, 5.3333, 6.3333, 7, 6,
@@ -188,8 +197,39 @@ describe('cuts of the first film', () => {
     assert.equal(gateCuts(report ? [report] : []).status, 'WARN');
   });
 
-  it('a video that cannot be read gives a warning, never a failure', async () => {
+  it('a video that cannot be read gives a warning, never a failure', {
+    skip: which('ffmpeg') ? false : 'skipped: ffmpeg is not installed',
+  }, async () => {
     const gate = await auditCuts(film, '/nonexistent/film.mp4');
     assert.equal(gate.status, 'WARN');
+  });
+});
+
+describe('loudness of a file', {
+  skip: which('ffmpeg') ? false : 'skipped: ffmpeg is not installed',
+}, () => {
+  it('a video with no audio stream gives no readings and no error', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'reel-mute-'));
+    const file = join(dir, 'mute.mp4');
+    const made = spawnSync('ffmpeg', [
+      '-v',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=black:s=64x64:d=1:r=10',
+      '-pix_fmt',
+      'yuv420p',
+      file,
+    ]);
+    assert.equal(made.status, 0);
+    assert.deepEqual(await momentaryLoudness(file), []);
+  });
+
+  it('a file that is not a video is an error, not "no audio"', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'reel-broken-'));
+    const file = join(dir, 'broken.mp4');
+    writeFileSync(file, 'not a video');
+    await assert.rejects(momentaryLoudness(file), UserError);
   });
 });

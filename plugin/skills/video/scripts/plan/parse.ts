@@ -17,6 +17,9 @@ export const DEFAULT_FILM_FPS = 24;
 /** The one format of a plan that names none, in pixels. */
 export const DEFAULT_FORMATS: ShotPlan['formats'] = {'16:9': [1920, 1080]};
 
+/** What a shot id may hold: it becomes a folder and a file name. */
+const SHOT_ID = /^[A-Za-z0-9_-]+$/;
+
 function checkLabel(p: Problems, at: string, raw: unknown): void {
   if (!isRaw(raw)) {
     p.add(at, 'must be an object');
@@ -36,7 +39,8 @@ function checkLabel(p: Problems, at: string, raw: unknown): void {
   }
 }
 
-function checkCue(p: Problems, at: string, raw: unknown): void {
+/** Records what is wrong with one cue; `at` names it in the message. */
+export function checkCue(p: Problems, at: string, raw: unknown): void {
   const cue = isRaw(raw) ? raw : {};
   if (!CUE_KINDS.includes(cue.kind as never)) {
     p.add(`${at}.kind`, `must be one of ${CUE_KINDS.join(', ')}`);
@@ -76,8 +80,12 @@ function checkShot(p: Problems, at: string, raw: unknown): void {
     p.add(at, 'must be an object');
     return;
   }
-  if (!isText(raw.id)) {
-    p.add(`${at}.id`, 'must be text');
+  if (typeof raw.id !== 'string' || !SHOT_ID.test(raw.id)) {
+    p.add(
+      `${at}.id`,
+      `${JSON.stringify(raw.id)} must use only letters, digits, "-" and ` +
+        '"_"; it names a plate folder and a file',
+    );
   }
   if (!isCount(raw.poses)) {
     p.add(`${at}.poses`, 'must be a whole number from 1');
@@ -149,6 +157,14 @@ function checkTop(p: Problems, doc: Raw): void {
 function checkSequences(p: Problems, doc: Raw): void {
   const seen = new Set<string>();
   const list = Array.isArray(doc.sequences) ? doc.sequences : [];
+  const shotCount = list.reduce(
+    (n: number, s) =>
+      n + (isRaw(s) && Array.isArray(s.shots) ? s.shots.length : 0),
+    0,
+  );
+  if (list.length && !shotCount) {
+    p.add('sequences', 'the plan has no shots; add a shot to a sequence');
+  }
   list.forEach((seq, i) => {
     const at = `sequences[${i}]`;
     if (!isRaw(seq) || !Array.isArray(seq.shots) || !isText(seq.id)) {
@@ -172,7 +188,8 @@ function checkSequences(p: Problems, doc: Raw): void {
  *
  * @param doc The parsed JSON.
  * @param file Name for messages, usually the path of the plan.
- * @throws UserError that lists up to 12 problems, each with its path in the
+ * @throws UserError for a bad shot id or a plan with no shot. It lists up to 12
+ *   problems, each with its path in the
  *   document, and says to correct the plan and run again.
  */
 export function parsePlan(doc: unknown, file: string): ShotPlan {
@@ -194,6 +211,6 @@ export function parsePlan(doc: unknown, file: string): ShotPlan {
 }
 
 /** Lists every shot of a plan in film order. */
-export function allShots(plan: ShotPlan): PlanShot[] {
+export function allShots(plan: Pick<ShotPlan, 'sequences'>): PlanShot[] {
   return plan.sequences.flatMap(s => s.shots);
 }

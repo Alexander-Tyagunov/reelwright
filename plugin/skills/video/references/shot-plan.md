@@ -13,8 +13,11 @@ reel assemble plan/shots.json --out film.json  # writes the spec
 ## Where files live
 
 The film folder holds `film.json`, `plates/` and `plan/`. Plate folders in the plan, and `--intro` and `--outro`,
-are relative to the folder of `--out` (for `reel plan`, to `--root`, which defaults to the folder above a plan
-folder called `plan`). The side files below sit beside the plan.
+are relative to the film folder. `reel plan` and `reel assemble` find it the same way: `--root`, which defaults to the
+folder above a plan folder called `plan`, else the plan's own folder. The plate paths in the spec are written relative
+to the folder of `--out`. Shot ids use letters, digits, `-` and `_` only. The side files below sit beside the plan.
+`reel plan` also warns when `film_fps` is not a multiple of `fps_poses` and when a plate's `fps` differs from
+`fps_poses`; `reel assemble` refuses an intro or outro whose folder name is also a shot id, and a plan with no shots.
 
 ## Fields the engine reads
 
@@ -47,7 +50,7 @@ engine; placement can be, through the override file.
 
 ## Fields the Blender library reads
 
-The library reads the plan only through the accessors at the top of `reel_blender/film.py`; the engine passes these fields
+The library reads the plan only through the accessors of `reel_blender/plan.py` (`film.py` re-exports them); the engine passes these fields
 through untouched. Pose numbers count from 1, as above. Distances are metres.
 
 | Where | Field | Meaning | Default |
@@ -137,5 +140,5 @@ frame needs different offsets. A shot may carry a camera per format; that field 
 
 `--intro plates/A0` puts a plate before the first shot and `--outro plates/Z0` after the last; their id is the folder
 name and their length comes from `tracks.json`. The bed starts at 0.02 under the intro, takes the plan's first value
-when the first shot starts, and eases to 0.02 after the outro. `--shots A1,A2` builds part of the film; the curve is
-cut and rebased to those shots. `--no-sound` leaves `meta.sound` out.
+when the first shot starts, and eases to 0.02 after the outro. `--shots A1,A2` builds part of the film; the curve follows
+the chosen shots (each keeps its own part, also when shots between are left out). `--no-sound` leaves `meta.sound` out.

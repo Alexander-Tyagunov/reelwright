@@ -45,11 +45,14 @@ const COMMANDS: Readonly<Record<string, string>> = {
     'check a plate folder: plate plates/shot03/tracks.json ' +
     '(tracks, events, frame files, frame size)',
   plan:
-    'check a shot plan: plan plan/shots.json (schema, totals, reading ' +
-    'time, label budget, cue kinds, missing plates)',
+    'check a shot plan: plan plan/shots.json [--root DIR] (schema, totals, ' +
+    'reading time, label budget, cue kinds, missing plates; plates are ' +
+    'looked for under --root, by default the folder above plan/)',
   assemble:
     'write the film spec from a shot plan: assemble plan/shots.json --out ' +
-    'film.json [--shots A1,A2] [--format 9:16] [--intro DIR] [--outro DIR]',
+    'film.json [--shots A1,A2] [--format 9:16] [--intro DIR] [--outro DIR] ' +
+    '[--no-sound] [--root DIR] (plates are looked for under --root, by ' +
+    'default the folder above plan/, as in plan)',
   cuts:
     'after a render, report brightness and loudness at each cut: cuts ' +
     'film.json [--video out/film.mp4]',

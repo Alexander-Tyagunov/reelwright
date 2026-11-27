@@ -7,7 +7,7 @@ import type {FilmSpec} from '../shared/contract.ts';
 import {frameBrightness} from '../video/brightness.ts';
 import {momentaryLoudness} from '../video/momentary.ts';
 import type {CutPoint, CutReport} from './cuts.ts';
-import {analyseCuts} from './cuts.ts';
+import {frameAfterCut, measureCut} from './cuts.ts';
 
 function nameOf(film: FilmSpec, index: number): string {
   const scene = film.scenes[index];
@@ -31,11 +31,32 @@ export function cutPoints(film: FilmSpec): CutPoint[] {
   }));
 }
 
+/** Reads the two frames around a cut by seeking, not by decoding the film. */
+async function frameMeans(
+  video: string,
+  frame: number,
+  fps: number,
+): Promise<[number, number]> {
+  const from = Math.max(frame - 1.5, 0) / fps;
+  const {whole} = await frameBrightness([
+    '-ss',
+    from.toFixed(4),
+    '-i',
+    video,
+    '-frames:v',
+    '2',
+    '-fps_mode',
+    'passthrough',
+  ]);
+  return [whole[0] ?? 0, whole[1] ?? whole[0] ?? 0];
+}
+
 /**
- * Measures every cut of a rendered film.
+ * Measures every cut of a rendered film. Only the frames next to each cut
+ * are decoded, so the memory used does not grow with the film's length.
  *
  * @param video Path of the rendered video.
- * @throws UserError when ffmpeg cannot read the video.
+ * @throws UserError when ffmpeg cannot read the video or its audio.
  */
 export async function measureCuts(
   film: FilmSpec,
@@ -46,7 +67,15 @@ export async function measureCuts(
     return [];
   }
   const fps = film.meta?.fps ?? 30;
-  const {whole} = await frameBrightness(['-i', video]);
   const loudness = await momentaryLoudness(video);
-  return analyseCuts(cuts, whole, fps, loudness);
+  const reports: CutReport[] = [];
+  for (const cut of cuts) {
+    const [before, after] = await frameMeans(
+      video,
+      frameAfterCut(cut, fps),
+      fps,
+    );
+    reports.push(measureCut(cut, before, after, loudness));
+  }
+  return reports;
 }

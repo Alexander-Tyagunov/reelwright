@@ -4,6 +4,8 @@
  * made from.
  */
 import assert from 'node:assert/strict';
+import {mkdirSync, mkdtempSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {describe, it} from 'node:test';
 import {UserError} from '../../plugin/skills/video/scripts/core/errors.ts';
@@ -136,5 +138,75 @@ describe('assemble options', () => {
       () => scenes({format: '1:1'}),
       (e: Error) => e instanceof UserError && /16:9/.test(e.message),
     );
+  });
+});
+
+describe('assemble with shots left out', () => {
+  it('--shots A1,C3 gives C3 its own part of the curve, not the curve of A2', () => {
+    const doc = structuredClone(plan);
+    const [a1, a2, c3] = doc.sequences.flatMap(s => s.shots);
+    assert.ok(a1 && a2 && c3);
+    const rate = doc.fps_poses;
+    const t1 = a1.poses / rate;
+    const t2 = t1 + a2.poses / rate;
+    const t3 = t2 + c3.poses / rate;
+    doc.sound.intensity = [
+      {at_s: 0, value: 0.1},
+      {at_s: t1, value: 0.1},
+      {at_s: t2, value: 0.5},
+      {at_s: t3, value: 0.9},
+    ];
+    const {spec} = assemble(doc, side, {...BASE, shots: ['A1', 'C3']});
+    const film = spec.scenes.reduce((t, s) => t + s.duration, 0);
+    const sound = spec.meta?.sound as {
+      intensity: {at: number; value: number}[];
+    };
+    const curve = sound.intensity;
+    assert.ok(Math.abs((curve.at(-1)?.at ?? 0) - film) < 0.001);
+    const start = a1.poses / rate;
+    const atC3 = curve.filter(p => Math.abs(p.at - start) < 0.001).at(-1);
+    assert.equal(atC3?.value, 0.5, 'C3 starts at the value A2 ended with');
+    assert.equal(curve.at(-1)?.value, 0.9);
+    assert.ok(!curve.some(p => p.value === 0.5 && p.at > start + 0.001));
+  });
+});
+
+describe('assemble refuses what would write a wrong spec', () => {
+  it('an intro folder that is also a shot id is an error', () => {
+    assert.throws(
+      () => scenes({intro: 'plates/A1'}),
+      (e: Error) => e instanceof UserError && /"A1"/.test(e.message),
+    );
+  });
+
+  it('an intro whose tracks.json is not JSON names the file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rw-intro-'));
+    mkdirSync(join(dir, 'plates', 'BR'), {recursive: true});
+    writeFileSync(join(dir, 'plates', 'BR', 'tracks.json'), '{nope');
+    assert.throws(
+      () => scenes({intro: 'plates/BR', root: dir}),
+      (e: Error) => e instanceof UserError && /BR.tracks\.json/.test(e.message),
+    );
+  });
+
+  it('an intro whose tracks.json has no frames names the file and the field', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rw-intro-'));
+    mkdirSync(join(dir, 'plates', 'BR'), {recursive: true});
+    writeFileSync(
+      join(dir, 'plates', 'BR', 'tracks.json'),
+      JSON.stringify({version: 1, fps: 12, frame_pattern: 'f/%04d.jpg'}),
+    );
+    assert.throws(
+      () => scenes({intro: 'plates/BR', root: dir}),
+      (e: Error) =>
+        e instanceof UserError &&
+        /BR.tracks\.json/.test(e.message) &&
+        /frames/.test(e.message),
+    );
+  });
+
+  it('plate paths are written relative to the folder of the spec', () => {
+    const all = scenes({specDir: join(ROOT, 'out')});
+    assert.equal(all[0]?.plate, '../plates/A1/tracks.json');
   });
 });

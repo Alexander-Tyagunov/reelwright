@@ -8,7 +8,7 @@ import type {Args} from '../core/args.ts';
 import {stringFlag} from '../core/args.ts';
 import {UserError} from '../core/errors.ts';
 import {assemble} from '../plan/assemble.ts';
-import {loadPlan, loadSideFiles} from '../plan/load.ts';
+import {filmRoot, loadPlan, loadSideFiles} from '../plan/load.ts';
 
 function shotIds(text: string | undefined): string[] | null {
   if (text === undefined || text === 'all') {
@@ -27,15 +27,20 @@ function shotIds(text: string | undefined): string[] | null {
 /**
  * Writes the film spec for a plan and prints its length and any warnings.
  *
- * Plate folders and `--intro` and `--outro` are relative to the folder of
- * `--out`, which is the film folder. A second format reads plates from
- * `<folder>@9x16`. Side files are read from the plan's folder.
+ * Plate folders and `--intro` and `--outro` are relative to the film folder,
+ * which is `--root`; by default it is the folder above a plan folder called
+ * `plan`, otherwise the plan's own folder (the rule of `reel plan`). The
+ * plate paths in the spec are written relative to the folder of `--out`. A
+ * second format reads plates from `<folder>@9x16`. Side files are read from
+ * the plan's folder.
  *
  * @param args `assemble plan.json --out film.json [--shots A1,A2|all]
- *   [--format 16:9] [--intro plates/A0] [--outro plates/Z0] [--no-sound]`.
+ *   [--format 16:9] [--intro plates/A0] [--outro plates/Z0] [--no-sound]
+ *   [--root DIR]`.
  * @returns 0 when the spec was written.
  * @throws UserError for a missing plan or `--out`, an unknown shot or format,
- *   or an intro or outro plate that has no `tracks.json`.
+ *   an intro or outro plate that has no usable `tracks.json`, or an intro or
+ *   outro whose id is also a shot's.
  */
 export async function run(args: Args): Promise<number> {
   const {abs, dir, plan} = loadPlan(args.positional[0]);
@@ -50,7 +55,8 @@ export async function run(args: Args): Promise<number> {
     intro: stringFlag(args, 'intro'),
     outro: stringFlag(args, 'outro'),
     noSound: args.flags.sound === false,
-    root: dirname(out),
+    root: filmRoot(dir, stringFlag(args, 'root')),
+    specDir: dirname(out),
   });
   mkdirSync(dirname(out), {recursive: true});
   writeFileSync(out, `${JSON.stringify(spec, null, 2)}\n`);

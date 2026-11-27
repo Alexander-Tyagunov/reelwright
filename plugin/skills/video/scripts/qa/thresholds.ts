@@ -136,6 +136,27 @@ export const PLATE_BRIGHTNESS_STEP = 0.2;
 /** Grey levels (0 to 255). Smaller brightness differences are never reported. */
 export const PLATE_BRIGHTNESS_FLOOR = 4;
 
+/**
+ * Fraction (0 to 1) of its one neighbour's brightness by which a run of odd
+ * frames at the first or last frame of a plate must lie outside it. Larger
+ * than {@link PLATE_BRIGHTNESS_STEP}, because an end run has only one
+ * neighbour to be judged against.
+ */
+export const PLATE_EDGE_STEP = 0.5;
+
+/**
+ * Fraction (0 to 1) by which the two frames next to a run at the end of a
+ * plate may differ for the plate to count as settled there. A ramp, such as
+ * a light coming on, is not settled and its frames are not reported.
+ */
+export const PLATE_SETTLED_SPREAD = 0.15;
+
+/**
+ * Grey levels (0 to 255). Highest level of the frames of a run at the first
+ * or last frame of a plate that `reel plate` reports as a dropout.
+ */
+export const PLATE_EDGE_BLACK = 8;
+
 /** Frames. Longest run of odd frames `reel plate` reports. */
 export const PLATE_RUN_MAX = 12;
 

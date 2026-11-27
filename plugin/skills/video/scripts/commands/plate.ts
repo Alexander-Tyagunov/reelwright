@@ -90,16 +90,30 @@ async function firstFrameProblem(plate: Plate, file: string) {
   );
 }
 
+/** Writes `%` as `%%` in the folder part, so ffmpeg reads it as text. */
+function ffmpegPattern(plate: Plate, path: string): string {
+  const full = resolve(dirname(path), plate.framePattern);
+  const field = [...full.matchAll(/%0?\d*d/g)].pop();
+  const at = field?.index ?? full.length;
+  return full.slice(0, at).replaceAll('%', '%%') + full.slice(at);
+}
+
+async function readBrightness(plate: Plate, path: string) {
+  const input = ['-start_number', String(plate.first), '-i'];
+  try {
+    return await frameBrightness([...input, ffmpegPattern(plate, path)]);
+  } catch (e) {
+    const why = e instanceof Error ? e.message : String(e);
+    throw new UserError(
+      `ffmpeg could not read the frames of ${path}: ${why}. If a folder in ` +
+        'the path has an unusual character, rename it to letters, digits, ' +
+        '"-" and "_", then run plate again.',
+    );
+  }
+}
+
 async function brightnessReport(plate: Plate, path: string): Promise<number> {
-  const pattern = resolve(dirname(path), plate.framePattern);
-  const runs = plateRuns(
-    await frameBrightness([
-      '-start_number',
-      String(plate.first),
-      '-i',
-      pattern,
-    ]),
-  );
+  const runs = plateRuns(await readBrightness(plate, path));
   if (!runs.length) {
     console.log(
       '  brightness: no run of frames stands out from its neighbours',
@@ -125,7 +139,7 @@ async function brightnessReport(plate: Plate, path: string): Promise<number> {
  *   size and no run of frames has odd brightness; 1 when the brightness
  *   check lists runs.
  * @throws UserError for a missing or invalid `tracks.json`, a missing frame
- *   file, or a first frame of the wrong size.
+ *   file, a first frame of the wrong size, or frames ffmpeg cannot read.
  */
 export async function run(args: Args): Promise<number> {
   const given = args.positional[0];

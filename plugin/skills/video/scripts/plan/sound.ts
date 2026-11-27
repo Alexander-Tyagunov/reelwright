@@ -5,8 +5,9 @@
  */
 import {DEFAULT_PALETTE, PALETTE_NAMES} from '../audio/palettes.ts';
 import {UserError} from '../core/errors.ts';
-import {r4} from './timing.ts';
-import type {PlanSound} from './types.ts';
+import {allShots} from './parse.ts';
+import {r4, shotSeconds, shotStarts} from './timing.ts';
+import type {PlanShot, PlanSound, ShotPlan} from './types.ts';
 
 /** Level of the bed under an intro and after the end of an outro. */
 export const QUIET_LEVEL = 0.02;
@@ -58,6 +59,52 @@ export function rebaseIntensity(
     [t1, valueAt(pts, t1)] as const,
   ];
   return all.map(([t, v]) => ({at: r4(t - t0), value: r4(v)}));
+}
+
+function runsOf(plan: ShotPlan, chosen: readonly PlanShot[]): PlanShot[][] {
+  const order = allShots(plan);
+  const runs: PlanShot[][] = [];
+  for (const shot of chosen) {
+    const run = runs[runs.length - 1];
+    const prev = run?.[run.length - 1];
+    if (run && prev && order.indexOf(shot) === order.indexOf(prev) + 1) {
+      run.push(shot);
+    } else {
+      runs.push([shot]);
+    }
+  }
+  return runs;
+}
+
+/**
+ * Builds the intensity curve of the chosen shots, in film seconds from 0.
+ * Shots that follow each other in the plan share one window of the plan's
+ * curve; a shot that was left out is not in the curve, so every chosen shot
+ * keeps its own part. Where a skipped shot lay between two windows, the
+ * curve steps within 0.0002 s.
+ *
+ * @param chosen Shots to use, in plan order.
+ */
+export function chosenIntensity(
+  plan: ShotPlan,
+  chosen: readonly PlanShot[],
+): CurvePointOut[] {
+  const starts = shotStarts(plan, allShots(plan));
+  const out: CurvePointOut[] = [];
+  let offset = 0;
+  for (const run of runsOf(plan, chosen)) {
+    const first = run[0] as PlanShot;
+    const t0 = starts.get(first.id) ?? 0;
+    const length = run.reduce((n, s) => n + shotSeconds(s, plan.fps_poses), 0);
+    const piece = rebaseIntensity(plan.sound.intensity, t0, t0 + length);
+    const before = out[out.length - 1];
+    if (before) {
+      before.at = r4(before.at - 0.0002);
+    }
+    out.push(...piece.map(p => ({at: r4(p.at + offset), value: p.value})));
+    offset = r4(offset + length);
+  }
+  return out;
 }
 
 /**

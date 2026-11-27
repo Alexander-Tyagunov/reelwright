@@ -3,11 +3,16 @@
  * accepts, what it fails, and that fields of the 3D side pass through.
  */
 import assert from 'node:assert/strict';
+import {mkdirSync, mkdtempSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {describe, it} from 'node:test';
 import {UserError} from '../../plugin/skills/video/scripts/core/errors.ts';
 import {checkPlan} from '../../plugin/skills/video/scripts/plan/checks.ts';
-import {loadPlan} from '../../plugin/skills/video/scripts/plan/load.ts';
+import {
+  loadPlan,
+  loadSideFiles,
+} from '../../plugin/skills/video/scripts/plan/load.ts';
 import {
   allShots,
   parsePlan,
@@ -111,6 +116,68 @@ describe('the example film project shipped with the Blender library', () => {
     assert.deepEqual(
       checks.filter(c => c.status === 'FAIL'),
       [],
+    );
+  });
+});
+
+describe('a plan that would write a wrong film', () => {
+  it('a plan with a sequence and no shots fails with "no shots"', () => {
+    const doc = {...copy(), sequences: [{id: 'S', shots: []}]};
+    assert.throws(
+      () => parsePlan(doc, 'plan'),
+      (e: Error) => e instanceof UserError && /has no shots/.test(e.message),
+    );
+  });
+
+  it('a shot id with ../ is refused and named', () => {
+    const doc = copy() as {sequences: {shots: {id: string}[]}[]};
+    const shot = doc.sequences[0]?.shots[0];
+    assert.ok(shot);
+    shot.id = '../../x';
+    assert.throws(
+      () => parsePlan(doc, 'plan'),
+      (e: Error) => e instanceof UserError && /\.\.\/\.\.\/x/.test(e.message),
+    );
+  });
+
+  it('film_fps 25 with 12 poses a second warns about uneven holds', () => {
+    const doc = {...copy(), film_fps: 25};
+    const s = statuses(doc);
+    assert.equal(
+      s['every pose is held for a whole number of film frames'],
+      'WARN',
+    );
+  });
+
+  it('a plate at another frame rate than the plan warns', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rw-fps-'));
+    const doc = copy() as {sequences: {shots: {id: string; poses: number}[]}[]};
+    for (const shot of doc.sequences.flatMap(s => s.shots)) {
+      mkdirSync(join(dir, 'plates', shot.id), {recursive: true});
+      writeFileSync(
+        join(dir, 'plates', shot.id, 'tracks.json'),
+        JSON.stringify({frames: shot.poses, fps: 24}),
+      );
+    }
+    const checks = checkPlan(parsePlan(doc, 'plan'), dir);
+    const c = checks.find(x => /plan pose rate/.test(x.name));
+    assert.equal(c?.status, 'WARN');
+  });
+});
+
+describe('extra-cues.json', () => {
+  it('a cue with no pose is refused with the file, the shot and the entry', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rw-cues-'));
+    writeFileSync(
+      join(dir, 'extra-cues.json'),
+      JSON.stringify({A1: [{kind: 'tick', gain: 0.5}]}),
+    );
+    assert.throws(
+      () => loadSideFiles(dir),
+      (e: Error) =>
+        e instanceof UserError &&
+        /extra-cues\.json/.test(e.message) &&
+        /A1\[0\]\.pose/.test(e.message),
     );
   });
 });

@@ -79,7 +79,44 @@ function flagsOf(change: number, jump: number | null): string[] {
 }
 
 /**
- * Measures every cut.
+ * Index of the first frame after a cut, in a film of `fps` frames a second.
+ * The frame before it is the one before the cut.
+ */
+export function frameAfterCut(cut: CutPoint, fps: number): number {
+  return Math.max(Math.round(cut.at * fps), 1);
+}
+
+/**
+ * Measures one cut.
+ *
+ * @param before Mean grey level (0 to 255) of the last frame before the cut.
+ * @param after Mean grey level (0 to 255) of the first frame after it.
+ * @param loudness Momentary loudness readings, empty for a silent video.
+ */
+export function measureCut(
+  cut: CutPoint,
+  before: number,
+  after: number,
+  loudness: readonly MomentaryPoint[],
+): CutReport {
+  const peak = Math.max(before, after, 1e-6);
+  const change = Math.abs(after - before) / peak;
+  const loud = loudnessAround(loudness, cut.at);
+  const jump = loud ? loud.after - loud.before : null;
+  return {
+    ...cut,
+    before,
+    after,
+    change,
+    loudBefore: loud?.before ?? null,
+    loudAfter: loud?.after ?? null,
+    jump,
+    flags: flagsOf(change, jump),
+  };
+}
+
+/**
+ * Measures every cut from the brightness of every frame.
  *
  * @param cuts Where the cuts are.
  * @param means Mean grey level of every frame of the video, in order.
@@ -94,22 +131,7 @@ export function analyseCuts(
 ): CutReport[] {
   const last = means.length - 1;
   return cuts.map(cut => {
-    const frame = Math.min(Math.max(Math.round(cut.at * fps), 1), last);
-    const before = means[frame - 1] ?? 0;
-    const after = means[frame] ?? 0;
-    const peak = Math.max(before, after, 1e-6);
-    const change = Math.abs(after - before) / peak;
-    const loud = loudnessAround(loudness, cut.at);
-    const jump = loud ? loud.after - loud.before : null;
-    return {
-      ...cut,
-      before,
-      after,
-      change,
-      loudBefore: loud?.before ?? null,
-      loudAfter: loud?.after ?? null,
-      jump,
-      flags: flagsOf(change, jump),
-    };
+    const frame = Math.min(frameAfterCut(cut, fps), last);
+    return measureCut(cut, means[frame - 1] ?? 0, means[frame] ?? 0, loudness);
   });
 }

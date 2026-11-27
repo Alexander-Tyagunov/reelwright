@@ -67,6 +67,24 @@ function curve(plan: ShotPlan, shots: readonly PlanShot[]): Check {
   return result('intensity curve is valid', bad, `${pts.length} points`);
 }
 
+function evenHolds(plan: ShotPlan): Check {
+  const bad: string[] = [];
+  if (plan.film_fps % plan.fps_poses !== 0) {
+    bad.push(
+      `film_fps ${plan.film_fps} is not a multiple of fps_poses ` +
+        `${plan.fps_poses}, so some poses are held 1 frame longer than ` +
+        'others. Use a film_fps such as ' +
+        `${plan.fps_poses * Math.max(1, Math.round(plan.film_fps / plan.fps_poses))}.`,
+    );
+  }
+  return result(
+    'every pose is held for a whole number of film frames',
+    bad,
+    `${plan.film_fps} film frames a second, ${plan.fps_poses} poses a second`,
+    'WARN',
+  );
+}
+
 /**
  * Runs every check of a plan.
  *
@@ -79,6 +97,7 @@ export function checkPlan(plan: ShotPlan, root: string): Check[] {
     totals(plan, shots),
     inside(shots),
     curve(plan, shots),
+    evenHolds(plan),
     ...labelChecks(plan, shots),
     ...plateChecks(plan, shots, root),
   ];

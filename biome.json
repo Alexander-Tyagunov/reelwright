@@ -65,7 +65,8 @@
     {
       "includes": [
         "plugin/skills/video/scripts/plan/**",
-        "tests/unit/shot-plan.test.ts"
+        "tests/unit/shot-plan.test.ts",
+        "tests/unit/assemble.test.ts"
       ],
       "linter": {
         "rules": {
