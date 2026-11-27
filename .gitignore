@@ -15,3 +15,7 @@ renders/
 blends/
 render_queue/
 !tests/fixtures/**/plates/
+
+# Editors
+.idea/
+.vscode/
