@@ -48,6 +48,15 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
   degrees. Fold lines pencilled on the flat sheet say what is coming.
 - A thing handed to a puppet (hat, pencil): fly a free copy for three poses (lift, turn over, above the head), then switch
   it off and switch on the same part built into the puppet's rig on the landing pose, with a squash. Later shots get it free.
+- A thing that raises itself (an arch cut flat, then standing): build it standing, then key the card's own rotation from
+  flat (0.07 rad, never 0: it rests on an offcut) through four poses, past upright on the fifth, back on the sixth, and
+  only then switch on what a hand adds afterwards (strut, tape at the feet, the lamps on their threads, swinging hard).
+  Lay it where the camera sees its face while it is down.
+- Tracing paper with a light behind it: a sheet that is never flat (1 mm of wave, a knife-cut top edge), taped to kraft
+  posts on the near side, small tabs (11 x 7 mm: at 17 x 10 they read as signboards). Material in blender.md section 4.
+  The glow says how far the light is: far back it is wide and dim, near the paper small, bright and sharp.
+- A length that must be read: stand the strip on its edge in a slow wave beside a ruler that leans back behind it, its
+  ticks along the lower edge, no numerals. The unused part is a roll standing on its end at the free end.
 - Light flicker: `craft.flicker(seed, n, amp)` on each light's energy (2-3% lamp, 5% LEDs).
 - Camera: locked off, or `camera.slider(obj, frames, start, end, craft.hand_slide(...), jitter)` for a hand-pushed
   move with uneven steps. Bake the focus empty per pose. `camera.lens_character(cam, blades=7)` shapes the bokeh.

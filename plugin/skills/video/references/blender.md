@@ -5,7 +5,7 @@ Use this when a shot needs real 3D (characters, light, camera moves). Blender re
 Worked examples: film `claude-timeline`, shot `shot-claude3` (Eevee; scripts `ct_look.py`, `shot_claude3.py`) and
 `shot-claude3-desk` (Cycles, stop motion at 12 fps; `ct_desk_look.py`, `shot_claude3_desk.py`). A film of many shots
 on one set: `ct_film.py` (shared module built from the plan's `shots.json`: `build_shot(id, overrides)`,
-`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py`, `ct_seq_b.py`).
+`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py`, `ct_seq_b.py`, `ct_seq_c.py`).
 When a shot must read as made by a person and not as a clean render, read `handmade.md` as well.
 
 ## 1. Connection check (first call, always)
@@ -71,7 +71,9 @@ exclusive file, so two sessions cannot get the same place), each through the sam
 do not save that file again while its job waits: the worker opens it when the job starts. `resume=True` (default)
 skips frames already on disk, so an interrupted job is simply submitted again. The session that submitted may end;
 the runner leaves by itself five seconds after the last job. A film keeps the folder in its own module (`ct_film.QUEUE`,
-with `submit(shot)`, `submit_check(shot, poses)`, `status()`).
+with `submit(shot)`, `submit_check(shot, poses)`, `status()`). Give a check job a file of its own
+(`save_as_mainfile(filepath=..., copy=True)` to `ct-C1-check.blend`): it may wait behind an hour of other jobs, and the
+shot's own file must stay free to be changed, saved and submitted meanwhile.
 
 ## 4. Cycles
 Use Cycles (Metal GPU) when the shot depends on physical light: soft shadows, light through paper, bounce, real
@@ -83,6 +85,13 @@ goes to the background (`render_background(frames=..., sheet=...)`): with kernel
 Measure one or two final-quality frames in the background before the final render and set `samples` / `noise`
 from that (numbers in section 6). A light inside a closed shell reaches the table only if the shell lets shadow
 rays through: `paper.paper_material(transmit=...)`.
+Tracing paper with something behind it (`ct_film.vellum_material`): mix Diffuse and Translucent, then mix in a rough
+Refraction lobe (share 0.30, roughness 0.38, IOR 1.4; the blur grows with IOR - 1, so IOR near 1 shows nothing soft).
+The translucent share gives the glow of a light behind, the refraction share the blurred outline of what is close behind
+(a lit paper globe 3 cm away reads as a moon), and no shadow ray crosses, so the light behind never lights the near side
+directly. Put the LED inside a paper shell (never bare: a bare point light seen through rough refraction is a firefly).
+Clean at 64 samples; a full-size frame took 44 s live while the queue was rendering. A disc that comes out as a flat
+plateau near 215 of 255 is too bright even though nothing clips: halve the LED.
 
 ## 5. Library (`reel_blender`)
 - `craft` (pure math, seeded): `hand_cut` (knife-cut outlines), `stroke_strip` (pencil, thread), `torn_rect` (tape),
@@ -140,6 +149,7 @@ Cycles, desk example (160 objects, 2 area lights, 8 point lights, translucent pa
 | cycles_final, f/16, `samples=96, noise=0.02` | 1920x1080 | 96 | about 28 (too slow for 108 frames in 45 min) |
 | cycles_final, `samples=64, noise=0.03`, shots A1-A3 (72-107 objects) | 1920x1080 | 64 | 7.3-9.4 (A1: dark room, no backdrop), 12.0 (A2), 18.6 (A3: both sky boards and the trees) |
 | the same, shots B1-B3 (88-168 objects) | 1920x1080 | 64 | 16.2 (B1: sky and trees), 16.8 (B2: a 0.5 m screen light on a glossy desk), 14.9 (B3) |
+| the same, shots C1-C4 (144-203 objects) | 1920x1080 | 64 | 17.6 (C1), 16.7 (C2), 18.4 (C3), 23.6 (C4: tracing paper with a lit globe behind it; three-frame check jobs)  |
 Later in the same day the Metal kernels were cached and a live `cycles_preview` strip was safe as the first render of a
 new session (first frame 3.2 s, then 1.8-3.6 s a frame); the background rule stands for a machine not used that day.
 While the queue renders on the same GPU a live preview frame takes 4.2-5.6 s (2.3 s idle): a strip of six is about 30 s,
@@ -242,6 +252,19 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
 23. (Film, sequence B) An emissive screen at strength 0.22 rendered near white under exposure 0.8; 0.065 is dim grey-blue.
     Its light on the desk comes from a separate area lamp hidden from the camera. A translucent paper lamp hanging in
     front of that light looks lit before its LED is on: do not rely on it reading as dark.
+
+24. (Film, sequence C) A camera square to the road sees two lanterns at the same road position as one: the nearer hides
+    the other whatever their lateral offset. Stagger every stop along the road by at least a lantern's width, and check
+    the stops with `sample_points` (screen x) before animating.
+25. (Film, sequence C) A lantern that stops 12 mm past its lamp-post stands between the lens and a lamp hung forward of
+    the post. Hang the lamp on the side the lantern came from (`post(arm_deg=150, arm=0.018)`), and project the lantern's
+    edge to the lamp's depth before the first strip.
+26. (Film, sequence C) Hops chained without a pause put the crouch for the next hop on the landing pose of the last:
+    Opus (12 thirtieths in the air, 6 of anticipation, one pose every 2.5) was photographed at half its height. Leave at
+    least one pose on the ground (10 in the air here), or lower `impact` on chained hops.
+27. (Film, sequence C) A ribbon lying flat on the road is 3 pixels high from a camera 12 cm up and 60 cm away, and a 25 mm
+    ruler lying beside it 15. Anything that must be read from a low camera stands: the ribbon on its edge
+    (`ribbon_strip(twist=)`), the ruler leant back on props behind the road.
 
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per
