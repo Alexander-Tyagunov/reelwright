@@ -43,6 +43,11 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
   so an untouched puppet stays dead still. About 0.15 mm and 0.6 degrees at this scale.
 - Replacement animation: swap parts on one pose (pencil-line shut eye for a punched dot; a road row appears
   crooked, is straightened on the next exposure, and one or two stay crooked).
+- A thing that makes itself (a sheet folding into a boat): four or five replacement shapes of two poses each, every one
+  able to stand (tent, paper hat, square on its point, half-opened boat), each put down a millimetre off and turned a few
+  degrees. Fold lines pencilled on the flat sheet say what is coming.
+- A thing handed to a puppet (hat, pencil): fly a free copy for three poses (lift, turn over, above the head), then switch
+  it off and switch on the same part built into the puppet's rig on the landing pose, with a squash. Later shots get it free.
 - Light flicker: `craft.flicker(seed, n, amp)` on each light's energy (2-3% lamp, 5% LEDs).
 - Camera: locked off, or `camera.slider(obj, frames, start, end, craft.hand_slide(...), jitter)` for a hand-pushed
   move with uneven steps. Bake the focus empty per pose. `camera.lens_character(cam, blades=7)` shapes the bokeh.
@@ -81,6 +86,9 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
   per-vertex jitter of 0.25 mm on the card frame).
 - A flat sheet of paper seen from a camera 7 cm above the mat is a sliver 7 mm high. Give it a slight curl so its
   ends lift, keep it clear of anything standing in front, and let the next replacement shape stand up.
+- Pencil guide lines drawn in graphite on the dark walnut desk did not show; the maker uses a pale pencil there, and the
+  rubbed-out line is a wider, fainter smear with pink rubber crumbs. A key that sinks 2 mm does not show at 0.5 m; 3 mm
+  of a 5.4 mm cap does, just.
 - Still open: paper fibre is too fine to see at 1080p; glue marks, fingerprints and bent corners are missing; the
   glowing shells are evenly lit where real paper shows hot spots and seams.
 

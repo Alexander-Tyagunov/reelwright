@@ -5,7 +5,7 @@ Use this when a shot needs real 3D (characters, light, camera moves). Blender re
 Worked examples: film `claude-timeline`, shot `shot-claude3` (Eevee; scripts `ct_look.py`, `shot_claude3.py`) and
 `shot-claude3-desk` (Cycles, stop motion at 12 fps; `ct_desk_look.py`, `shot_claude3_desk.py`). A film of many shots
 on one set: `ct_film.py` (shared module built from the plan's `shots.json`: `build_shot(id, overrides)`,
-`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py`).
+`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py`, `ct_seq_b.py`).
 When a shot must read as made by a person and not as a clean render, read `handmade.md` as well.
 
 ## 1. Connection check (first call, always)
@@ -139,8 +139,11 @@ Cycles, desk example (160 objects, 2 area lights, 8 point lights, translucent pa
 | cycles_final, f/16, `samples=64, noise=0.03` (v2) | 1920x1080 | 64 | 18.0 background (108 frames, about 32.5 min); a live-sized check of 3 frames took 21 s each |
 | cycles_final, f/16, `samples=96, noise=0.02` | 1920x1080 | 96 | about 28 (too slow for 108 frames in 45 min) |
 | cycles_final, `samples=64, noise=0.03`, shots A1-A3 (72-107 objects) | 1920x1080 | 64 | 7.3-9.4 (A1: dark room, no backdrop), 12.0 (A2), 18.6 (A3: both sky boards and the trees) |
+| the same, shots B1-B3 (88-168 objects) | 1920x1080 | 64 | 16.2 (B1: sky and trees), 16.8 (B2: a 0.5 m screen light on a glossy desk), 14.9 (B3) |
 Later in the same day the Metal kernels were cached and a live `cycles_preview` strip was safe as the first render of a
 new session (first frame 3.2 s, then 1.8-3.6 s a frame); the background rule stands for a machine not used that day.
+While the queue renders on the same GPU a live preview frame takes 4.2-5.6 s (2.3 s idle): a strip of six is about 30 s,
+two strips in one call 54-57 s, which is the limit.
 A shot on twos has half the frames: at 12 poses a second, 9 s is 108 renders, which is what makes Cycles affordable.
 
 ## 7. Plate contract (fixed)
@@ -227,6 +230,18 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
 19. (Film, sequence A) A strut behind a standing card and pale tape in the foreground are marks of making only when they
     are small in frame: a 5 cm strip of tape lying 20 cm from the lens was the brightest thing in the picture. Put
     them where the frame shows them small, or behind a leg.
+
+20. (Film, sequence B) A standing piece between the lens and the road hides the walker: the near leg of an arch stood in
+    front of one landing. Project every leg to the walker's depth (x' = cam_x + (x - cam_x) * walker_depth / leg_depth) and
+    compare with each landing's x before the first strip; choose the cheat so the leg falls between two landings.
+21. (Film, sequence B) The cutting mats are 3 mm thick: everything past a mat's edge stands 3 mm lower (`ct_film.ground`,
+    `foot_z`), and a tile row cannot lie across the step. Ask of every new surface where its top is.
+22. (Film, sequence B) From a camera 11 cm high, two lines on the desk that both run across the frame look the same even
+    when one is straight and one curves: make them differ in screen direction (one toward the lens). A line needs 2.4 mm
+    of width to show at all, and graphite on dark wood does not: use a pale pencil.
+23. (Film, sequence B) An emissive screen at strength 0.22 rendered near white under exposure 0.8; 0.065 is dim grey-blue.
+    Its light on the desk comes from a separate area lamp hidden from the camera. A translucent paper lamp hanging in
+    front of that light looks lit before its LED is on: do not rely on it reading as dark.
 
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per
