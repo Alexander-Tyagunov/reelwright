@@ -15,11 +15,13 @@ def _zoom(ch, s, xx, yy, cx, cy):
             + ch[y0 + 1, x0] * (1 - fx) * fy + ch[y0 + 1, x0 + 1] * fx * fy)
 
 
-def develop(src, dst=None, seed=0, grain=0.03, vignette=0.2, fringe=0.001, flicker=0.0, quality=95):
+def develop(src, dst=None, seed=0, grain=0.03, vignette=0.2, fringe=0.001, flicker=0.0, quality=95, fine=False):
     """Read image `src`, add lens and sensor faults, write JPEG `dst` (default: over src).
 
     seed: use the frame number, so grain and flicker change per exposure and repeat on a re-render.
-    grain: noise strength in display values (0.03 is visible but quiet; stronger in shadows, 1-2 px clumps).
+    grain: noise strength in display values (0.03 is visible but quiet; stronger in shadows). fine=False gives
+    1-2 px clumps (each value shared by a 2x2 block); fine=True gives independent noise in every pixel at the same
+    strength, which is what a sharp frame wants (handmade.md section 5).
     vignette: share of light lost in the far corners. fringe: red/blue scale difference (0.001 = about a
     pixel at the edge of a 1920 frame). flicker: +-share of exposure variation between frames."""
     import numpy as np
@@ -42,7 +44,8 @@ def develop(src, dst=None, seed=0, grain=0.03, vignette=0.2, fringe=0.001, flick
         rgb *= 1.0 + flicker * rs.uniform(-1.0, 1.0)
     if grain:
         n = rs.normal(0.0, 1.0, (h, w)).astype(np.float32)
-        n = (n + np.roll(n, 1, 0) + np.roll(n, 1, 1) + np.roll(n, (1, 1), (0, 1))) * 0.5
+        if not fine:
+            n = (n + np.roll(n, 1, 0) + np.roll(n, 1, 1) + np.roll(n, (1, 1), (0, 1))) * 0.5
         lum = np.clip(rgb.mean(-1), 0.0, 1.0)
         amp = grain * (1.15 - 0.8 * lum)
         chroma = rs.normal(0.0, 0.35, (h, w, 3)).astype(np.float32)

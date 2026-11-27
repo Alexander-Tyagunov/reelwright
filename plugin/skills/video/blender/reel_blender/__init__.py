@@ -16,6 +16,7 @@ Modules
   tracks      export tracks.json for the engine
   paper       paper / card material builder, plain materials
   photo       lens and sensor faults on a rendered frame (vignette, fringe, grain, flicker)
+  renderqueue one-at-a-time render queue shared by several sessions (submit, status, cancel; no bpy needed)
 
 Nothing here holds a look or a project path; films keep those in their own scripts.
 Units: metres, frames at the scene fps, radians.
@@ -24,7 +25,7 @@ import importlib
 
 __version__ = "0.2.0"
 
-from . import motion, plate, craft  # noqa: F401  (usable without Blender)
+from . import motion, plate, craft, renderqueue  # noqa: F401  (usable without Blender)
 
 try:
     import bpy  # noqa: F401
@@ -38,7 +39,7 @@ if _HAVE_BPY:
 
 def reload_all():
     """Reload every module after the files changed on disk (call from the live Blender)."""
-    names = ["motion", "plate", "craft"]
+    names = ["motion", "plate", "craft", "renderqueue"]
     if _HAVE_BPY:
         names += ["project", "mesh", "anim", "paper", "photo", "camera", "render", "background", "tracks"]
     g = globals()

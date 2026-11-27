@@ -50,7 +50,8 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
   paper tree falls over, the hill card rocks, the pencil rolls 2 mm).
 - The photograph: Cycles (`cycles_preview`, `cycles_final`), real aperture at true scale, then
   `photo.develop(...)` through `render_still(develop=...)` / `render_background(develop=...)`: vignette 0.12,
-  fringe 0, grain 0.010, flicker 0.012, seeded by the frame number so grain changes per exposure. Read section 5
+  fringe 0, grain 0.010 with `fine=True` (per-pixel), flicker 0.012, seeded by the frame number so grain changes per
+  exposure. Read section 5
   before choosing f-stop and focus.
 - Labels: a handwriting or typewriter face on a dark card-coloured tag; track empties on the root, not on the
   jittered body.
@@ -78,6 +79,8 @@ Seeds: every helper in `craft` takes a seed and returns the same numbers on ever
 - `Path.heading` averaged over 16 cm at desk scale: pass `eps` (see blender.md).
 - Perfect ellipses and hexagons still look machined after `hand_cut`; break the base shape first (lobed oval,
   per-vertex jitter of 0.25 mm on the card frame).
+- A flat sheet of paper seen from a camera 7 cm above the mat is a sliver 7 mm high. Give it a slight curl so its
+  ends lift, keep it clear of anything standing in front, and let the next replacement shape stand up.
 - Still open: paper fibre is too fine to see at 1080p; glue marks, fingerprints and bent corners are missing; the
   glowing shells are evenly lit where real paper shows hot spots and seams.
 
@@ -97,8 +100,11 @@ the main subject at the start, was out of focus and the lamps were blobs; with g
   lanterns at 0.41-0.50 m, focus 0.45 m. If near and far do not fit, stop down further or move the camera back
   before accepting softness on a subject.
 - Finishing: grain 0.010 (0.024 was heavy), vignette 0.12, exposure flicker 0.012 kept, colour fringe 0 (it
-  resamples a channel, so it can only blur). Grain must be no coarser than one pixel; `photo.develop` makes 1-2 px
-  clumps, so keep the amount small until it has a per-pixel option.
+  resamples a channel, so it can only blur). Grain must be no coarser than one pixel: pass `fine=True` to `photo.develop` (the default
+  still makes 1-2 px clumps, which the approved plate has). Same raw frame developed both ways at 0.010: edge energy
+  after `MedianFilter(5)` is identical (136 whole frame, 533 subject crop), before it 393 fine against 311 clumped
+  (finer noise has more edge energy, one more reason to compare after the median); at 100% the clumps show as a
+  faint mottle in dark flat areas and the fine grain does not.
 - Noise: 64 samples with noise threshold 0.03 (18 s a frame, 108 frames in about 33 min) kept dark areas clean
   enough; 96 samples at 0.02 took 28 s a frame (about 50 min).
 - Light: the opening was dark with the arch near silhouette (arch pillars 23-34 of 255 against a frame mean of 45).

@@ -3,7 +3,9 @@
 Use this when a shot needs real 3D (characters, light, camera moves). Blender renders a *plate*
 (frames + `tracks.json`); the engine composites labels over it. Library: `plugin/skills/video/blender/reel_blender/`.
 Worked examples: film `claude-timeline`, shot `shot-claude3` (Eevee; scripts `ct_look.py`, `shot_claude3.py`) and
-`shot-claude3-desk` (Cycles, stop motion at 12 fps; `ct_desk_look.py`, `shot_claude3_desk.py`).
+`shot-claude3-desk` (Cycles, stop motion at 12 fps; `ct_desk_look.py`, `shot_claude3_desk.py`). A film of many shots
+on one set: `ct_film.py` (shared module built from the plan's `shots.json`: `build_shot(id, overrides)`,
+`export_tracks(id)`, `submit(id)`) with one module per sequence (`ct_seq_a.py`).
 When a shot must read as made by a person and not as a clean render, read `handmade.md` as well.
 
 ## 1. Connection check (first call, always)
@@ -57,6 +59,19 @@ Poll with `sleep` in the cloud shell (60-300 s) then `background.read_progress` 
 `render_background(..., frames=[...], sheet=path)` renders chosen frames and tiles them into one image: a preview
 strip that cannot time out. Use it for the first Cycles render of a session and for anything slow; write the
 documents and the film spec while a long render runs.
+More than one long render, or several sessions rendering on the same Mac: use the queue, not `render_background`
+(two background Blenders at once share the GPU and both crawl). `renderqueue.submit(queue_dir, name, blend, out_dir,
+frames= | frame_start=, frame_end=, preset=, overrides=, develop=)` adds a job and returns at once; one detached
+runner per queue folder renders the jobs strictly one at a time in submission order (job numbers are taken with an
+exclusive file, so two sessions cannot get the same place), each through the same worker and with the same
+`render_progress.json` / `render.log` in its output folder. `renderqueue.status(queue_dir)` lists every job
+(queued, rendering, done, error, cancelled; frames done; seconds per frame) and when the queue should be empty
+(it prices waiting jobs at the last measured seconds per frame, so add your own figure for slower shots);
+`renderqueue.cancel(queue_dir, id)` removes a waiting job. Give every job its own saved .blend (`ct-A1.blend`), and
+do not save that file again while its job waits: the worker opens it when the job starts. `resume=True` (default)
+skips frames already on disk, so an interrupted job is simply submitted again. The session that submitted may end;
+the runner leaves by itself five seconds after the last job. A film keeps the folder in its own module (`ct_film.QUEUE`,
+with `submit(shot)`, `submit_check(shot, poses)`, `status()`).
 
 ## 4. Cycles
 Use Cycles (Metal GPU) when the shot depends on physical light: soft shadows, light through paper, bounce, real
@@ -73,7 +88,8 @@ rays through: `paper.paper_material(transmit=...)`.
 - `craft` (pure math, seeded): `hand_cut` (knife-cut outlines), `stroke_strip` (pencil, thread), `torn_rect` (tape),
   `pose_jitter`, `flicker`, `hand_slide`, `held` (on twos), `shifts`, `rng`. `paper.paper_material(...)` (fibre,
   mottle, per-object variation, translucency, shadow transmission), `paper.plain_material`. `photo.develop(...)`
-  (vignette, fringe, grain, flicker on the rendered file; fringe resamples and softens, grain is 1-2 px clumps). See `handmade.md` for when to use them.
+  (vignette, fringe, grain, flicker on the rendered file; fringe resamples and softens; grain is 1-2 px clumps unless
+  `fine=True`, which gives per-pixel grain of the same strength). See `handmade.md` for when to use them.
 - `project.clean_scene()` remove everything, purge orphans. `project.setup_scene(scene, fps, width, height,
   frame_start, frame_end, look=, exposure=, dither=)` units, range, AgX. `project.collection(name)`. `project.save(path)`.
 - `mesh.revolve / loft / prism / box / torus` return parts `(verts, faces)`; `mesh.transform`, `mesh.merge`;
@@ -95,6 +111,8 @@ rays through: `paper.paper_material(transmit=...)`.
   `contact_sheet(paths, out)`.
 - `background.render_background(blend, out_dir, start, end, preset=, overrides=, resume=, frames=, develop=,
   sheet=)`, `read_progress(path)`.
+- `renderqueue.submit / status / cancel / ensure_runner` (section 3): one-at-a-time render queue shared by sessions;
+  no bpy needed for `status` and `cancel`.
 - `tracks.sample_points(scene, cam, {name: object}, frames)` layout numbers without rendering;
   `tracks.export_tracks(scene, cam, points, out_path, events=[(name, scene_frame)])`.
 - `plate.pack_plate(dir)` zip for transfer; `plate.check_plate(dir)` frames vs tracks.
@@ -120,6 +138,9 @@ Cycles, desk example (160 objects, 2 area lights, 8 point lights, translucent pa
 | cycles_final, `samples=64, noise=0.04` | 1920x1080 | 64 | 18.6 background (108 frames in 2010 s, 33.5 min; first frame 19.5 s) |
 | cycles_final, f/16, `samples=64, noise=0.03` (v2) | 1920x1080 | 64 | 18.0 background (108 frames, about 32.5 min); a live-sized check of 3 frames took 21 s each |
 | cycles_final, f/16, `samples=96, noise=0.02` | 1920x1080 | 96 | about 28 (too slow for 108 frames in 45 min) |
+| cycles_final, `samples=64, noise=0.03`, shots A1-A3 (72-107 objects) | 1920x1080 | 64 | 7.3-9.4 (A1: dark room, no backdrop), 12.0 (A2), 18.6 (A3: both sky boards and the trees) |
+Later in the same day the Metal kernels were cached and a live `cycles_preview` strip was safe as the first render of a
+new session (first frame 3.2 s, then 1.8-3.6 s a frame); the background rule stands for a machine not used that day.
 A shot on twos has half the frames: at 12 poses a second, 9 s is 108 renders, which is what makes Cycles affordable.
 
 ## 7. Plate contract (fixed)
@@ -195,6 +216,17 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
     section 5), and keep the finishing pass light; judge a still at 100%, not scaled down.
 16. (Desk shot) Judged sharpness by eye on half-size previews and measured edge energy with grain on: grain raises
     edge energy, so a noisy soft frame can out-score a clean sharp one. Compare after `MedianFilter(5)` as well.
+
+17. (Film, sequence A) An arch that spans a road running across the frame is seen edge-on by a camera at the front of
+    the desk (12 degrees off its plane: a 12 cm arch is 2 cm wide on screen) and shows its plain back. Stations take a
+    `cheat` angle that turns the face toward the lens (50 degrees for arches, 35 for a doorway 39 mm wide that a 31 mm
+    lantern must still pass); check the opening that is left across the road: opening x sin(angle between plane and road).
+18. (Film, sequence A) A hop that lands just past an arch crosses its plane near the top of the arc: handle top = body
+    height + 4 h u (1 - u) at the crossing. Lower the arriving hop or shorten the lamp's thread before a strip shows the
+    handle through the lamp.
+19. (Film, sequence A) A strut behind a standing card and pale tape in the foreground are marks of making only when they
+    are small in frame: a 5 cm strip of tape lying 20 cm from the lens was the brightest thing in the picture. Put
+    them where the frame shows them small, or behind a leg.
 
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per
