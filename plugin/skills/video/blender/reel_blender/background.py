@@ -37,14 +37,15 @@ def render_background(blend_path, out_dir, frame_start, frame_end, preset="final
         "develop": develop, "sheet": sheet, "sheet_cols": int(sheet_cols),
     }
     job_path = os.path.join(out_dir, "render_job.json")
-    with open(job_path, "w") as fh:
+    with open(job_path, "w", encoding="utf-8") as fh:
         json.dump(job, fh, indent=1)
-    with open(progress_path, "w") as fh:
-        json.dump({"state": "starting", "done": 0, "total": len(frames) if frames else job["frame_end"] - job["frame_start"] + 1,
+    with open(progress_path, "w", encoding="utf-8") as fh:
+        json.dump({"state": "starting", "done": 0,
+                "total": len(frames) if frames else job["frame_end"] - job["frame_start"] + 1,
                    "started": time.time()}, fh)
     worker = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_bg_worker.py")
     cmd = [bpy.app.binary_path, "--background", blend_path, "--python", worker, "--", job_path]
-    log = open(log_path, "w")
+    log = open(log_path, "w", encoding="utf-8")
     proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                             start_new_session=True)
     return {"pid": proc.pid, "progress": progress_path, "log": log_path,
@@ -56,7 +57,7 @@ def read_progress(progress_path):
     """Read the worker's progress file: state (starting | rendering | done | error), done, total,
     sec_per_frame, elapsed, eta_sec, error."""
     try:
-        with open(progress_path) as fh:
+        with open(progress_path, encoding="utf-8") as fh:
             return json.load(fh)
     except Exception as exc:  # missing or mid-write
         return {"state": "unknown", "error": repr(exc)}

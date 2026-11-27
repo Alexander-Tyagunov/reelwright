@@ -14,7 +14,7 @@ LOCK = os.path.join(QUEUE, "runner.lock")
 
 def read(path, default=None):
     try:
-        with open(path) as fh:
+        with open(path, encoding="utf-8") as fh:
             return json.load(fh)
     except Exception:
         return default
@@ -22,7 +22,7 @@ def read(path, default=None):
 
 def write(path, data):
     tmp = path + ".tmp"
-    with open(tmp, "w") as fh:
+    with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=1)
     os.replace(tmp, path)
 
@@ -46,7 +46,7 @@ def take_lock():
     for _ in range(3):
         try:
             fd = os.open(LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            with os.fdopen(fd, "w") as fh:
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 json.dump({"pid": os.getpid(), "started": time.time()}, fh)
             return True
         except FileExistsError:
@@ -93,18 +93,22 @@ def run(n):
     if not os.path.isfile(job["blend"]):
         write(sp, {"state": "error", "error": "missing " + job["blend"]})
         return
-    write(job["progress"], {"state": "starting", "done": 0, "total": len(job["frames"]), "job": n, "started": time.time()})
+    write(job["progress"], {"state": "starting", "done": 0, "total": len(job["frames"]), "job": n,
+            "started": time.time()})
     t0 = time.time()
-    with open(job["log"], "a") as log:
-        proc = subprocess.Popen([BLENDER, "--background", job["blend"], "--python", os.path.join(HERE, "_bg_worker.py"), "--", jp],
+    with open(job["log"], "a", encoding="utf-8") as log:
+        proc = subprocess.Popen([BLENDER, "--background", job["blend"], "--python", os.path.join(HERE,
+                "_bg_worker.py"), "--", jp],
                                 stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
         write(sp, {"state": "rendering", "pid": proc.pid, "started": t0})
         say("job", n, job["name"], "started, pid", proc.pid)
         rc = proc.wait()
     pr = read(job["progress"], {})
     ok = rc == 0 and pr.get("state") == "done"
-    write(sp, {"state": "done" if ok else "error", "started": t0, "finished": time.time(), "elapsed": round(time.time() - t0, 1),
-               "returncode": rc, "sec_per_frame": pr.get("sec_per_frame"), "error": None if ok else (pr.get("error") or "exit %s" % rc)})
+    write(sp, {"state": "done" if ok else "error", "started": t0, "finished": time.time(),
+            "elapsed": round(time.time() - t0, 1),
+               "returncode": rc, "sec_per_frame": pr.get("sec_per_frame"),
+               "error": None if ok else (pr.get("error") or "exit %s" % rc)})
     say("job", n, job["name"], "done" if ok else "FAILED", "in", round(time.time() - t0), "s")
 
 

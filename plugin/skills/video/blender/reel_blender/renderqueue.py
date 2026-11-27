@@ -22,7 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def _read(path, default=None):
     try:
-        with open(path) as fh:
+        with open(path, encoding="utf-8") as fh:
             return json.load(fh)
     except Exception:
         return default
@@ -30,7 +30,7 @@ def _read(path, default=None):
 
 def _write(path, data):
     tmp = "%s.%d.tmp" % (path, os.getpid())
-    with open(tmp, "w") as fh:
+    with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=1)
     os.replace(tmp, path)
 
@@ -78,7 +78,7 @@ def submit(queue_dir, name, blend, out_dir, frames=None, frame_start=None, frame
            "resume": bool(resume), "develop": develop, "sheet": sheet, "sheet_cols": int(sheet_cols),
            "progress": os.path.join(out_dir, "render_progress.json"), "log": os.path.join(out_dir, "render.log")}
     tmp = os.path.join(queue_dir, "jobs", "submit.%d.%d.tmp" % (os.getpid(), int(time.time() * 1000)))
-    with open(tmp, "w") as fh:
+    with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(job, fh, indent=1)
     ids = job_ids(queue_dir)
     n = (ids[-1] if ids else 0) + 1
@@ -110,7 +110,7 @@ def ensure_runner(queue_dir, blender=None):
         cmd = [py, runner, queue_dir, blender]          # Blender's own Python: no second Blender just to wait
     else:
         cmd = [blender, "--background", "--python", runner, "--", queue_dir, blender]
-    log = open(os.path.join(queue_dir, "runner.log"), "a")
+    log = open(os.path.join(queue_dir, "runner.log"), "a", encoding="utf-8")
     proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
     return {"pid": proc.pid, "started": True}
 

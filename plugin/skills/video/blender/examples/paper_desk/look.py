@@ -24,7 +24,8 @@ PAL = {                              # linear RGB of the materials a person woul
 PARAMS = dict(lens=40.0, fstop=16.0, exposure=0.8, view_look="Medium High Contrast", world=1.0,
               lamp=1.2, lamp_pos=(-1.80, -0.12, 0.42), lamp_aim=(-1.40, 0.02, 0.0), warm=0.0)
 DEVELOP = dict(grain=0.010, vignette=0.12, fringe=0.0, flicker=0.012, fine=True)   # light finishing, per-pixel grain
-FINAL = dict(samples=64, noise=0.03)                                                 # overrides of the cycles_final preset
+# overrides of the cycles_final preset
+FINAL = dict(samples=64, noise=0.03)
 
 
 def _mat_grid():
@@ -44,7 +45,8 @@ def _mat_grid():
     PP._put(wear, "Scale", 14.0)
     PP._put(wear, "Detail", 4.0)
     link(tc.outputs["Object"], wear.inputs["Vector"])
-    fac = mth("MULTIPLY", mth("MAXIMUM", mth("MULTIPLY", fine, 0.5), bold), mth("MULTIPLY_ADD", wear.outputs[0], 0.9, 0.35))
+    fac = mth("MULTIPLY", mth("MAXIMUM", mth("MULTIPLY", fine, 0.5), bold), mth("MULTIPLY_ADD", wear.outputs[0], 0.9,
+            0.35))
     mix = new("ShaderNodeMix")
     mix.data_type = "RGBA"
     mix.inputs[6].default_value = PAL["mat"] + (1.0,)
@@ -64,7 +66,8 @@ def materials(p):
     tr = p.get("trans", {})
     out = {
         "mat": _mat_grid(),
-        "wood": pm("PD_Wood", PAL["wood"], fibre=0.9, fibre_size=0.012, mottle=0.25, roughness=0.45, bump=0.1, vary=0.0),
+        "wood": pm("PD_Wood", PAL["wood"], fibre=0.9, fibre_size=0.012, mottle=0.25, roughness=0.45, bump=0.1,
+        vary=0.0),
         "kraft": pm("PD_Kraft", PAL["kraft"], fibre=0.9, fibre_size=0.002, mottle=0.3, mottle_size=0.02),
         "core": pm("PD_Core", PAL["core"], fibre=0.9, fibre_size=0.0012, mottle=0.3, mottle_size=0.004),
         "ivory": pm("PD_Ivory", PAL["ivory"], fibre=0.3, fibre_size=0.002),
@@ -75,7 +78,8 @@ def materials(p):
     }
     for key, glow in (("lantern", tr.get("lantern", 0.20)), ("tube", tr.get("tube", 0.25))):
         c = PAL[key]
-        out["p_" + key] = pm("PD_P_" + key, c, translucency=glow, transmit=tuple(0.25 + 0.6 * ch for ch in c), fibre=0.35,
+        out["p_" + key] = pm("PD_P_" + key, c, translucency=glow, transmit=tuple(0.25 + 0.6 * ch for ch in c),
+                fibre=0.35,
                              fibre_size=0.0012, mottle=0.12, mottle_size=0.008, vary=0.03)
     return out
 
@@ -105,7 +109,8 @@ def area(name, coll, pos, aim, size, power, color):
 
 def lights(sh):
     """The clip lamp with its blue gel (sh.lights['lamp']) and, when p['warm'] > 0, a small warm work lamp
-    (sh.lights['warm']); a shot's builder bakes their energy. Position, aim and watts come from the shot's parameters."""
+    (sh.lights['warm']); a shot's builder bakes their energy. Position, aim and watts come from the shot's
+    parameters."""
     p = sh.p
     sh.lights["lamp"] = area("PD_ClipLamp", sh.env, p["lamp_pos"], p["lamp_aim"], 0.12, p["lamp"], PAL["blue_lamp"])
     if p["warm"] > 0.0:

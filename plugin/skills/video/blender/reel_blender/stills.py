@@ -73,7 +73,8 @@ def banner_crops(src, out_dir, phone=(1546, 423), desktop=(2560, 423)):
 
 def watermark_cut(src, out_path, size=150, shape="circle", margin=0.0):
     """Cut a watermark: the middle square of the picture scaled to size x size px, transparent outside one simple
-    shape ("circle" or "square"); margin (circle only) is the share of the side left clear at the edge. PNG. Check it at 56 px over
+    shape ("circle" or "square"); margin (circle only) is the share of the side left clear at the edge. PNG. Check it at
+    56 px over
     a dark and a light frame. Returns out_path."""
     img = Image.open(src).convert("RGBA")
     side = min(img.size)

@@ -330,7 +330,7 @@ Parent the empty to the part that carries position only (the root), not to a bod
 `reel qa film.json --page-only` and read the holds lines for the labels.
 
 ## 12. `film.py`: the calls an animator makes, in order
-`film.py` holds film mechanics with no look in them. A film registers once per Blender session; every shot is then the same
+`film.py` names the public calls of the film mechanics, which have no look in them; the work lives in `plan.py` (the plan, no bpy), `film_state.py`, `film_camera.py`, `film_shot.py` and `film_queue.py`, and `import reel_blender.film as F; F.build_shot(...)` works as before. A film registers once per Blender session; every shot is then the same
 few calls. All of them end under 60 s; slow renders go to the queue (section 3).
 1. `film.register(name, project, plan, look, builders, shot_params=None, extra_shots=None)`. `look` is a `film.Look(materials,
    world, lights, params, develop, final, prefix)`: the film's materials, world and lights, shared shot parameters (lens, fstop,
@@ -347,13 +347,13 @@ few calls. All of them end under 60 s; slow renders go to the queue (section 3).
    gives the track positions without rendering.
 4. `film.submit_check(shot, poses, fmt=None)` queues three poses at final settings, with develop, into
    `renders/check/<shot>/f%04d.jpg` from a copy of the scene in its own file. Submit it the moment the first strip looks right.
-5. `film.submit(shot, fmt=None, frames=None)` saves `blends/<name>-<shot>.blend` and queues the final render into `plates/<shot>/`.
+5. `film.submit(shot, fmt=None, frames=None)` saves `blends/<name>-<shot>.blend` and queues the final render into the shot's plate folder: `plates/<shot>/`, or the shot's `plate` field when the plan has one (plus `@9x16` for a second format), the rule the engine uses. A shot id may hold letters, digits, `-` and `_` only.
 6. `film.export_tracks(shot, fmt=None)` writes `plates/<shot>/tracks.json` from the live scene (events: frame = pose - 1).
 7. `film.status()` lists every job, when the queue empties and `free_mb`.
 `submit`, `submit_check` and `export_tracks` need the live scene to be that shot in that format and say so when it is not.
 Kept from seven animators: constant keys, seeded jitter, one saved .blend per queued job, focus at the harmonic mean of the
 nearest and farthest depth of the `in_focus` points (smoothed over three poses). The plan is read only through the accessors
-at the top of `film.py` (`plan_shots`, `plan_formats`, `plan_fps`, `shot_poses`, `shot_tracks`, `shot_events`, `shot_in_focus`,
+of `plan.py`, which `film.py` re-exports (`plan_shots`, `plan_formats`, `plan_fps`, `shot_poses`, `shot_tracks`, `shot_events`, `shot_in_focus`,
 `shot_focus_pull`, `shot_camera`), so a renamed plan field costs one line.
 
 ## 13. `lettering.py`: text as an image

@@ -12,9 +12,12 @@ import bpy
 
 PRESETS = {
     # scale: resolution percentage; samples: Eevee TAA render samples (also drives DOF and soft shadow quality)
-    "preview": dict(engine="EEVEE", scale=50, samples=12, raytracing=False, shadow_rays=1, shadow_steps=4, dof_jitter=False),
-    "draft": dict(engine="EEVEE", scale=50, samples=20, raytracing=True, rt_resolution="2", shadow_rays=1, shadow_steps=6, dof_jitter=True),
-    "final": dict(engine="EEVEE", scale=100, samples=40, raytracing=True, rt_resolution="2", shadow_rays=2, shadow_steps=6, dof_jitter=True),
+    "preview": dict(engine="EEVEE", scale=50, samples=12, raytracing=False, shadow_rays=1, shadow_steps=4,
+    dof_jitter=False),
+    "draft": dict(engine="EEVEE", scale=50, samples=20, raytracing=True, rt_resolution="2", shadow_rays=1,
+    shadow_steps=6, dof_jitter=True),
+    "final": dict(engine="EEVEE", scale=100, samples=40, raytracing=True, rt_resolution="2", shadow_rays=2,
+    shadow_steps=6, dof_jitter=True),
     "cycles_still": dict(engine="CYCLES", scale=100, samples=96, denoise=True),
     # Cycles on the Metal GPU: physical soft shadows, light through paper, bounce. noise: adaptive sampling threshold.
     "cycles_preview": dict(engine="CYCLES", scale=50, samples=24, denoise=True, noise=0.1, bounces=4, diffuse=2),
@@ -171,7 +174,8 @@ def render_strip(scene, frames, out_path, preset="preview", cols=3, develop=None
     tmp = os.path.join(os.path.dirname(out_path), "_strip")
     paths, secs = [], []
     for f in frames:
-        r = render_still(scene, os.path.join(tmp, "f%04d.jpg" % f), frame=f, preset=preset, develop=develop, **overrides)
+        r = render_still(scene, os.path.join(tmp, "f%04d.jpg" % f), frame=f, preset=preset, develop=develop,
+                **overrides)
         paths.append(r["path"])
         secs.append(r["seconds"])
     contact_sheet(paths, out_path, cols=cols)

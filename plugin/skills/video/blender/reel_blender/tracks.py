@@ -61,6 +61,6 @@ def export_tracks(scene, camera, points, out_path, events=(), frame_start=None, 
         "events": [{"name": n, "frame": int(f) - fs} for n, f in events],
     }
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w") as fh:
+    with open(out_path, "w", encoding="utf-8") as fh:
         json.dump(data, fh, separators=(",", ":"))
     return {"path": out_path, "frames": data["frames"], "points": sorted(points), "events": data["events"]}

@@ -31,8 +31,12 @@ def _crop(g, box):
 
 def edge_energy(img, box=None):
     """Sharpness of a frame (or of a box of it): variance of FIND_EDGES after a 5 px median, border of 4 px left out.
-    Compare only frames of the same size and the same region; higher is sharper."""
-    g = _crop(_grey(img), box).filter(ImageFilter.MedianFilter(5)).filter(ImageFilter.FIND_EDGES)
+    Compare only frames of the same size and the same region; higher is sharper. A black or flat picture gives 0.0.
+    Raises ValueError for a region smaller than 9 x 9 px, which has no pixels left after the border."""
+    g = _crop(_grey(img), box)
+    if min(g.size) < 9:
+        raise ValueError("edge_energy needs a region of at least 9 x 9 px, got %d x %d" % g.size)
+    g = g.filter(ImageFilter.MedianFilter(5)).filter(ImageFilter.FIND_EDGES)
     return float(np.asarray(g, np.float32)[4:-4, 4:-4].var())
 
 
@@ -56,11 +60,20 @@ def shift_between(a, b):
     return (2 * int(dx), 2 * int(dy))
 
 
+def _ratio(b, a):
+    """b / a for two measurements; defined when a is 0 (a black or flat frame): 1.0 when b is 0 too, else infinity."""
+    if a == 0:
+        return 1.0 if b == 0 else float("inf")
+    return round(b / a, 4)
+
+
 def match(a, b):
     """Compare the same pose from two renders of one size. Returns dict(shift=(dx, dy) px, brightness_ratio b / a,
-    edge_ratio b / a, mean_a, mean_b, edge_a, edge_b)."""
+    edge_ratio b / a, mean_a, mean_b, edge_a, edge_b). When picture a is black or flat, so that a measurement is 0,
+    the ratio of that measurement is 1.0 if b's is 0 as well and infinity otherwise, so compare_sets marks the pair
+    not ok instead of failing."""
     ma, mb, ea, eb = brightness(a), brightness(b), edge_energy(a), edge_energy(b)
-    return {"shift": shift_between(a, b), "brightness_ratio": round(mb / ma, 4), "edge_ratio": round(eb / ea, 4),
+    return {"shift": shift_between(a, b), "brightness_ratio": _ratio(mb, ma), "edge_ratio": _ratio(eb, ea),
             "mean_a": round(ma, 2), "mean_b": round(mb, 2), "edge_a": round(ea, 2), "edge_b": round(eb, 2)}
 
 
@@ -70,7 +83,8 @@ def compare_sets(pairs, brightness_tol=0.03, edge_tol=0.05, max_shift=1):
     rows = []
     for a, b in pairs:
         m = match(a, b)
-        m["ok"] = (max(abs(m["shift"][0]), abs(m["shift"][1])) <= max_shift and abs(m["brightness_ratio"] - 1.0) <= brightness_tol
+        m["ok"] = (max(abs(m["shift"][0]),
+                abs(m["shift"][1])) <= max_shift and abs(m["brightness_ratio"] - 1.0) <= brightness_tol
                    and abs(m["edge_ratio"] - 1.0) <= edge_tol)
         rows.append(m)
     return {"ok": all(r["ok"] for r in rows), "rows": rows}

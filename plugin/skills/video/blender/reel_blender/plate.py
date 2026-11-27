@@ -12,7 +12,7 @@ def check_plate(plate_dir):
     names = sorted(n for n in os.listdir(fdir) if n.lower().endswith((".jpg", ".png"))) if os.path.isdir(fdir) else []
     if not os.path.isfile(tj):
         return {"ok": False, "frames_on_disk": len(names), "problems": ["tracks.json missing"]}
-    with open(tj) as fh:
+    with open(tj, encoding="utf-8") as fh:
         t = json.load(fh)
     n = t.get("frames", 0)
     if len(names) != n:

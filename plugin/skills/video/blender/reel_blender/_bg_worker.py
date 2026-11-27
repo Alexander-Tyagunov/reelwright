@@ -8,7 +8,7 @@ import traceback
 import bpy
 
 job_path = sys.argv[sys.argv.index("--") + 1]
-with open(job_path) as fh:
+with open(job_path, encoding="utf-8") as fh:
     JOB = json.load(fh)
 sys.path.insert(0, JOB["lib_parent"])
 
@@ -16,7 +16,7 @@ sys.path.insert(0, JOB["lib_parent"])
 def write(state, **kw):
     kw["state"] = state
     tmp = JOB["progress"] + ".tmp"
-    with open(tmp, "w") as fh:
+    with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(kw, fh)
     os.replace(tmp, JOB["progress"])
 

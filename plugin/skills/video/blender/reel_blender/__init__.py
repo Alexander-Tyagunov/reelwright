@@ -17,7 +17,10 @@ Modules
   paper       paper / card material builder, plain materials
   photo       lens and sensor faults on a rendered frame (vignette, fringe, grain, flicker)
   renderqueue one-at-a-time render queue shared by several sessions (submit, status, cancel; no bpy needed)
-  film        plan-driven film work with no look: register a look and builders, build_shot, strip, submit, export_tracks, status
+  plan        reading the shot plan: the one place that knows its field names, and the plate folder rule (no bpy)
+  film        plan-driven film work with no look: register a look and builders, build_shot, strip, submit,
+  export_tracks, status
+              (the public calls; the work is in film_state, film_camera, film_shot and film_queue)
   lettering   hand lettering and printed text as image textures (Pillow, numpy; run in the workspace; import it by name)
   stills      still pictures: render at a size, circle check sheet, banner crops, watermark cut (Pillow; import by name)
   checks      edge energy, brightness, shift and match of two frames (Pillow, numpy; import by name)
@@ -29,7 +32,7 @@ import importlib
 
 __version__ = "0.3.0"
 
-from . import motion, plate, craft, renderqueue  # noqa: F401  (usable without Blender)
+from . import motion, plate, craft, renderqueue, plan  # noqa: F401  (usable without Blender)
 
 try:
     import bpy  # noqa: F401
@@ -38,14 +41,16 @@ except ImportError:  # outside Blender: only motion and plate
     _HAVE_BPY = False
 
 if _HAVE_BPY:
-    from . import project, mesh, anim, camera, render, background, tracks, paper, photo, film  # noqa: F401
+    from . import project, mesh, anim, camera, render, background, tracks, paper, photo  # noqa: F401
+    from . import film_state, film_camera, film_shot, film_queue, film  # noqa: F401
 
 
 def reload_all():
     """Reload every module after the files changed on disk (call from the live Blender)."""
-    names = ["motion", "plate", "craft", "renderqueue"]
+    names = ["motion", "plate", "craft", "renderqueue", "plan"]
     if _HAVE_BPY:
-        names += ["project", "mesh", "anim", "paper", "photo", "camera", "render", "background", "tracks", "film"]
+        names += ["project", "mesh", "anim", "paper", "photo", "camera", "render", "background", "tracks",
+                  "film_state", "film_camera", "film_shot", "film_queue", "film"]
     g = globals()
     for n in names:
         g[n] = importlib.reload(g[n])

@@ -35,7 +35,8 @@ def font_file(path, cache_dir="/tmp"):
 
 
 def noise(shape, cell, seed, blur=0.0):
-    """Value noise 0..1 of the given (rows, cols): random cells of `cell` pixels, smoothly enlarged, optionally blurred."""
+    """Value noise 0..1 of the given (rows, cols): random cells of `cell` pixels, smoothly enlarged, optionally
+    blurred."""
     rs = np.random.RandomState(seed)
     small = Image.fromarray((rs.uniform(0, 1, (shape[0] // cell + 2, shape[1] // cell + 2)) * 255).astype(np.uint8))
     im = small.resize((shape[1], shape[0]), Image.BICUBIC)
@@ -53,7 +54,8 @@ def _save(alpha, ink, out_png, proof, paper):
     Image.fromarray(rgba, "RGBA").save(out_png)
     if proof:
         card = Image.new("RGB", alpha.shape[::-1], paper)
-        card.paste(Image.new("RGB", alpha.shape[::-1], tuple(ink)), (0, 0), Image.fromarray((np.clip(alpha, 0, 1) * 255).astype(np.uint8)))
+        card.paste(Image.new("RGB", alpha.shape[::-1], tuple(ink)), (0, 0), Image.fromarray((np.clip(alpha, 0,
+                1) * 255).astype(np.uint8)))
         card.save(proof, quality=90)
     ys, xs = np.nonzero(alpha > 0.2)
     return (int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())) if len(xs) else (0, 0, 0, 0)
@@ -66,15 +68,19 @@ def _stroke(draw, pts, width):
 
 
 def _arrow(canvas, x, yb, em_px, r):
-    """A drawn arrow 1.22 em long at the height of the small letters (shaft that sags, two head strokes). Returns its length."""
+    """A drawn arrow 1.22 em long at the height of the small letters (shaft that sags, two head strokes). Returns its
+    length."""
     d, w = ImageDraw.Draw(canvas), max(3, int(round(em_px * 0.105)))
     j = lambda a: r.uniform(-a, a) * em_px
     y0, ln = yb - 0.30 * em_px, 1.22 * em_px
-    shaft = [(x + ln * t, y0 + 0.035 * em_px * math.sin(math.pi * t) - 0.05 * em_px * t + j(0.008)) for t in (0.0, 0.25, 0.5, 0.75, 1.0)]
+    shaft = [(x + ln * t, y0 + 0.035 * em_px * math.sin(math.pi * t) - 0.05 * em_px * t + j(0.008)) for t in (0.0,
+            0.25, 0.5, 0.75, 1.0)]
     _stroke(d, shaft, w)
     tx, ty = shaft[-1]
-    _stroke(d, [(tx - 0.36 * em_px + j(0.02), ty - 0.23 * em_px + j(0.02)), (tx - 0.15 * em_px, ty - 0.08 * em_px), (tx + 0.02 * em_px, ty + 0.005 * em_px)], w)
-    _stroke(d, [(tx + 0.015 * em_px, ty - 0.01 * em_px), (tx - 0.13 * em_px, ty + 0.10 * em_px), (tx - 0.30 * em_px + j(0.02), ty + 0.24 * em_px + j(0.02))], w)
+    _stroke(d, [(tx - 0.36 * em_px + j(0.02), ty - 0.23 * em_px + j(0.02)), (tx - 0.15 * em_px, ty - 0.08 * em_px),
+            (tx + 0.02 * em_px, ty + 0.005 * em_px)], w)
+    _stroke(d, [(tx + 0.015 * em_px, ty - 0.01 * em_px), (tx - 0.13 * em_px, ty + 0.10 * em_px),
+            (tx - 0.30 * em_px + j(0.02), ty + 0.24 * em_px + j(0.02))], w)
     return ln
 
 
@@ -109,11 +115,13 @@ def _letter_line(canvas, path, scale, face_h_mm, text, em_mm, left_mm, base_mm, 
             region = canvas.crop((box[0], box[1], box[0] + im.size[0], box[1] + im.size[1]))
             canvas.paste(ImageChops.lighter(region, im), box)
             nxt = text[i + 1] if i + 1 < len(text) and text[i + 1] not in " >" else ""
-            x += (f0.getlength(ch + nxt) - f0.getlength(nxt) if nxt else f0.getlength(ch)) * size / em + r.uniform(-0.012, 0.022) * em
+            step = f0.getlength(ch + nxt) - f0.getlength(nxt) if nxt else f0.getlength(ch)
+            x += step * size / em + r.uniform(-0.012, 0.022) * em
     return x / scale
 
 
-def hand_lettering(out_png, font, size_mm, lines, px_per_mm=19.0, ink=(38, 33, 31), seed=1, proof=None, paper=(226, 208, 170)):
+def hand_lettering(out_png, font, size_mm, lines, px_per_mm=19.0, ink=(38, 33, 31), seed=1, proof=None, paper=(226,
+        208, 170)):
     """Write hand lettering as a transparent PNG covering a face of size_mm = (width, height) millimetres.
 
     font: path of a handwriting face (.ttf, .otf, .woff, .woff2). lines: [(text, em_mm, left_mm, baseline_mm, rise_mm,
@@ -127,15 +135,19 @@ def hand_lettering(out_png, font, size_mm, lines, px_per_mm=19.0, ink=(38, 33, 3
     canvas = Image.new("L", (w_px, h_px), 0)
     ends = [_letter_line(canvas, path, px_per_mm, size_mm[1], *row, r) for row in lines]
     a = np.asarray(canvas.filter(ImageFilter.GaussianBlur(1.6)), dtype=np.float32) / 255.0
-    edge = (noise(a.shape, 3, seed + 10) - 0.5) * 0.30 + (noise(a.shape, 9, seed + 11) - 0.5) * 0.14      # eats into the edge of a stroke
+    # eats into the edge of a stroke
+    edge = (noise(a.shape, 3, seed + 10) - 0.5) * 0.30 + (noise(a.shape, 9, seed + 11) - 0.5) * 0.14
     a = np.clip((a + edge - 0.30) / 0.34, 0.0, 1.0)
     a = a * a * (3.0 - 2.0 * a)
-    dens = 0.80 + 0.20 * noise(a.shape, 46, seed + 12)                                                    # pressed harder here, lighter there
-    tooth = 0.86 + 0.14 * np.clip((noise(a.shape, 2, seed + 13) - 0.22) / 0.4, 0.0, 1.0)                  # specks the pencil skipped
+    # pressed harder here, lighter there
+    dens = 0.80 + 0.20 * noise(a.shape, 46, seed + 12)
+    # specks the pencil skipped
+    tooth = 0.86 + 0.14 * np.clip((noise(a.shape, 2, seed + 13) - 0.22) / 0.4, 0.0, 1.0)
     a = np.clip(a * dens * tooth, 0.0, 1.0)
     x0, y0, x1, y1 = _save(a, ink, out_png, proof, paper)
     return {"size": (w_px, h_px), "line_ends_mm": [round(e, 1) for e in ends],
-            "ink_box_mm": [round(x0 / px_per_mm, 1), round((h_px - y1) / px_per_mm, 1), round(x1 / px_per_mm, 1), round((h_px - y0) / px_per_mm, 1)],
+            "ink_box_mm": [round(x0 / px_per_mm, 1), round((h_px - y1) / px_per_mm, 1), round(x1 / px_per_mm, 1),
+            round((h_px - y0) / px_per_mm, 1)],
             "alpha_mean_in_ink": round(float(a[a > 0.2].mean()), 3) if (a > 0.2).any() else 0.0}
 
 
@@ -144,11 +156,15 @@ def _advances(text, font, track):
     xs, x = [], 0.0
     for i, ch in enumerate(text):
         xs.append(x)
-        x += (font.getlength(text[i:i + 2]) - font.getlength(text[i + 1]) + track) if i < len(text) - 1 else font.getlength(ch)
+        if i < len(text) - 1:
+            x += font.getlength(text[i:i + 2]) - font.getlength(text[i + 1]) + track
+        else:
+            x += font.getlength(ch)
     return xs, x
 
 
-def printed_text(out_png, font, size_mm, lines, px_per_mm=40.0, ink=(24, 22, 22), seed=1, gain_px=5, proof=None, paper=(226, 208, 170)):
+def printed_text(out_png, font, size_mm, lines, px_per_mm=40.0, ink=(24, 22, 22), seed=1, gain_px=5, proof=None,
+        paper=(226, 208, 170)):
     """Write printed text as a transparent PNG covering a face of size_mm = (width, height) millimetres.
 
     lines: [(text, em_mm, track_em, baseline_mm)]: the text, its em size, letter spacing as a share of the em, and the
@@ -169,10 +185,12 @@ def printed_text(out_png, font, size_mm, lines, px_per_mm=40.0, ink=(24, 22, 22)
     img = img.filter(ImageFilter.MaxFilter(gain_px))
     a = np.asarray(img, np.float32) / 255.0
     fine, slow = noise(a.shape, 1, seed + 1, 0.9), noise(a.shape, 55, seed + 2, 4.0)
-    soft = np.asarray(Image.fromarray((a * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.9)), np.float32) / 255.0
+    soft = np.asarray(Image.fromarray((a * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.9)),
+            np.float32) / 255.0
     edge = np.clip((soft + 0.16 * (fine - 0.5) - 0.5) * 3.0 + 0.5, 0.0, 1.0)
     holes = (noise(a.shape, 1, seed + 3, 1.3) > 0.985).astype(np.float32)
     alpha = edge * (0.955 + 0.045 * slow) * (0.985 + 0.05 * (fine - 0.5)) * (1.0 - 0.40 * holes)
     x0, y0, x1, y1 = _save(alpha, ink, out_png, proof, paper)
     return {"size": (w_px, h_px), "rows": rows,
-            "ink_box_mm": [round(x0 / px_per_mm, 1), round((h_px - y1) / px_per_mm, 1), round(x1 / px_per_mm, 1), round((h_px - y0) / px_per_mm, 1)]}
+            "ink_box_mm": [round(x0 / px_per_mm, 1), round((h_px - y1) / px_per_mm, 1), round(x1 / px_per_mm, 1),
+            round((h_px - y0) / px_per_mm, 1)]}
