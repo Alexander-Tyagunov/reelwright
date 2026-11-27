@@ -23,7 +23,7 @@ changes the code.
     skills/<skill>/SKILL.md   nine skills; film, studio and publish have references/ of their own
     skills/video/       the engine lives inside this skill so every surface can reach it
       references/*.md
-      blender/          reel_blender/ (Python library 0.3.0) and examples/paper_desk/ (an example film project)
+      blender/          reel_blender/ (Python library, same version as the plugin) and examples/paper_desk/ (an example film project)
       templates/<name>/film.json
       scripts/          TypeScript, run directly by Node 24 (no build step)
         reel.ts         CLI entry
@@ -127,8 +127,25 @@ about 60 characters, else the film title or "Part N").
 `plugin/skills/video/blender/reel_blender/` renders plates; the engine never imports it. The two sides meet in two files: the
 shot plan (`references/shot-plan.md` lists the fields each side reads; the library reads the plan only through `plan.py`, the twin of
 `plan/parse.ts`: same shot-id rule, same plate-folder rule) and the plate (`tracks.json` and frames, `references/film-spec.md`). `film.py` (the public calls, over `film_state.py`, `film_camera.py`, `film_shot.py` and `film_queue.py`), `lettering.py`, `stills.py` and
-`checks.py` came in 0.3.0; the first runs inside Blender, the others in the workspace with Pillow and numpy. The library holds
+`checks.py` came in 0.2.0; the first runs inside Blender, the others in the workspace with Pillow and numpy. The library holds
 no look and no project path. `examples/paper_desk/` shows one look module and one shot module on top of it.
+
+## Skills, agents and the film path
+
+Nine skills. `film` is the main path and names the agent for each of its twelve steps; `studio` keeps the owner's profile and
+look ledger, which `film` and `publish` read first; `publish` prepares the upload kit and never uploads. `video` holds the engine
+and the references the others read; `release-video`, `metrics-video`, `explainer-video`, `check-film` and `add-scene` are
+recipes on it. Eight agents, each pinned to a model tier (`references/model-routing.md`): `reel-director` (pitches, treatment,
+plan), `reel-animator` (one sequence in Blender at a time), `reel-builder` (assembly, gates, side-file fixes), `reel-critic` (a
+film it did not make), and `reel-ingest`, `reel-runner`, `reel-reviewer`, `reel-auteur` for both paths. A skill reaches the engine
+through `${CLAUDE_SKILL_DIR}`, an agent through `${CLAUDE_PLUGIN_ROOT}`.
+
+The first film's plan and a few downscaled plate frames are the fixtures of record (`tests/fixtures/first-film/`); the engine's
+tests for `reel plan`, `reel assemble`, `reel plate` and the cut and chapter rules read them. The example project uses neutral
+names, and no code or skill text names an outside project, person or source. The library carries the plugin's version
+(`reel_blender.__version__` equals `version` in `plugin.json`; a unit test checks it), so a session can tell whether the copy on
+a Blender machine is the plugin's. `film.build_shot` refuses to empty an open scene that has unsaved changes and is not the
+film's own (`film_state.check_open_file`).
 
 ## Generated sound
 

@@ -5,6 +5,12 @@ planned, and the exact state of the two pieces of work that were stopped mid-way
 
 ## Where things stand
 
+**Update, 27 November 2026: stage 2 is done for the Blender path (Reelwright 0.2.0).** The `film`, `studio` and `publish`
+skills, the director, animator and critic agents, the shot plan, `reel assemble`, the Blender library and its example
+project exist, and a fresh session that could read only the plugin made a 6-second film in two formats with them (see
+`docs/TESTING.md`, "Cold-start test"). What remains is listed under "Stage 2" below. The text after this paragraph is the
+roadmap as written on 24 November 2026, kept for the reasoning.
+
 **Finished and delivered: Reelwright 0.1.0** (`master`, commit `3fc66eb`). A JSON film spec is rendered to MP4 by
 twelve built-in scene types, measured by a quality gate, with six skills and six model-pinned agents. 152 unit
 tests and 43 end-to-end scenarios pass; an independent review's 21 findings are fixed. See `docs/TESTING.md`.
@@ -90,7 +96,18 @@ Estimate: 2.5 to 4 hours, most of it the range test and the Blender and painted 
 
 ### Stage 2: put the creative pipeline in the plugin
 
-Only after stage 1 is accepted.
+**Done for the Blender path in 0.2.0** (the nine steps are the `film` skill; the variety rule is the director's six pitches
+and the ledger; the critic is `reel-critic`). **Still to do:**
+- **Measured sameness.** The ledger rule (a new look differs on medium or palette family from the last five) is enforced in
+  words by the director and the critic; nothing measures how alike two films look.
+- **A selector agent** that chooses among the pitches; today the director argues the pick and the owner may overrule it.
+- **Browser 3D** as a second rendering backend, drawn in the page.
+- **Generated shots** (images and footage from a generation service), within the owner's cost cap. Out of scope in 0.2.0.
+- **Narration.** Set aside by the owner; see "Later".
+- Not tested yet: the fixes made after the cold-start test, by a second cold run; sound and motion at speed, which no
+  agent can judge.
+
+The plan as first written:
 
 **A new `film` skill**, the main path for anything that is not a recurring templated video:
 
@@ -223,8 +240,7 @@ Finished: merged onto `master` (synthesiser in `scripts/audio/`, `reel sound`, r
 
 ### The two films
 
-In the session workspace under `/home/claude/work/films/`, and copied to the Mac (see "Where the files are"). Both
-stopped after the treatment; neither has a scene yet.
+In the session workspace that made them, not in this repository. Both stopped after the treatment; neither has a scene yet.
 
 | Film | Done | Not done |
 |---|---|---|
@@ -248,18 +264,9 @@ note: see "No predefined visuals", "No limit on the medium" and "No habit" in th
 
 ## Where the files are
 
-On the owner's Mac, in `~/ClaudeProjects`:
-
-| Path | What |
-|---|---|
-| `reelwright/` | The repository at 0.1.0, plus this file |
-| `reelwright-0.1.0.plugin` | The installable plugin as delivered |
-| `reelwright-samples/` | The six 0.1.0 sample films |
-| `reelwright-wip/reelwright-all.bundle` | A git bundle with `master` and `wip/generated-sound` |
-| `reelwright-wip/films-wip.zip` | The two film projects with their treatments |
-
-To bring the paused branch into the repository on the Mac:
-`git fetch ../reelwright-wip/reelwright-all.bundle "refs/heads/*:refs/remotes/paused/*"`.
+Not in this repository: the 0.1.0 plugin package, the six 0.1.0 sample films, a git bundle with the paused sound branch (it
+has since been merged) and the two film projects with their treatments are kept by the owner, next to his clone of the
+repository.
 
 ## To resume
 

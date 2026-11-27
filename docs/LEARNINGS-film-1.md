@@ -7,7 +7,7 @@ a skill that repeats them must tell the reader to check them again.
 
 A 93-second stop-motion film (16 scenes: intro, 14 shots, outro) about a product's release history, rendered in
 Blender as paper models on a desk, with tracked labels and generated sound, then published on YouTube with
-channel art made in the same look. The owner's Mac ran only Blender and its MCP server; everything else ran in
+channel art made in the same look. The owner's computer ran only Blender and its MCP server; everything else ran in
 the session's workspace.
 
 ## What the owner rejected, and what he accepted
