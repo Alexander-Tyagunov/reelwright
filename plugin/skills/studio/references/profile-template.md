@@ -1,9 +1,15 @@
 # Studio profile
 
-<!-- Kept by the studio skill. Every line under "In his words" is a quote with a date. Sections the owner has not
+<!-- Kept by the studio skill. Every line under "In his words" is a quote with a date (a verdict he reported without
+a date gets the day it was recorded and "reported" in the About column). Sections the owner has not
 spoken to say "not stated yet". Claude does not write taste he did not express. -->
 
 Last updated: <YYYY-MM-DD>
+
+## Films so far
+
+Films he has already made, one line each: title, year, where it was published, from his own account.
+not stated yet
 
 ## Who the films are for
 

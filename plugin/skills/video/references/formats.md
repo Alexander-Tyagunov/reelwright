@@ -39,7 +39,9 @@ rate. Brand colours survive the round trip to within about 2 levels per channel.
 
 ## Sound
 
-Sound is optional and is added at export from a file the user supplies. The export normalises to -14 LUFS
+For a scene-library video sound is optional and is added at export from a file the user supplies. A film made from
+plates (the film skill) gets a generated bed and cues from `reel render` by default (`--no-sound` on assemble leaves
+them out). The export normalises to -14 LUFS
 integrated with true peak at or below -1.5 dBTP and then measures the finished file, because encoding to AAC can
 raise the peak. Keep music under voice and quieter than feels natural: many viewers watch muted or at low volume.
 

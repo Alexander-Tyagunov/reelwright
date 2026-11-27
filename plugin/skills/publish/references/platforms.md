@@ -17,8 +17,11 @@ have not checked a value, say so instead of giving one. `video/` below is the vi
 
 - A video is a Short when it is square or vertical and at most 3 minutes long. A 16:9 video of any length is a
   regular video. So a 93-second 16:9 film is a regular video; the same film framed 9:16 would be a Short.
-- Chapters, a custom thumbnail and an end screen apply to the regular video. Whether Shorts show chapters or take
-  an end screen was not checked; look it up before promising either.
+- Chapters and an end screen apply to the regular video. Whether Shorts show chapters or take an end screen was not
+  checked; leave both out of a Short and promise neither.
+- A Short takes a custom thumbnail from YouTube Studio on a computer: 9:16, recommended 2160 x 3840, at least 640 px
+  high, JPG or PNG up to 50 MB, verified account (help page "Add custom thumbnails on YouTube", read 27 November 2026;
+  no figure for the phone app). The kit's `thumbnail-short.jpg` is a 9:16 frame of the vertical plate.
 - Custom thumbnails, videos over 15 minutes and live streams need a phone-verified account.
 - The `youtube` export preset (`reel export film.json --preset youtube`) writes an H.264 and AAC MP4 at the
   render's size; it does not change the frame.
@@ -45,7 +48,10 @@ labels laid out for 16:9 do not fit a 9:16 frame.
    `reel render`, `reel qa` and `reel cuts` on that file. Labels are placed again from the new tracks.
 4. A cheaper option: a vertical cut of 30 to 60 seconds from the strongest shots
    (`reel assemble ... --shots A4,C3,D3 --format 9:16`), so fewer shots need a vertical camera.
-5. A thumbnail or cover for the vertical version is a 9:16 frame of its own.
+5. A thumbnail or cover for the vertical version is a 9:16 frame of its own, `thumbnail-short.jpg`, taken from
+   `plates/<shot>@9x16/frames/`. The file to upload is the vertical export, `out/film-9x16.export/film-9x16-youtube.mp4`
+   (`reel export film-9x16.json --preset youtube`). What does not apply to a Short: the 1280 x 720 thumbnail, chapters
+   and the end screen.
 
 ## Export sizes
 

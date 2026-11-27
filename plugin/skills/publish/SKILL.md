@@ -17,9 +17,11 @@ Names used below: `reel` is `node ${CLAUDE_SKILL_DIR}/../video/scripts/reel.ts`;
 
 1. Read the studio profile and ledger (`studio` skill, "Read"): audience, voice, platforms, fixed title or brand
    elements, intro and outro habits.
-2. Read the film's `brief.md`, `treatment.md` and `content.json`, and find the film spec (`film.json`) and the
-   rendered master (`out/film.mp4`). Get the duration and size:
-   `ffprobe -v error -show_entries format=duration:stream=width,height -of csv=p=0 out/film.mp4`.
+2. Read the film's `brief.md`, `treatment.md` and `content.json`, and find the film spec and the
+   rendered master of the format you publish: `film.json` and `out/film.mp4` for 16:9, `film-9x16.json` and
+   `out/film-9x16.mp4` for the vertical film (the exports are in `out/export/` and `out/film-9x16.export/`). Get the
+   duration and size: `ffprobe -v error -show_entries format=duration:stream=width,height -of csv=p=0 out/film.mp4`.
+   A vertical film of at most 3 minutes is a Short; the kit below has a column for it.
 3. Platform rules change. Every number in `refs/platforms.md`, `refs/upload-checklist.md` and
    `refs/channel-art.md` carries the date it was checked. Before relying on one, run a web search for the
    platform's current rule (for example "YouTube chapters requirements", "YouTube Shorts length", "YouTube banner
@@ -33,16 +35,21 @@ Make `publish/` beside the film and write these files:
 | File | What | How |
 |---|---|---|
 | `titles.txt` | three to five title options, best first, with one line on each | `refs/upload-checklist.md`, "Title" |
-| `chapters.txt` | the chapter list, timestamp lines only | `reel chapters film.json > publish/chapters.txt`, then read it |
+| `chapters.txt` | the chapter list, timestamp lines only; regular video only, and only when the film is long enough | `reel chapters film.json > publish/chapters.txt`, then read it. When `reel chapters` prints nothing and says on stderr that no chapters fit (fewer than 3 of 10 s), leave the file out and the description without chapters |
 | `description.txt` | two plain lines, how the film was made, the chapters, links | "Description" |
 | `tags.txt` | a short list, comma-separated | "Tags" |
-| `thumbnail.jpg`, `thumbnail-160.jpg` | the thumbnail and its small-size check | "Thumbnail" |
+| `thumbnail.jpg`, `thumbnail-160.jpg` | the thumbnail of a regular video (16:9, 1280 x 720) and its small-size check | "Thumbnail" |
+| `thumbnail-short.jpg`, `thumbnail-short-160.jpg` | for a Short: a 9:16 frame from `plates/<shot>@9x16/` at the plate's size (1080 x 1920 is above the 640 px minimum), checked at 160 px wide | "Thumbnail" |
 | `settings.md` | every field of the upload form with the value to enter, and the AI-content answer with its reasoning | "Settings" |
 | `formats.md` | which formats this film can go out in, per platform, and what each one still needs | `refs/platforms.md` |
 | `channel/` | banner, profile picture, watermark and their check sheets, only when asked | `refs/channel-art.md` |
 
-Done when every file exists, `thumbnail.jpg` is 1280 x 720 and under 2 MB (`ffprobe` and `ls -l`), you have opened
-`thumbnail-160.jpg` and can read it, and `chapters.txt` starts at 0:00.
+Done when every file that applies exists, and:
+- regular video: `thumbnail.jpg` is 1280 x 720 and under 2 MB (`ffprobe` and `ls -l`), you have opened `thumbnail-160.jpg`
+  and can read it, and `chapters.txt` starts at 0:00 (or is left out because fewer than three chapters fit);
+- Short: `thumbnail-short.jpg` is 9:16 and at least 640 px high, you have opened its 160 px check and can read it,
+  `settings.md` names the vertical export as the file to upload (`out/film-9x16.export/film-9x16-youtube.mp4`), and there are
+  no chapters and no end screen in it; the 1280 x 720 rule and the 2 MB limit are for the regular video only.
 
 ## Formats
 

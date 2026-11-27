@@ -11,7 +11,10 @@ do: decide what the video says, in what order, for how long.
 
 CLI: `node ${CLAUDE_SKILL_DIR}/scripts/reel.ts <command>` (written `reel` below). Run `reel doctor` once per machine.
 It needs Node 24 or newer, ffmpeg and a Chromium-family browser. If that path is not expanded, the CLI is
-`scripts/reel.ts` inside this skill's folder; use its absolute path.
+`scripts/reel.ts` inside this skill's folder; use its absolute path. If `node --version` is below 24, run
+`npm install --prefix <dir> node@24` (for example `~/tools/node24`) and start every `reel` command with
+`PATH=<dir>/node_modules/node/bin:$PATH`: shell state does not carry over between calls. `reel doctor` prints this advice
+too.
 
 ## Films made in Blender
 

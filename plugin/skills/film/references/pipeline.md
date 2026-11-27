@@ -33,9 +33,10 @@ films/
 
 On one machine this folder is also the project folder given to `film.register`, so Blender writes `plates/`,
 `renders/`, `blends/` and `render_queue/` into it directly. In the two-machine layout the Blender machine has a
-project folder of its own (`video/blender.md`, section 2) with `scripts/` (a copy of `blender/`), `plan/`, `renders/`,
-`plates/`, `blends/` and `render_queue/`. The workspace copy is the source of truth for code and plan; the Blender
-machine is the source of truth for renders until they are brought across.
+project folder of its own, `<shared folder>/<films>/<slug>/` (`video/blender.md`, section 2), with `scripts/` (a copy of
+`blender/`), `plan/`, `renders/`, `plates/`, `blends/`, `render_queue/` and `transfer/`, and the plugin's library sits
+beside the films in `<shared folder>/<films>/lib/reel_blender/`. The workspace copy is the source of truth for code and
+plan; the Blender machine is the source of truth for renders until they are brought across.
 
 ## 1. Intake
 
@@ -45,8 +46,10 @@ Write `brief.md`:
 Premise       one sentence: what happens, to whom
 Source        files or links the facts come from
 Audience      who watches, where, on what screen
-Length        seconds (30 to 90 is the range this pipeline was built on)
+Length        seconds (30 to 90 is the range this pipeline was built on; an ident of 6 s works too, see SKILL.md)
 Formats       16:9 1920x1080; add 9:16 1080x1920 or 1:1 1080x1080 only if asked or the profile lists it
+Frame rate    24 unless the film will be cut into other footage (an ident, an insert): then that footage's rate,
+              which must be a multiple of the pose rate (12 poses a second) or the poses are held unevenly
 Sound         generated bed and cues (default), silent, or the owner's own track
 Direction     the owner's words about look, tone or references, quoted; "none given" if none
 Series        new world, or the next film in an existing one (name the ledger entry)
@@ -132,12 +135,17 @@ needs about 0.6 GB of plates per format. `submit` and `submit_check` refuse belo
 that, when free space is under twice what the queued shots need. A job whose disk filled up once reported an
 ordinary exit while its progress file stayed at "starting": read its `render.log`.
 
-Poll every 5 to 15 minutes with `film.status()` through the Blender tool (it renders nothing and returns at once;
-it lists every job, when the queue empties, and `free_mb`). A job is finished when its state is `done`, not when
-its frame count is one short. Then:
+Poll with `film.status()` through the Blender tool (it renders nothing and returns at once; it lists every job, when the
+queue empties, and `free_mb`). Poll every 5 to 15 minutes, but for a short job look at the measured seconds a pose: 72
+poses at 9 s is 11 minutes, so wait a few minutes, not a quarter of an hour. A `sleep` of more than 120 s in the foreground needs the Bash tool's
+`timeout` raised above it (up to 600000 ms), or the call is moved to the background. A job is finished when its state is
+`done`, not when its frame count is one short. On a nearly full machine free space moves by itself (swap, caches, other
+apps; 1.3 GB in four minutes was seen with a film folder of 6 MB): read `free_mb` at every poll and stop the queue
+(`renderqueue.cancel`) when it nears 500 MB; do not rely on the figure taken at submission. Then:
 - one machine: the plate is already in `plates/<shot>/`;
-- two machines: pack it on the Blender machine, stage it, unpack it into `plates/<shot>/` (`video/blender.md`,
-  section 7, "Transfer").
+- two machines: pack it on the Blender machine into `<project>/transfer/<shot>.zip` (not into `plates/`), stage it, unpack
+  it into `plates/<shot>/` (`video/blender.md`, section 7, "Transfer"), and list the zips in the hand-over for the owner
+  to delete: the bridge shell cannot delete, and deleting through Blender what the bridge shell may not is not done.
 
 ```bash
 reel plate plates/<shot>/tracks.json
@@ -159,7 +167,7 @@ reel qa film.json --page-only
 ```
 
 For a partial film while plates are still rendering, `--shots A1,A2,A3`. For a second format,
-`--format 9:16 --out film-9x16.json` (needs `plates/<shot>@9x16/`). The sound bed is generated with the engine palette `calm` unless the plan's `sound.engine_palette` names another
+`--format 9:16 --out film-9x16.json` (needs `plates/<shot>@9x16/`); steps 9 and 12 then run on that spec too. The sound bed is generated with the engine palette `calm` unless the plan's `sound.engine_palette` names another
 (`video/shot-plan.md`); say which palette the film got. Label position, timing and sound fixes go into
 `plan/label-overrides.json` and `plan/extra-cues.json`; then assemble again. Words are never changed in an
 override; a wording change is a plan change and goes back through `reel plan`. Done when `--page-only` passes.
@@ -172,7 +180,9 @@ reel qa film.json
 reel cuts film.json
 ```
 
-`reel qa` must show no FAIL. `reel cuts` lists each cut with mean brightness before and after and the jump in
+`reel qa` must show no FAIL. Read the table for gates that had nothing to measure: a film with no labels shows SKIP "no
+text to measure" for `layout` and `holds`, a film of one shot shows SKIP for `cuts`; none of these is evidence, so name them in the
+hand-over. `reel cuts` lists each cut with mean brightness before and after and the jump in
 momentary loudness; it is also a warning-only gate inside `reel qa`. A flagged cut is not a failure, but someone
 must look at the two frames side by side: the builder saves them as one image in `review/` and the critic judges
 them. Done when the gate table and the cut report are in the builder's reply.
@@ -198,6 +208,10 @@ ffmpeg -i out/film.mp4 -vf scale=1280:-2 -c:v libx264 -crf 23 -preset medium -pi
   -c:a aac -b:a 160k -movflags +faststart out/film-720p.mp4
 ```
 
+Repeat steps 8 and 9 and the exports for each further format's spec. The names follow the spec's: `film.json` renders to
+`out/film.mp4`, reports to `out/qa-report.json` and exports to `out/export/`; `film-9x16.json` renders to
+`out/film-9x16.mp4`, reports to `out/film-9x16.qa-report.json` and exports to `out/film-9x16.export/`.
+
 The viewing copy matters: per-pixel grain makes large files, and chat file sharing stops at 400 MB. Report the
 paths, duration, file sizes, the final gate table, and the hand-over (SKILL.md, step 12). Then offer the ledger
 entry and the publishing kit.
@@ -215,4 +229,6 @@ entry and the publishing kit.
 | Review | about 180k | |
 | Channel art (publish skill) | about 300k | |
 
-The facts figure is an estimate; the others were measured.
+The facts figure is an estimate; the others were measured. The first film was a 93-second stop-motion film in 16 shots.
+Rendering in Cycles took 10 to 24 s a pose at 1080p on a laptop GPU, at 12 poses a second: 2 to 5 render minutes for each
+second of film, about 5 hours for the whole. A 6-second ident of 72 poses took 11 minutes a format at 9 s a pose.

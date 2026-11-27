@@ -30,7 +30,9 @@ runs Python in Blender, and, in the two-machine layout, the bridge tools `device
    shot builders, `build_shot`, `strip`, `submit_check`, `submit`, `export_tracks`, `status`, `disk_free_mb`), and
    sections 13 to 16 for `lettering`, `stills`, `checks` and a second format when you need them. The example
    project in `${CLAUDE_PLUGIN_ROOT}/skills/video/blender/examples/paper_desk/` shows the structure of a look
-   module and a shot module; it is not a look to copy.
+   module and a shot module; its palette, room and lamp colours are not a look to copy, but what is construction and not
+   taste (the cutting-mat grid shader, `area`, `tape`, `knife`, with `paper._math` and `paper._put` that the mat grid
+   uses) may be copied into your own modules.
 
 ## Work, shot by shot
 
@@ -38,7 +40,9 @@ runs Python in Blender, and, in the two-machine layout, the bridge tools `device
    and send only short loader snippets through the Blender tool. In the two-machine layout check syntax in the
    workspace (`python3 -c "import ast; ast.parse(open(f).read())"`) and commit the changed files, and
    `plan/shots.json` whenever it changed, to the Blender machine's project folder before each call.
-2. Build the shot with `build_shot`. Read the layout numbers it returns (screen position and depth of every track
+2. Build the shot with `build_shot`. It refuses when the open Blender file has unsaved changes and is not this film's: stop
+   and ask the owner rather than passing `force=True`. In a second format, give every entry and every prop near a frame edge a
+   position per format (`sh.fmt`) and run the three-pose check for that format before its full render. Read the layout numbers it returns (screen position and depth of every track
    at six poses) before rendering anything: framing, what hides what, focus depths.
 3. Draw a live strip of 6 poses across the main action and open it. Fix and repeat. Calibrate light on the first
    strip before judging anything else.

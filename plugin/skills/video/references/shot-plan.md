@@ -61,14 +61,14 @@ through untouched. Pose numbers count from 1, as above. Distances are metres.
 | shot | `poses` | Number of poses (`shot_poses`) | required |
 | shot | `tracks` | Names of the points written to `tracks.json` (`shot_tracks`) | `[]` |
 | shot | `events` | `{name, pose}`; written as frame = pose - 1 (`shot_events`) | `[]` |
-| shot | `in_focus` | Tracks the focus follows: harmonic mean of the nearest and farthest depth, smoothed over three poses (`shot_in_focus`) | `[]` |
+| shot | `in_focus` | Tracks the focus follows: harmonic mean of the nearest and farthest depth, smoothed over three poses (`shot_in_focus`). Give every shot at least one in-focus track, even a shot without labels: with none the focus is set to 0.5 m without a warning | `[]` |
 | shot | `focus_pull` | `{"poses": [a, b], "to": "<track>"}`: a hand focus pull that ends on that track (`shot_focus_pull`) | none |
 | shot | `camera` | A dict, below (`shot_camera`) | required |
 | camera | `lens_mm`, `fstop` | Lens in millimetres, aperture | 40, 16 |
-| camera | `pos`, `aim` | Camera position and the point it looks at; with `moves`, where the move ends | required |
+| camera | `pos`, `aim` | Camera position and the point it looks at; with `moves`, where the move ends. For a top view put `pos` a few centimetres toward -Y of `aim`, never exactly above it (Track To has no roll there); +Y is then up in the frame | required |
 | camera | `pos_start`, `aim_start` | Where a pushed move begins | `pos`, `aim` |
 | camera | `moves` | `[[first pose, last pose]]`: the hand move from the start to the end over those poses | `[]` (locked off) |
-| camera | `formats` | `{"9:16": {...}}`: entries that replace the camera's own for that format | `{}` |
+| camera | `formats` | `{"9:16": {...}}`: entries that replace the camera's own for that format. Only the camera has them: entries into the frame and props near an edge are staged per format in the builder (`blender.md`, section 16) | `{}` |
 
 Used by no code but by the people reading the plan: `releases`, `seconds`, `walkers` and any other field. The look
 parameters of a film (light powers, exposure, `cam_pos` overrides) are not plan fields; they live in the film's

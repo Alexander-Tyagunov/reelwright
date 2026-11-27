@@ -4,6 +4,12 @@ The owner judges by looking at one finished piece. Descriptions, mood words and 
 him what the film would be; one shot at final quality did. So the first thing built is one shot of the film, at
 the quality of the film, with its words and sound. It costs about a twelfth of the film and decides the rest.
 
+## A film of one or two shots
+
+For an ident or any film of one or two shots the sample is the whole film in its main format: there is no "rest" to
+build until he has said yes, and the second format is built only after that. Labels, facts, chapters and the cut report
+may be empty; the still and the MP4 are still what he judges.
+
 ## Which shot
 
 The treatment's signature shot: the one that carries the central metaphor and has at least one character, one
@@ -26,7 +32,7 @@ the same standard as every other shot (poses, camera, tracks, events, label word
    `reel assemble plan/shots.json --shots <shot> --out film-sample.json`, `reel render film-sample.json`,
    `reel qa film-sample.json`.
 5. Save one frame at full size as `review/sample.jpg`: the frame with the most of the film's look in it, with
-   its label.
+   its label. A film without labels uses the plate frame itself (`plates/<shot>/frames/<nnnn>.jpg`).
 
 ## What to show and ask
 

@@ -8,6 +8,10 @@ pacing in seconds, without a render, and gives pass, warn or fail on those; rend
 gates. `--size WxH` checks another format and writes `out/qa-report-WxH.json`. `--strict` also fails on warnings. With a spec and `--video file.mp4` the report is named after the video (`out/qa-report-<name>.json`), so the main report is not replaced. A draft render is not checked: render in full, or pass the draft with `--video`. For a video made with any other tool, `reel qa --video file.mp4`
 runs the gates that need only the file (properties, motion, loudness).
 
+A gate that has nothing to measure says so: `layout` and `holds` show SKIP and "no text to measure" for a film with no
+text, and `cuts` shows SKIP for a film of one shot. A pass on zero items is not a measurement, so name those gates in a
+hand-over instead of pasting "PASS".
+
 A gate reports numbers and names the scene, so a fix can be made without guessing. Fix one failure at a time with
 the smallest change, re-render (unchanged scenes are reused) and run it again.
 

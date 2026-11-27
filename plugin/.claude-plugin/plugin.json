@@ -2,7 +2,7 @@
   "name": "reelwright",
   "displayName": "Reelwright",
   "version": "0.2.0",
-  "description": "Make release videos, explainers and animated metrics from code. A film is one JSON file; a headless browser draws every frame; a quality gate measures motion, layout and reading time before anything ships.",
+  "description": "Make release videos, explainers and animated metrics from code. A film is one JSON file; a headless browser draws every frame; a quality gate measures motion, layout and reading time before anything ships. Also makes short films in Blender (film skill), keeps the owner's studio profile (studio skill) and prepares publishing kits (publish skill).",
   "author": {
     "name": "Alex Tyagunov"
   },

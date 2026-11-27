@@ -65,7 +65,7 @@ A re-render of a whole shot is a cost of tens of minutes and a few hundred thous
 
 ```markdown
 # Review: <film file>, <duration>
-Reviewer: independent critic, not one of the makers. Reviewed from frames and measurements. <n> images opened.
+Reviewer: independent critic, not one of the makers (if the session that made the film did this review, write instead: NOT independent, made by the same session; the owner's own viewing is the only outside check). Reviewed from frames and measurements. <n> images opened.
 
 ## Verdict
 Ship, or fix first, and why in three sentences: would it hold a viewer, does it look made, what harms it most.

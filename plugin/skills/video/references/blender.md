@@ -6,15 +6,19 @@ Worked example: `plugin/skills/video/blender/examples/paper_desk/`, a stop-motio
 module, a three-shot plan; it is not a house style). A film of many shots on one set registers its look and one builder per
 shot with `film.py` (section 12) and keeps one module per sequence.
 When a shot must read as made by a person and not as a clean render, read `handmade.md` as well.
+The library carries the plugin's version: `reel_blender.__version__` equals `version` in `.claude-plugin/plugin.json`
+(0.2.0 at this writing), so a session can check that the copy on the Blender machine is the plugin's (section 2).
 
 ## 1. Connection check (first call, always)
 Load in one ToolSearch call the tool whose name ends in `execute_blender_code` (its prefix depends on the layout; section 2
 explains the layouts), the Blender documentation tools `..._search_api_docs` and `..._get_python_api_docs` if the server has
 them, and, in the two-machine layout, the bridge tools `device_list_dir`, `device_stage_files` and `device_commit_files`.
-Run `result = {"ver": bpy.app.version_string, "file": bpy.data.filepath}`. If the tool is missing or cannot
-connect, stop and tell the user; nothing below works without it. The live Blender still holds whatever the last
-session built. `build()` wipes that scene in memory only; a .blend on disk changes only when you save, so give a
-new version its own file name (`project.save(new_path)`) and never save over an earlier shot's file.
+Run `result = {"ver": bpy.app.version_string, "file": bpy.data.filepath, "dirty": bpy.data.is_dirty, "home":
+os.path.expanduser("~")}`. If the tool is missing or cannot connect, stop and tell the user; nothing below works without it.
+The live Blender still holds whatever the last session built, or the owner's own work. If the open file has unsaved
+changes (`dirty` is true) and is not this film's, stop and ask: `build_shot` empties the open scene in memory (it refuses, see
+section 12) and `submit` makes the shot's .blend the open file. A .blend on disk changes only when you save, so give a
+new version its own file name (`project.save(new_path)`) and never save over an earlier shot's file or the owner's.
 
 ## 2. Where things run
 Name the tool that runs Python in Blender by what it does ("the Blender code tool"): its prefix differs between layouts.
@@ -28,35 +32,53 @@ plates straight from `<project>/plates/`. Free disk space is the disk you work o
 Blender runs on the user's computer behind a bridge; the two share no disk.
 - Workspace: your shell and file tools. Source of truth for the library: `plugin/skills/video/blender/reel_blender/`;
   for a film: `<work>/films/<film>/blender/` (scripts) and `plan/`.
-- Blender machine: Blender and a shared folder (here `~/ClaudeProjects`). Library copy
-  `~/ClaudeProjects/reelwright/plugin/skills/video/blender/reel_blender/`; film project
-  `~/ClaudeProjects/reelwright-work/<film>/` with `scripts/`, `plan/`, `renders/preview/`, `renders/check/`, `plates/<shot>/`,
-  `blends/`, `render_queue/`.
+- Blender machine: Blender and a shared folder `<shared>` that the bridge may write to (take it from the bridge's connected
+  folders, not from this text). Under it a `<films>` folder holds the library copy
+  `<shared>/<films>/lib/reel_blender/` and each film's project `<shared>/<films>/<slug>/` with `scripts/`, `plan/`,
+  `renders/preview/`, `renders/check/`, `plates/<shot>/`, `blends/`, `render_queue/`, `transfer/`. Use no folder that
+  already exists there and is not this film's: an older library copy or another project's work is not yours to reuse.
+- **Install the library, at the start of every film.** The library carries the plugin's version (`reel_blender.__version__`
+  equals `version` in the plugin's `.claude-plugin/plugin.json`), which is how a session checks that the copy on the Blender
+  machine is the plugin's. Two machines: commit the plugin's whole `reel_blender/*.py` (not `__pycache__`; 25 files fit in one
+  `device_commit_files` call, the limit is 50) to `<shared>/<films>/lib/reel_blender/`, then check `__version__` and `__file__`
+  from Blender (the loader below returns both). One machine: add the plugin's `skills/video/blender` folder to `sys.path`
+  instead; nothing is copied.
 - Staging (workspace to Blender machine): copy the changed files under `/mnt/user-data/outputs/<anything>/`, check their syntax
   first with `python3 -c "import ast; ast.parse(open(f).read())"` (`py_compile` leaves `__pycache__` in the repository), then
   `device_commit_files` with `force: true`, one entry per file: `stagedPath` in the workspace, `devicePath`
-  `~/ClaudeProjects/...` on the Blender machine (an absolute path inside a connected folder; `~` is accepted).
+  `<shared>/...` on the Blender machine (an absolute path inside a connected folder; `~` is accepted).
 - Commit step (Blender machine to workspace): `device_stage_files` copies chosen files to
-  `/mnt/user-data/uploads/ClaudeProjects/<path under ClaudeProjects>`, from where you read them (stills, check frames) or
+  `/mnt/user-data/uploads/<shared folder name>/<path under it>`, from where you read them (stills, check frames) or
   zip and unpack plates (section 7). Stage only what you need to look at.
 - The shell on the Blender machine (`device_bash`) can list, move and measure but cannot delete until the user allows it.
-- Write code in files and sync; send only short snippets through the Blender code tool:
+  Do not delete around that through Blender's Python; leave the file and list it for the owner.
+- Write code in files and sync; send only short snippets through the Blender code tool. The loader first drops any
+  `reel_blender` that an earlier session imported from somewhere else: `importlib.reload` reloads a module from where it was
+  first found, so a stale copy would run whatever you put on `sys.path`.
 ```python
-import sys, importlib, traceback
-for p in ("<mac>/reelwright/plugin/skills/video/blender", "<mac>/reelwright-work/<film>/scripts"):
-    if p not in sys.path: sys.path.insert(0, p)
+import sys, os, importlib, traceback
+lib = "<library folder>"        # two machines: <shared>/<films>/lib ; one machine: <plugin>/skills/video/blender
+film = "<film scripts folder>"  # <shared>/<films>/<slug>/scripts
+old = getattr(sys.modules.get("reel_blender"), "__file__", None)
+if old and not os.path.realpath(old).startswith(os.path.realpath(lib) + os.sep):
+    for k in [k for k in sys.modules if k == "reel_blender" or k.startswith("reel_blender.")]:
+        del sys.modules[k]
+for p in (film, lib):
+    while p in sys.path: sys.path.remove(p)
+    sys.path.insert(0, p)
 try:
     import reel_blender
     reel_blender = importlib.reload(reel_blender); reel_blender.reload_all()  # reload the package first: reload_all alone misses modules added since the session started
     import look_x; importlib.reload(look_x)                                   # the look module before the shot that imports it
     import shot_x; S = importlib.reload(shot_x)
-    result = S.build()
+    result = {"version": reel_blender.__version__, "file": reel_blender.__file__, "built": S.build()}
 except Exception:
     result = {"error": traceback.format_exc()[-1800:]}                        # an uncaught error comes back without the traceback you need
 ```
 - `execute_blender_code` starts with no names in scope: `import bpy` (and `sys`, `os`) in every call, or the first line of
   the `try` block fails with `NameError` and the shot module is left half reloaded.
-- `<mac>` is `/Users/<user>/ClaudeProjects` (ask Blender: `os.path.expanduser("~")`; on one machine it is wherever the library sits).
+- `<shared>` is under the home folder Blender reports (`os.path.expanduser("~")`). In the first call check that `version` is
+  the plugin's and `file` is inside your library folder; if not, the install step did not take.
 - A whole edit-look round is 5 calls: patch + copy (Bash), commit, build + render (Blender), stage, Read.
 - Put every number you expect to tune (light powers, exposure, camera, material amounts) in the shot's `P` dict and
   try values with `S.build({...})`: that round is 3 calls (build + strip, stage, Read) and needs no file sync. Write
@@ -68,10 +90,12 @@ under 60 s. In a live call you may: build the scene, render preview stills or a 
 Never render an animation or a slow frame in a live call: use `background.render_background`, which starts a
 second Blender (`--background <saved .blend> --python _bg_worker.py`), returns at once and writes
 `render_progress.json`. Save the .blend first; the worker reads the file, not the live session.
-Poll with `sleep` in the cloud shell (60-300 s) then `background.read_progress` or `device_list_dir`.
+Poll with `sleep` in the cloud shell (60-300 s; a foreground `sleep` over 120 s needs the Bash tool's `timeout` raised above it,
+or the call is moved to the background) then `background.read_progress` or `device_list_dir`.
 `state` becomes `done` only after the last frame is written: wait for it, not for `done == total - 1`.
 `render_background(..., frames=[...], sheet=path)` renders chosen frames and tiles them into one image: a preview
-strip that cannot time out. Use it for the first Cycles render of a session and for anything slow; write the
+strip that cannot time out. Use it for anything slow, and for the first Cycles render of a session on a machine that has not
+rendered in Cycles that day (a film's live calls have no background strip: use `film.submit_check`, section 12); write the
 documents and the film spec while a long render runs.
 More than one long render, or several sessions rendering on the same Mac: use the queue, not `render_background`
 (two background Blenders at once share the GPU and both crawl). `renderqueue.submit(queue_dir, name, blend, out_dir,
@@ -93,9 +117,10 @@ first strip looks right, not when all shots are done: behind a busy queue the wa
 Use Cycles (Metal GPU) when the shot depends on physical light: soft shadows, light through paper, bounce, real
 depth of field. Presets `cycles_preview` (960x540, 24 samples, denoised) and `cycles_final` (1920x1080, denoised,
 persistent data); `apply_preset` also sets bounces, clamping, an animated noise seed and enables the Metal device.
-The first Cycles render on a machine compiles Metal kernels for about 3 minutes, so the first one of a session
-goes to the background (`render_background(frames=..., sheet=...)`): with kernels cached its first frame took
-17 s. After that, live `render_strip(preset="cycles_preview")` strips of 6 are safe (3.2-3.9 s a frame).
+The first Cycles render on a machine compiles Metal kernels for about 3 minutes, so on a machine that has not rendered in
+Cycles that day the first one goes to the background (`render_background(frames=..., sheet=...)`; for a film,
+`film.submit_check`): with kernels cached its first frame took 17 s. After that, live `render_strip(preset="cycles_preview")`
+strips of 6 are safe (3.2-3.9 s a frame).
 Measure one or two final-quality frames in the background before the final render and set `samples` / `noise`
 from that (numbers in section 6). A light inside a closed shell reaches the table only if the shell lets shadow
 rays through: `paper.paper_material(transmit=...)`.
@@ -139,7 +164,7 @@ plateau near 215 of 255 is too bright even though nothing clips: halve the LED.
 - `tracks.sample_points(scene, cam, {name: object}, frames)` layout numbers without rendering;
   `tracks.export_tracks(scene, cam, points, out_path, events=[(name, scene_frame)])`.
 - `plate.pack_plate(dir)` zip for transfer; `plate.check_plate(dir)` frames vs tracks.
-- `film` (section 12), `lettering` (13), `stills` (14), `checks` (15) are the film-level modules added in 0.3.0. The last three need Pillow
+- `film` (section 12), `lettering` (13), `stills` (14), `checks` (15) are the film-level modules. The last three need Pillow
   and run in the workspace (import them by name: `from reel_blender import checks`); `film` needs Blender.
 Rules: pure functions, units in docstrings, no project paths, no look. The look lives in the film's own script.
 Animation is baked from math and fixed seeds (no handlers, no playback, no live physics), so `build()` gives
@@ -187,7 +212,8 @@ frames (scene frame minus first scene frame). `fps` is the plate's own rate and 
 stop-motion plate is 12 fps (set the scene to 12 fps, one scene frame per pose) under a 30 fps film, and the engine
 holds each frame. Track empties parented to what they follow (name them `TRK_*`).
 Switch a rig off by keying its root scale to 0: children of a `hide_render` parent still render.
-Transfer: `plate.pack_plate` on the Mac, `device_stage_files` the zip, unzip in the cloud, then ffmpeg:
+Transfer: `plate.pack_plate(dir, zip_path)` on the Blender machine with `zip_path` `<project>/transfer/<shot>.zip` (not
+inside `plates/`, and list the zips in the hand-over: the owner deletes them), `device_stage_files` the zip, unzip in the cloud, then ffmpeg:
 `ffmpeg -framerate <plate fps> -i frames/%04d.jpg -c:v libx264 -pix_fmt yuv420p -crf 18 out/<shot>-preview.mp4`.
 Labels, vignette and grain belong to the engine, not the plate. The one exception is a look that must read as
 photographed (`handmade.md`): there the lens and sensor faults are part of the picture and go into the plate with
@@ -311,14 +337,14 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
     worker writes a raw PNG beside the JPEG). The queue said `error: exit 0` while `render_progress.json` stayed at "starting":
     read `render.log`, and check `shutil.disk_usage` before submitting. A still at 256 samples, noise 0.01 took 32-38 s.
 
-35. (Library 0.3.0) The Object Info "Random" that paper uses for per-object variation is hashed from the object name, so
+35. (Library) The Object Info "Random" that paper uses for per-object variation is hashed from the object name, so
     renaming every object of a set shifts each paper's tint a little. Measured on the intro shot after neutral names: mean
     brightness +0.3 %, edge energy within 1.3 %, no shift. Fix names before the first approved plate, not after.
-36. (Library 0.3.0) A vertical frame is not the 16:9 camera turned: with sensor fit Auto the lens angle spans the longer side,
+36. (Library) A vertical frame is not the 16:9 camera turned: with sensor fit Auto the lens angle spans the longer side,
     so 1080 x 1920 sees 56 % of the width a 1920 x 1080 frame sees, and a 108 mm tag that filled the wide frame was cut at
     its right end. Give the shot a camera for the format (`camera.formats`, section 16), and project the subject's
     extremes with `tracks.sample_points` before rendering.
-37. (Library 0.3.0) A seed key built from the shot id (`craft.rng(17, "scraps", sh.id)`) changes the offcuts when the shot is
+37. (Library) A seed key built from the shot id (`craft.rng(17, "scraps", sh.id)`) changes the offcuts when the shot is
     renamed or built under another id. Pass an explicit key when the same set must come out the same in two shots.
 
 ## 11. Labels
@@ -338,13 +364,18 @@ few calls. All of them end under 60 s; slow renders go to the queue (section 3).
    fn(sh)}`; `extra_shots` holds shots that are not in the plan (an intro), same shape as a plan entry. Register again after
    reloading the film's modules. `project` is the folder of section 2; `film.py` writes `plates/`, `renders/`, `blends/`,
    `render_queue/` under it.
-2. `film.build_shot(shot, overrides=None, fmt=None)` rebuilds the live scene from nothing and returns the report: seconds,
+2. `film.build_shot(shot, overrides=None, fmt=None, force=False)` rebuilds the live scene from nothing and returns the report: seconds,
    objects, `focus_m`, `tracks_missing`, and the screen `layout` of the track points at six poses. A builder receives a
    `Shot` (`sh.scene`, `sh.env / chars / trk` collections, `sh.mats`, `sh.p`, `sh.FR` poses, `sh.times` seconds, `sh.points`,
    `sh.switch(obj, first, last)`), builds what the camera sees, bakes constant keys from the pose number and fixed seeds, and
-   puts every plan track into `sh.points`. Parameters merge as `look.params`, `shot_params[shot]`, `overrides`.
+   puts every plan track into `sh.points`. Parameters merge as `look.params`, `shot_params[shot]`, `overrides`. The build
+empties the open scene in memory, so it refuses with a message that says what to do when the open file has unsaved changes
+and is not one of this film's own shot files (`<project>/blends/<name>-*.blend`): save it or ask the owner to, or pass
+`force=True` when he has said the scene may be thrown away. `submit` then makes the shot's .blend the open file.
 3. `film.strip(poses, name)` is the live preview strip (six poses or fewer) at `renders/preview/<name>.jpg`; `film.layout(poses)`
-   gives the track positions without rendering.
+   gives the track positions without rendering. If this machine has not rendered in Cycles today, make the first strip with
+   `film.submit_check(shot, poses)` instead (kernels compile for about 3 minutes and a live call would time out); a one-pose
+   check job is the cheap way to find out.
 4. `film.submit_check(shot, poses, fmt=None)` queues three poses at final settings, with develop, into
    `renders/check/<shot>/f%04d.jpg` from a copy of the scene in its own file. Submit it the moment the first strip looks right.
 5. `film.submit(shot, fmt=None, frames=None)` saves `blends/<name>-<shot>.blend` and queues the final render into the shot's plate folder: `plates/<shot>/`, or the shot's `plate` field when the plan has one (plus `@9x16` for a second format), the rule the engine uses. A shot id may hold letters, digits, `-` and `_` only.
@@ -382,7 +413,9 @@ three-pose check against an approved plate, and after a library change to prove 
 **Free disk space.** Check the free space of the Blender machine before queuing and report it in your handover. A queued still
 died once with "No space left on device", and 12 poses a second of film at 1080p is about 0.5 MB a frame plus the raw PNG
 while a frame renders. `film.disk_free_mb()` and `film.status()` give it; `submit` and `submit_check` refuse below 500 MB
-(`min_free_mb=`). On a machine nearly full, render only what the proof needs and stop when it is below the limit.
+(`min_free_mb=`). On a machine nearly full, render only what the proof needs and stop when it is below the limit. Free space
+also moves by itself while a job runs (swap, caches, other apps): read `free_mb` at every `film.status()` and cancel the queue
+(`renderqueue.cancel`) when it nears 500 MB; the figure taken at submission does not hold for a 30-minute job.
 
 ## 16. A second format (vertical)
 The plan carries `formats` (`{"16:9": [1920, 1080], "9:16": [1080, 1920]}`); the first is the main format. Build, check and
@@ -393,3 +426,9 @@ under `formats` replace the shot's own. With sensor fit Auto the lens angle span
 about half the width: move the camera back or aim at the middle of the subject, and read `layout()` (all extremes of the subject
 between 0.05 and 0.95) before the check. Export tracks per format (`export_tracks(shot, fmt="9:16")`); the engine reads
 `plates/<shot>@9x16/` with `reel assemble --format 9:16`. Labels and safe areas are a separate decision per format.
+
+Staging is per format too, and only the camera is inherited for you. Everything that enters, leaves or sits near a frame edge
+needs a position for each format: a strip carried in from outside a 16:9 frame over five poses starts inside the frame of a
+9:16 one and appears in one step. Branch on `sh.fmt` in the builder for entry points and for every prop near an edge, and
+draw one strip of the entries in the second format before its check. Run the three-pose check (`submit_check`) for each
+format before its full render; the vertical one is not covered by the check of the wide one.

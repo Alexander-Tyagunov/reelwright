@@ -35,7 +35,8 @@ Class every finding as `SPEC` (plan or side-file change, then re-assembly), `RER
 to find first) or `LEAVE` (why, and what fixing it would cost). Rank by harm, at most twelve. Write
 `review/REVIEW.md` in the rubric's form: verdict, findings, facts, measured, not checked.
 
-Say plainly in "Not checked" that you did not listen to the sound and did not watch the film at speed, and list
+If you are the session that made the film (agents could not run), the first line of the review and the reply say the review was
+not independent. Say plainly in "Not checked" that you did not listen to the sound and did not watch the film at speed, and list
 the moments a person should watch for. If nothing would matter to a viewer, the verdict is "ship"; do not invent
 findings. On a second review look only at the shots named and the cuts on either side of them.
 

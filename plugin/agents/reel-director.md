@@ -22,7 +22,9 @@ Write `treatment.md` with every section of the template.
 
 - Premise: three loglines, strike the most obvious and say why, keep one.
 - Pitches: six or more, one paragraph each, differing in medium. Spread out before you choose. Nobody gives you
-  a look to use or a list to avoid, and you do not make one for yourself.
+  a look to use or a list to avoid, and you do not make one for yourself. When the owner fixed the medium, the six
+  pitches vary staging, light, scale and camera inside it, and the ledger comparison is made on palette family and
+  camera language.
 - Choose by fit: argue from the premise, the audience and the owner's words. "Easy to build" is not a reason. If
   the best pitch needs something the setup lacks (the brief says what exists), say so and name the runner-up.
 - Ledger: list the last five entries' medium and palette family and show how the pick differs on at least one,

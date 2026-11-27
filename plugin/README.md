@@ -181,13 +181,13 @@ node "$REEL" export film.json --preset x --poster auto
 | `stills` | Draws full-size stills and a contact sheet; `--every` draws a motion strip |
 | `render` | Renders the MP4, scene by scene; `--draft` is a fast preview at half size; adds generated sound when `meta.sound` is on, `--no-sound` skips it |
 | `sound` | Generates the film's background sound (`meta.sound`) as `out/sound.wav` and a cue list; prints length, cues and loudness |
-| `qa` | Runs the quality gate; `--page-only` skips the video gates, `--size WxH` checks another format |
+| `qa` | Runs the quality gate; `--page-only` skips the video gates, `--size WxH` checks another format; a gate with nothing to measure (no text) shows SKIP |
 | `export` | Writes delivery files: `master`, `x`, `linkedin`, `youtube`, `slack`, `web`, `gif`, `webm` |
 | `plate` | Checks a plate folder (an image sequence with `tracks.json`): tracks, events, every frame file, the frame size, and frames whose brightness jumps out of line with their neighbours |
 | `plan` | Validates a film's shot plan: schema, totals, reading time of every label, label budget per second, cue kinds, missing plates |
 | `assemble` | Writes the film spec from the shot plan, the plates and the side files beside the plan; `--shots`, `--format`, `--intro`, `--outro` |
 | `cuts` | After a render, reports the brightness and loudness change at every cut and flags the large ones |
-| `chapters` | Prints video chapters from the scene starts: first at 0:00, each at least 10 seconds |
+| `chapters` | Prints video chapters from the scene starts: first at 0:00, each at least 10 seconds; prints nothing and says why on stderr when fewer than 3 fit |
 | `build` | Bundles the film into one HTML file that plays in a browser |
 
 ## Requirements

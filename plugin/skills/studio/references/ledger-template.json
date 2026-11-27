@@ -2,8 +2,8 @@
   "version": 1,
   "films": [
     {
-      "id": "release-history",
-      "title": "A release history",
+      "id": "example-film",
+      "title": "An example entry: replace every value",
       "date": "2026-11-27",
       "duration_s": 93,
       "formats": ["16:9"],
@@ -14,7 +14,8 @@
       "camera": "40 mm at f/16, locked off or hand-pushed slides, cuts on landmarks, 12 poses a second",
       "series": null,
       "link": "out/film.mp4",
-      "owner_verdict": null
+      "owner_verdict": null,
+      "note": "Illustration of the fields only. Not a film of this owner: write each value from what he said, and null for what he did not."
     }
   ]
 }

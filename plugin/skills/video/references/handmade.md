@@ -137,6 +137,10 @@ the main subject at the start, was out of focus and the lamps were blobs; with g
   faint mottle in dark flat areas and the fine grain does not.
 - Noise: 64 samples with noise threshold 0.03 (18 s a frame, 108 frames in about 33 min) kept dark areas clean
   enough; 96 samples at 0.02 took 28 s a frame (about 50 min).
+- Light, not albedo: to make a pale paper brighter change the lamp or the exposure, not the paper's colour. Under the AgX
+  looks a paper albedo of 0.72 against 0.80 differed by 2 levels of 255 on the final frame (188/181/171 against
+  190/183/172 at exposure 0.6, "Medium High Contrast"), because the top of the range is compressed. Compare old and new on
+  a final-quality check frame, not on a preview.
 - Light: the opening was dark with the arch near silhouette (arch pillars 23-34 of 255 against a frame mean of 45).
   Lifting the existing clip lamp from 2.6 to 3.4 W brought them to 28-42 (mean 52) with nothing near white later
   (no pixel above 254 in poses 50 and 100). Check the darkest pose, not the hero pose.
@@ -151,7 +155,8 @@ the main subject at the start, was out of focus and the lamps were blobs; with g
 ## 6. Stills and flat lays (see also `publish/references/channel-art.md`)
 Seen from straight above, thickness does not show: height is read only from shadows. Keep the lamp low (37 degrees up) and let
 loose pieces ride up a millimetre or more (0.9 mm of lift on 0.6 mm card was not seen at 1600 px; 1.3 mm was). Flat metal mirrors
-whatever is overhead: give the room a soft source above the camera and chamfer flat bars, or they render as grey paper. A top-down
-lens is a pure scale, so lay the picture out in pixels per metre before building (safe areas, the size of a line of type), and make
+whatever is overhead: give the room a soft source above the camera and chamfer flat bars, or they render as grey paper. For a top view put the camera's `pos` a few centimetres toward -Y of `aim`
+(6 cm at 0.9 m is 6.8 degrees off plumb, which also shows card thickness) and never exactly above it: a Track To constraint has
+no roll there. +Y is then up in the frame. A top-down lens is a pure scale, so lay the picture out in pixels per metre before building (safe areas, the size of a line of type), and make
 drawn and printed marks as alpha textures mixed into the paper. Printed black needs an ink alpha of 0.95-1.0: at 0.84-1.0 it read
 as grey. Check a profile picture as 88, 48 and 24 px circles on dark and white before the final render.

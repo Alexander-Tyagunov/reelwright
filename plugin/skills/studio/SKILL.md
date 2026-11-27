@@ -11,7 +11,8 @@ updates them. Templates: `${CLAUDE_SKILL_DIR}/references/profile-template.md` an
 `${CLAUDE_SKILL_DIR}/references/ledger-template.json`.
 
 The films folder is the one the owner named, or `films/` under the current working directory. Find the files with
-Glob (`**/studio/PROFILE.md`) before assuming there are none.
+Glob (`**/studio/PROFILE.md`), or `find . -path '*/studio/PROFILE.md'` where there is no Glob tool, before assuming
+there are none.
 
 ## Read (start of every film and every publishing kit)
 
@@ -40,10 +41,15 @@ fixed them; otherwise each film develops its own.
 ## Start a profile
 
 When there is none and the owner wants one, or at delivery of his first film:
-1. Copy the template to `studio/PROFILE.md`. Fill only what the conversation already contains: the films made, his
-   words on them, the platforms he publishes to.
+1. Copy the template to `studio/PROFILE.md`. Fill only what the conversation already contains: the films made (under
+   "Films so far"), his words on them, the platforms he publishes to. When he reports earlier verdicts without dates,
+   date the row with today and write "reported" in the About column; a verdict he gave in reported speech ("I
+   approved it") goes in as "(reported: approved)", not as a quote.
 2. Ask at most one question, the one that matters most for the next film (usually who the films are for).
 3. Leave every other section "not stated yet".
+4. When he describes films already made, add one ledger entry per film from his words only, with `null` for every
+   field he did not describe (camera, texture, date) and a `note` saying the entry was written from his account. Do not
+   copy values from the template's example.
 
 ## Ledger entry (at delivery of every film)
 
