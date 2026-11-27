@@ -39,6 +39,16 @@ export interface IntensityPoint {
   value: number;
 }
 
+/** Which derived cues play, and how loud. Missing keys mean `true`. */
+export interface AutoSpec {
+  /** The whoosh at each scene change. */
+  transition?: boolean | number;
+  /** The tick where a text block settles. */
+  text?: boolean | number;
+  /** The chime at the start of the last scene. */
+  ending?: boolean | number;
+}
+
 /** The detailed form of `meta.sound`. All fields are optional. */
 export interface SoundSpec {
   /** Palette name: calm, bright, tense, minimal, epic or storybook. */
@@ -47,6 +57,12 @@ export interface SoundSpec {
   bed?: boolean;
   /** Play cues timed to the picture. Default true. */
   cues?: boolean;
+  /**
+   * Cues derived from the picture. `false`: none, only a scene's own `cues`
+   * play. An object sets each kind: `true` (as planned), `false` (none) or a
+   * gain multiplier from 0 to 1. Default true.
+   */
+  auto?: boolean | AutoSpec;
   /** Level from 0 to 1 relative to -14 LUFS. Default 1. */
   volume?: number;
   /** Integer seed. The same seed gives the same sound. Default 0. */

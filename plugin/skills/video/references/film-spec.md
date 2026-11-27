@@ -151,6 +151,7 @@ all computed in the engine (no samples, no network) and identical for the same s
 | `palette` | `"calm"` | `calm`, `bright`, `tense`, `minimal`, `epic` or `storybook`. An unknown name is refused and the palettes are listed. |
 | `bed` | true | Play the pad and pulse under the film. |
 | `cues` | true | Play cues timed to the picture. At least one of `bed` and `cues` must be on. |
+| `auto` | true | Cues derived from the picture. `false`: none, and a scene's own `cues` still play. An object `{ "transition", "text", "ending" }` sets the whoosh at each scene change, the tick where text settles and the last-scene chime: each `true` (as planned), `false` (none) or 0 to 1 (multiplies its gain); a missing key is `true`, an unknown key is refused. |
 | `volume` | 1 | 0 to 1, scales the finished track below -14 LUFS. |
 | `seed` | 0 | Whole number. Same spec and seed give the same sound byte for byte. |
 | `key` | the palette's | Root note: `C`, `F#`, `Bb`. |
@@ -171,6 +172,9 @@ frame. Cues, with pitches taken from the palette's scale:
   scene seconds (0 to the scene's `duration`); `kind` is `tick`, `pop`, `whoosh`, `rise`, `chime`, `hit`, `boom` or
   `sting`; `gain` is 0 to 1 (default 1); `duration` (seconds, default 2) is only for `rise`, which builds up and ends at
   `at + duration`. Explicit cues are always played.
+
+A film with hard cuts or its own cue sheet turns the derived cues down with `auto`:
+`"sound": { "auto": { "transition": 0.35, "ending": false } }` plays the whooshes at 35% and drops the chime.
 
 `reel sound film.json` writes `out/sound.wav` (48 kHz, 16-bit, stereo) and `out/sound.json` (the cue list with times
 and pitches) and prints the length, cue count, integrated loudness and true peak. `--palette name` tries another

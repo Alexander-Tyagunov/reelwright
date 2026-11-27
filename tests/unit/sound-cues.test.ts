@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import {describe, it} from 'node:test';
+import {resolveAuto} from '../../plugin/skills/video/scripts/audio/auto-cues.ts';
 import {
   MIN_CUE_GAP_S,
   planCues,
@@ -213,5 +214,68 @@ describe('checking a scene cues list', () => {
 
   it('cues that are not a list are refused', () => {
     assert.throws(() => sceneCues(scene({at: 1}), 0), /must be a list/);
+  });
+});
+
+describe('meta.sound.auto', () => {
+  const own = plain.map((s, i) =>
+    i === 3 ? {...s, cues: [{at: 1, kind: 'hit' as const}]} : s,
+  );
+  const base = planCues(info, own, KEY);
+
+  it('a film with its own cue sheet and auto false plays only its cues', () => {
+    const cues = planCues(info, own, KEY, resolveAuto(false));
+    assert.deepEqual(
+      cues.map(c => c.source),
+      ['spec'],
+    );
+  });
+
+  it('transition 0.35 scales only the whooshes', () => {
+    const cues = planCues(info, own, KEY, resolveAuto({transition: 0.35}));
+    assert.equal(cues.length, base.length);
+    cues.forEach((c, i) => {
+      const was = base[i];
+      assert.ok(was);
+      const scaled = c.source === 'transition';
+      assert.ok(Math.abs(c.gain - was.gain * (scaled ? 0.35 : 1)) < 1e-12);
+    });
+  });
+
+  it('ending false drops the chime and keeps the whooshes', () => {
+    const cues = planCues(info, own, KEY, resolveAuto({ending: false}));
+    assert.equal(cues.filter(c => c.kind === 'chime').length, 0);
+    assert.equal(cues.filter(c => c.kind === 'whoosh').length, 9);
+  });
+
+  it('a tick gives way to a whoosh that auto keeps and not to one it drops', () => {
+    const second = info.scenes[1];
+    assert.ok(second);
+    const near = (cues: typeof base) =>
+      cues.filter(c => c.kind === 'tick' && Math.abs(c.t - second.start) < 1);
+    const lone = {
+      ...info,
+      texts: [{...info.texts[0], scene: 1, settle: FIXTURE_OVERLAP / 2}],
+    } as typeof info;
+    assert.equal(near(planCues(lone, plain, KEY)).length, 0);
+    const quiet = resolveAuto({transition: false});
+    assert.equal(near(planCues(lone, plain, KEY, quiet)).length, 1);
+  });
+
+  it('absent auto gives the same cue list as before', () => {
+    assert.deepEqual(planCues(info, own, KEY, resolveAuto(undefined)), base);
+    assert.deepEqual(planCues(info, own, KEY, resolveAuto(true)), base);
+  });
+
+  it('a bad value is refused with a message that names the field', () => {
+    const named = (value: unknown, field: string) =>
+      assert.throws(
+        () => resolveAuto(value),
+        (e: Error) => e.message.startsWith(field) || e.message.includes(field),
+      );
+    named('quiet', 'meta.sound.auto');
+    named({transition: 1.5}, 'meta.sound.auto.transition');
+    named({text: 'low'}, 'meta.sound.auto.text');
+    named({whoosh: 0.5}, 'meta.sound.auto has unknown key "whoosh"');
   });
 });

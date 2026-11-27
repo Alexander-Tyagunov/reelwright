@@ -118,7 +118,7 @@ async function fitLoudness(
 export async function makeSoundtrack(i: SoundtrackInput): Promise<Soundtrack> {
   const {sound: s, info} = i;
   const key = {palette: s.palette, key: s.key};
-  const cues = s.cues ? planCues(info, i.film.scenes, key) : [];
+  const cues = s.cues ? planCues(info, i.film.scenes, key, s.auto) : [];
   const base = composeTrack({
     palette: s.palette,
     key: s.key,

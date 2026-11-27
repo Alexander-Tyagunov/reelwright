@@ -4,6 +4,7 @@
  * explicit `cues` of each scene. Pure: the same input gives the same list.
  */
 import type {CueKind, FilmInfo, SceneSpec} from '../shared/contract.ts';
+import {AUTO_ALL, type AutoCues} from './auto-cues.ts';
 import type {Palette} from './palette-types.ts';
 import {degreeHz} from './scale.ts';
 import {sceneCues} from './scene-cues.ts';
@@ -55,27 +56,27 @@ function textGain(words: number): number {
   return words <= 3 ? 1 : words <= 8 ? 0.7 : 0.45;
 }
 
-function structural(info: CueInfo, k: CueKey): Cue[] {
+function structural(info: CueInfo, k: CueKey, auto: AutoCues): Cue[] {
   const out: Cue[] = [];
   const last = info.scenes[info.scenes.length - 1];
-  if (last && info.scenes.length > 1) {
+  if (last && info.scenes.length > 1 && auto.ending > 0) {
     const hz = hzFor('chime', k, 0);
     out.push({
       t: last.start,
       kind: 'chime',
-      gain: 0.9,
+      gain: 0.9 * auto.ending,
       hz,
       duration: null,
       source: 'ending',
     });
   }
   info.scenes.forEach((s, i) => {
-    if (i > 0) {
+    if (i > 0 && auto.transition > 0) {
       const t = s.start + info.overlap / 2;
       out.push({
         t,
         kind: 'whoosh',
-        gain: 0.8,
+        gain: 0.8 * auto.transition,
         hz: null,
         duration: null,
         source: 'transition',
@@ -85,7 +86,7 @@ function structural(info: CueInfo, k: CueKey): Cue[] {
   return out;
 }
 
-function ticks(info: CueInfo, k: CueKey): Cue[] {
+function ticks(info: CueInfo, k: CueKey, level: number): Cue[] {
   const run = k.palette.tickRun;
   const placed = new Map<number, number>();
   const out: Cue[] = [];
@@ -101,7 +102,7 @@ function ticks(info: CueInfo, k: CueKey): Cue[] {
     out.push({
       t,
       kind: 'tick',
-      gain: textGain(x.words),
+      gain: textGain(x.words) * level,
       hz,
       duration: null,
       source: 'text',
@@ -156,12 +157,14 @@ function hzFor(kind: CueKind, k: CueKey, n: number): number {
  * Derived cues: a whoosh centred on each scene change, a chime at the start
  * of the last scene, and a tick where a text block settles, quieter for
  * longer text. A tick gives way to any cue within {@link MIN_CUE_GAP_S}
- * seconds, so a list of rows never machine-guns. Explicit and scene-change
- * cues are always kept.
+ * seconds, so a list of rows never machine-guns. Explicit cues are always
+ * kept, and so are the other derived cues that `auto` leaves on.
  *
  * @param info Film duration, scene starts and text settle times, in seconds.
  * @param scenes Scene specs, for their explicit `cues`.
  * @param k Palette and key that decide the pitches.
+ * @param auto How much each kind of derived cue plays, 0 to 1 as a gain
+ *   multiplier; 0 drops the kind. Default: every kind at its planned gain.
  * @returns Cues sorted by time.
  * @throws UserError when an explicit cue is malformed.
  */
@@ -169,11 +172,14 @@ export function planCues(
   info: CueInfo,
   scenes: readonly SceneSpec[],
   k: CueKey,
+  auto: AutoCues = AUTO_ALL,
 ): Cue[] {
-  const kept = [...explicit(info, scenes, k), ...structural(info, k)];
+  const kept = [...explicit(info, scenes, k), ...structural(info, k, auto)];
   const crowded = (t: number): boolean =>
     kept.some(c => Math.abs(c.t - t) < MIN_CUE_GAP_S);
-  for (const c of ticks(info, k).sort((a, b) => a.t - b.t)) {
+  for (const c of (auto.text > 0 ? ticks(info, k, auto.text) : []).sort(
+    (a, b) => a.t - b.t,
+  )) {
     if (!crowded(c.t)) {
       kept.push(c);
     }

@@ -34,6 +34,9 @@
   last scene) and from a scene's own `cues` list (`tick`, `pop`, `whoosh`, `rise`, `chime`, `hit`, `boom`, `sting`),
   including on a `plate` scene, which used to ignore the field. The finished track is -14 LUFS; its true peak is at or
   below -1.5 dBTP in the WAV and at or below -1 dBTP in the MP4, after AAC.
+- **Sound: `meta.sound.auto`.** Turns the cues derived from the picture down or off by kind: `false` for none, or
+  `{ transition, text, ending }` with `true`, `false` or a gain multiplier from 0 to 1. A scene's own `cues` always play.
+  Absent means as before.
 - **Command: `reel sound`.** Writes `out/sound.wav` and the cue list `out/sound.json`; prints length, cue count,
   loudness and true peak.
 - **Sound in render and export.** `reel render` muxes the track into the finished file with the video copied and AAC

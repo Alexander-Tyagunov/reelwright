@@ -5,6 +5,7 @@
 import {UserError} from '../core/errors.ts';
 import {checkRange} from '../core/validate.ts';
 import type {FilmSpec} from '../shared/contract.ts';
+import {type AutoCues, resolveAuto} from './auto-cues.ts';
 import type {CurvePoint} from './envelope.ts';
 import type {Palette} from './palette-types.ts';
 import {DEFAULT_PALETTE, PALETTE_NAMES, PALETTES} from './palettes.ts';
@@ -28,6 +29,7 @@ const FIELDS = [
   'key',
   'tempo',
   'intensity',
+  'auto',
 ];
 
 /** `meta.sound` with every default applied. */
@@ -37,6 +39,8 @@ export interface ResolvedSound {
   bed: boolean;
   /** Play cues. */
   cues: boolean;
+  /** How much each kind of derived cue plays. */
+  auto: AutoCues;
   /** Linear level against the -14 LUFS target, 0 to 1. */
   volume: number;
   /** Whole number seed. */
@@ -157,6 +161,7 @@ export function resolveSound(sound: unknown): ResolvedSound | null {
     palette,
     bed,
     cues,
+    auto: resolveAuto(raw.auto),
     volume: checkRange('meta.sound.volume', raw.volume ?? 1, 0, 1),
     seed: checkRange(
       'meta.sound.seed',
