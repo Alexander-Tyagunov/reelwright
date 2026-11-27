@@ -44,6 +44,16 @@ before(() => {
 });
 after(() => ws.dispose());
 
+/** The label of the one-plate scene, with a leader line by default. */
+const LABEL = {
+  track: 'box',
+  text: 'Box',
+  from: 0.8,
+  to: 2.8,
+  side: 'right',
+  offset: 4,
+};
+
 /** The one plate scene every test starts from. */
 function plateScene(extra: Record<string, unknown> = {}) {
   return {
@@ -133,6 +143,31 @@ describe('plate scene', {skip, timeout: 900_000}, () => {
     for (const id of ['load', 'determinism', 'layout', 'holds'] as const) {
       const gate = gateOf(report, id);
       assert.equal(gate.status, 'PASS', `${id}: ${gate.details.join('; ')}`);
+    }
+  });
+
+  it('two plate scenes with leader labels pass the determinism gate', async () => {
+    const early = {labels: [{...LABEL, from: 0.1, to: 3, offset: 9}]};
+    const p = plateProject('two-plates', [plateScene(), plateScene(early)]);
+    const {report} = await qa(p, ['--page-only']);
+    const gate = gateOf(report, 'determinism');
+    assert.equal(gate.status, 'PASS', gate.details.join('; '));
+  });
+
+  it('a leader line of a scene that is off screen stays hidden after another scene is drawn', async () => {
+    const early = {labels: [{...LABEL, from: 0.1, to: 3, offset: 9}]};
+    const p = plateProject('leader-hidden', [plateScene(), plateScene(early)]);
+    const film = await openFilm(p.spec);
+    try {
+      await drawAt(film.page, 3.2);
+      await drawAt(film.page, 1.5);
+      const shown = await film.page.eval(
+        `[...document.querySelectorAll('.rw-layer[data-scene="1"] line')]
+          .filter(l => getComputedStyle(l).visibility === 'visible').length`,
+      );
+      assert.equal(shown, 0, 'a leader line shows through a hidden scene');
+    } finally {
+      await film.close();
     }
   });
 

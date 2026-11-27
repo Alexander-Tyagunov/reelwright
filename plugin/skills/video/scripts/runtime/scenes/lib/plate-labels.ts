@@ -200,7 +200,9 @@ function drawLeader(
   group.setAttribute('opacity', String(round3(alpha)));
   dot.setAttribute('cx', String(round3(placed.point.x)));
   dot.setAttribute('cy', String(round3(placed.point.y)));
-  line.setAttribute('visibility', end ? 'visible' : 'hidden');
+  // 'inherit', not 'visible': a visible child would show through the hidden
+  // layer of a scene that is off screen and was last drawn mid-fade.
+  line.setAttribute('visibility', end ? 'inherit' : 'hidden');
   if (end) {
     line.setAttribute('x1', String(round3(placed.point.x)));
     line.setAttribute('y1', String(round3(placed.point.y)));

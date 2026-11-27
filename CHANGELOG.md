@@ -2,6 +2,8 @@
 
 ## 0.2.0 (unreleased)
 
+- **Fix: leader lines of plate scenes no longer leak between scenes.** A leader line of a scene that was off screen
+  showed through and failed the determinism gate on films with two or more plate scenes with leader labels.
 - **Scene type: `plate` (13 built-in types now).** Plays an image sequence rendered elsewhere, for example in
   Blender, as the picture, and draws labels over it that follow points exported per frame: placed by side and
   offset, with a leader line, kept inside the safe area, hidden while the point is not visible, timed in seconds or

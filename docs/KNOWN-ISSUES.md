@@ -21,6 +21,19 @@ solve a new one, add it: symptom, cause, fix, and how to tell it is fixed.
   by more than 8 levels. A real dependence on history changes thousands of pixels.
 - **Do not** try to fix this with `will-change`; it made rasterisation more history-dependent, not less.
 
+### Leader lines of an off-screen plate scene show through, and the determinism gate fails
+
+- **Symptom:** a film with two or more `plate` scenes whose labels have leader lines fails the determinism gate:
+  about 130 pixels differ by up to 28 levels (more on longer films). The rendered video is right.
+- **Cause:** the leader `<line>` carried `visibility="visible"`. A scene that is off screen is not redrawn, so its
+  line kept the geometry and group opacity of its last draw, and the explicit `visible` overrode the `hidden` that
+  the scene layer sets, painting a faint stale line over the scene that was on screen.
+- **Fix:** the line uses `visibility="inherit"` (or `hidden` when it has no end), so the layer decides.
+- **Check:** `reel qa film.json --page-only` passes determinism on a film with two plate scenes; the e2e test
+  "two plate scenes with leader labels pass the determinism gate" covers it.
+- **Rule:** inside a scene never set `visibility: visible` on a child; hide with the layer and let children
+  inherit.
+
 ### An image looks one pixel different after other scenes were drawn
 
 - **Symptom:** the determinism gate fails on a scene with a logo; about 500 pixels differ around the image.
