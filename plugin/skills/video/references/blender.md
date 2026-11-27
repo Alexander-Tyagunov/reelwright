@@ -290,6 +290,13 @@ Budget about 14 looks. Before rendering anything, read `tracks.sample_points` nu
     then prove the cut on a check frame against the other plate's first frame (mean brightness, phase correlation of crops
     for the shift, edge energy after the median for focus) before the final render.
 
+33. (Channel identity, stills) Rolled a lying prop with `rotation_euler.x`: the film's pencil and knife lie by `(0, pi / 2, yaw)`, and
+    with Y at 90 degrees a turn about X is a turn about Z, so the pencil swung 23 degrees and lay across the subject. On such a
+    prop change `yaw` only; for a top-down still, work out where both ends fall in the frame before the first render.
+34. (Channel identity, stills) A queued 2560 x 1440 still died with "No space left on device" (the Mac had under 0.5 GB free; the
+    worker writes a raw PNG beside the JPEG). The queue said `error: exit 0` while `render_progress.json` stayed at "starting":
+    read `render.log`, and check `shutil.disk_usage` before submitting. A still at 256 samples, noise 0.01 took 32-38 s.
+
 ## 11. Labels
 A label follows a track point, and the holds gate fails a label that moves faster than 6% of the short side per
 second. Characters that hop make the point bob. Put each track empty above the highest point of the character's

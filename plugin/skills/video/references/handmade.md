@@ -147,3 +147,11 @@ the main subject at the start, was out of focus and the lamps were blobs; with g
   crop does not clearly rise, the focus is wrong; fix it before spending 30 minutes on the full render. Then look at
   one old | new crop at 100%.
 
+
+## 6. Stills and flat lays (worked example: `channel-identity`, `identity.py`)
+Seen from straight above, thickness does not show: height is read only from shadows. Keep the lamp low (37 degrees up) and let
+loose pieces ride up a millimetre or more (0.9 mm of lift on 0.6 mm card was not seen at 1600 px; 1.3 mm was). Flat metal mirrors
+whatever is overhead: give the room a soft source above the camera and chamfer flat bars, or they render as grey paper. A top-down
+lens is a pure scale, so lay the picture out in pixels per metre before building (safe areas, the size of a line of type), and make
+drawn and printed marks as alpha textures mixed into the paper. Printed black needs an ink alpha of 0.95-1.0: at 0.84-1.0 it read
+as grey. Check a profile picture as 88, 48 and 24 px circles on dark and white before the final render.
